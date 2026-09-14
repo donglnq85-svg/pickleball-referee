@@ -1,12 +1,35 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
+
+const SUPABASE_URL = 'https://brlyzsprmaxxgqotglmt.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJybHl6c3BybWF4eGdxb3RnbG10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTgwNzQsImV4cCI6MjEwNDk3NDA3NH0.R9jMX2UwH2G9GEuGezrtSAADAn0wg0ei6Ddu3aNLxYY'
 
 const initialConfig = {
   team1: 'ĐỘI 1',
   team2: 'ĐỘI 2',
   target: 11,
   winBy: 2,
+}
+
+async function supabaseRequest(path, options = {}) {
+  const response = await fetch(`${SUPABASE_URL}${path}`, {
+    ...options,
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  })
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(message || `Supabase request failed: ${response.status}`)
+  }
+
+  const text = await response.text()
+  return text ? JSON.parse(text) : null
 }
 
 function App() {
@@ -18,6 +41,8 @@ function App() {
   const [gameNumber, setGameNumber] = useState(1)
   const [history, setHistory] = useState([])
   const [completedGames, setCompletedGames] = useState([])
+  const [matchId, setMatchId] = useState(null)
+  const [syncStatus, setSyncStatus] = useState('ĐANG KIỂM TRA DỮ LIỆU')
 
   const gameWinner = useMemo(() => {
     const [a, b] = score
@@ -26,6 +51,79 @@ function App() {
     return null
   }, [score, config])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function restoreActiveMatch() {
+      try {
+        const rows = await supabaseRequest('/rest/v1/matches?status=eq.IN_PROGRESS&order=updated_at.desc&limit=1')
+        if (cancelled) return
+
+        if (rows?.length) {
+          const match = rows[0]
+          setConfig({
+            team1: match.team1,
+            team2: match.team2,
+            target: match.target,
+            winBy: match.win_by,
+          })
+          setScore([match.score1, match.score2])
+          setGames([match.games1, match.games2])
+          setServing(match.serving)
+          setGameNumber(match.game_number)
+          setCompletedGames(Array.isArray(match.completed_games) ? match.completed_games : [])
+          setMatchId(match.id)
+          setHistory([])
+          setScreen('match')
+          setSyncStatus('ĐÃ KHÔI PHỤC TRẬN ĐANG DIỄN RA')
+        } else {
+          setSyncStatus('SẴN SÀNG')
+        }
+      } catch (error) {
+        console.error(error)
+        if (!cancelled) setSyncStatus('CHƯA KẾT NỐI DỮ LIỆU')
+      }
+    }
+
+    restoreActiveMatch()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!matchId || screen !== 'match') return
+
+    const timer = setTimeout(async () => {
+      try {
+        setSyncStatus('ĐANG LƯU')
+        await supabaseRequest(`/rest/v1/matches?id=eq.${matchId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            team1: config.team1,
+            team2: config.team2,
+            target: config.target,
+            win_by: config.winBy,
+            score1: score[0],
+            score2: score[1],
+            games1: games[0],
+            games2: games[1],
+            serving,
+            game_number: gameNumber,
+            completed_games: completedGames,
+            updated_at: new Date().toISOString(),
+          }),
+        })
+        setSyncStatus('ĐÃ LƯU')
+      } catch (error) {
+        console.error(error)
+        setSyncStatus('LỖI LƯU DỮ LIỆU')
+      }
+    }, 250)
+
+    return () => clearTimeout(timer)
+  }, [matchId, screen, config, score, games, serving, gameNumber, completedGames])
+
   const pushHistory = () => {
     setHistory((prev) => [
       ...prev,
@@ -33,14 +131,41 @@ function App() {
     ])
   }
 
-  const startMatch = () => {
-    setScore([0, 0])
-    setGames([0, 0])
-    setServing(0)
-    setGameNumber(1)
-    setHistory([])
-    setCompletedGames([])
-    setScreen('match')
+  const startMatch = async () => {
+    try {
+      setSyncStatus('ĐANG TẠO TRẬN')
+      const rows = await supabaseRequest('/rest/v1/matches', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify({
+          team1: config.team1 || 'ĐỘI 1',
+          team2: config.team2 || 'ĐỘI 2',
+          target: config.target,
+          win_by: config.winBy,
+          score1: 0,
+          score2: 0,
+          games1: 0,
+          games2: 0,
+          serving: 0,
+          game_number: 1,
+          completed_games: [],
+          status: 'IN_PROGRESS',
+        }),
+      })
+
+      setScore([0, 0])
+      setGames([0, 0])
+      setServing(0)
+      setGameNumber(1)
+      setHistory([])
+      setCompletedGames([])
+      setMatchId(rows?.[0]?.id || null)
+      setScreen('match')
+      setSyncStatus('ĐÃ LƯU')
+    } catch (error) {
+      console.error(error)
+      setSyncStatus('LỖI TẠO TRẬN')
+    }
   }
 
   const addPoint = (side) => {
@@ -79,9 +204,47 @@ function App() {
     setGameNumber((prev) => prev + 1)
   }
 
-  const finishMatch = () => {
+  const finishMatch = async () => {
     if (games[0] === games[1]) return
+
+    if (matchId) {
+      try {
+        setSyncStatus('ĐANG HOÀN TẤT')
+        await supabaseRequest(`/rest/v1/matches?id=eq.${matchId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            score1: score[0],
+            score2: score[1],
+            games1: games[0],
+            games2: games[1],
+            serving,
+            game_number: gameNumber,
+            completed_games: completedGames,
+            status: 'COMPLETED',
+            updated_at: new Date().toISOString(),
+          }),
+        })
+        setSyncStatus('ĐÃ HOÀN TẤT')
+      } catch (error) {
+        console.error(error)
+        setSyncStatus('LỖI HOÀN TẤT')
+        return
+      }
+    }
+
     setScreen('complete')
+  }
+
+  const startNewMatch = () => {
+    setMatchId(null)
+    setScore([0, 0])
+    setGames([0, 0])
+    setServing(0)
+    setGameNumber(1)
+    setHistory([])
+    setCompletedGames([])
+    setSyncStatus('SẴN SÀNG')
+    setScreen('home')
   }
 
   if (screen === 'setup') {
@@ -119,6 +282,7 @@ function App() {
 
           <button onClick={startMatch}>BẮT ĐẦU TRẬN ĐẤU</button>
           <button className="secondary" onClick={() => setScreen('home')}>QUAY LẠI</button>
+          <small>{syncStatus}</small>
         </section>
       </main>
     )
@@ -132,6 +296,8 @@ function App() {
             <div className="badge">TRẬN ĐẤU ĐANG DIỄN RA</div>
             <div className="game-label">GAME {gameNumber}</div>
           </div>
+
+          <div className="sync-line"><span className="sync-dot" /> {syncStatus}</div>
 
           <div className="games-strip">
             <span>GAME: {games[0]}</span>
@@ -188,7 +354,7 @@ function App() {
           )}
 
           <button className="danger" disabled={games[0] === games[1]} onClick={finishMatch}>KẾT THÚC TRẬN ĐẤU</button>
-          <small>Scoring đang ở chế độ điều khiển thủ công; luật giao bóng chi tiết sẽ được gắn vào Match Engine sau.</small>
+          <small>Trạng thái trận đang được lưu tự động vào Supabase. Refresh trang sẽ khôi phục trận IN_PROGRESS gần nhất.</small>
         </section>
       </main>
     )
@@ -203,7 +369,8 @@ function App() {
           <h1>KẾT THÚC TRẬN ĐẤU</h1>
           <p className="winner">{winner === 0 ? config.team1 : config.team2} thắng trận</p>
           <div className="final-score">{games[0]} — {games[1]}</div>
-          <button onClick={() => setScreen('home')}>VỀ TRANG ĐẦU</button>
+          <div className="sync-line"><span className="sync-dot" /> {syncStatus}</div>
+          <button onClick={startNewMatch}>VỀ TRANG ĐẦU</button>
         </section>
       </main>
     )
@@ -217,7 +384,7 @@ function App() {
         <p>Ứng dụng hỗ trợ trọng tài điều hành trận đấu Pickleball.</p>
         <div className="status"><span></span> Hệ thống đã chạy thành công</div>
         <button onClick={() => setScreen('setup')}>TẠO TRẬN ĐẤU</button>
-        <small>Runnable V1 · Core Match</small>
+        <small>{syncStatus}</small>
       </section>
     </main>
   )
