@@ -12,6 +12,11 @@ const initialConfig = {
   winBy: 2,
 }
 
+const defaultPlayers = [
+  ['Nguyễn Văn Nam', 'Trần Hoàng Minh'],
+  ['Lê Quốc Hùng', 'Phạm Anh Tuấn'],
+]
+
 async function supabaseRequest(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}${path}`, {
     ...options,
@@ -38,11 +43,14 @@ function App() {
   const [score, setScore] = useState([0, 0])
   const [games, setGames] = useState([0, 0])
   const [serving, setServing] = useState(0)
+  const [serverNumber, setServerNumber] = useState(1)
   const [gameNumber, setGameNumber] = useState(1)
   const [history, setHistory] = useState([])
+  const [redoStack, setRedoStack] = useState([])
   const [completedGames, setCompletedGames] = useState([])
   const [matchId, setMatchId] = useState(null)
   const [syncStatus, setSyncStatus] = useState('ĐANG KIỂM TRA DỮ LIỆU')
+  const [timeouts, setTimeouts] = useState([[1, 1], [1, 1]])
 
   const gameWinner = useMemo(() => {
     const [a, b] = score
@@ -55,9 +63,19 @@ function App() {
     score: [...score],
     games: [...games],
     serving,
+    serverNumber,
     gameNumber,
     completedGames: [...completedGames],
   })
+
+  const restoreSnapshot = (snapshot) => {
+    setScore(snapshot.score)
+    setGames(snapshot.games)
+    setServing(snapshot.serving)
+    setServerNumber(snapshot.serverNumber || 1)
+    setGameNumber(snapshot.gameNumber)
+    setCompletedGames(snapshot.completedGames)
+  }
 
   const recordEvent = async (eventType, payload = {}, snapshot = currentSnapshot()) => {
     if (!matchId) return
@@ -153,6 +171,7 @@ function App() {
   const pushHistory = () => {
     const snapshot = currentSnapshot()
     setHistory((prev) => [...prev, snapshot].slice(-100))
+    setRedoStack([])
     return snapshot
   }
 
@@ -183,8 +202,10 @@ function App() {
       setScore([0, 0])
       setGames([0, 0])
       setServing(0)
+      setServerNumber(1)
       setGameNumber(1)
       setHistory([])
+      setRedoStack([])
       setCompletedGames([])
       setMatchId(id)
       setScreen('match')
@@ -219,6 +240,7 @@ function App() {
     const before = pushHistory()
     const nextServing = serving === 0 ? 1 : 0
     setServing(nextServing)
+    setServerNumber(1)
     void recordEvent('SERVE_CHANGED', { from: serving, to: nextServing }, { ...before, serving: nextServing })
   }
 
@@ -226,35 +248,45 @@ function App() {
     const last = history.at(-1)
     if (!last) return
     const beforeUndo = currentSnapshot()
-    setScore(last.score)
-    setGames(last.games)
-    setServing(last.serving)
-    setGameNumber(last.gameNumber)
-    setCompletedGames(last.completedGames)
+    setRedoStack((prev) => [...prev, beforeUndo].slice(-100))
+    restoreSnapshot(last)
     setHistory((prev) => prev.slice(0, -1))
     void recordEvent('UNDO_APPLIED', { revertedFrom: beforeUndo }, last)
+  }
+
+  const redo = () => {
+    const next = redoStack.at(-1)
+    if (!next) return
+    const beforeRedo = currentSnapshot()
+    setHistory((prev) => [...prev, beforeRedo].slice(-100))
+    restoreSnapshot(next)
+    setRedoStack((prev) => prev.slice(0, -1))
+    void recordEvent('REDO_APPLIED', { restoredTo: next }, next)
+  }
+
+  const useTimeout = (team, type) => {
+    setTimeouts((prev) => {
+      const next = prev.map((row) => [...row])
+      if (next[team][type] > 0) next[team][type] -= 1
+      return next
+    })
   }
 
   const completeGame = () => {
     if (gameWinner === null) return
     const before = pushHistory()
     const nextGames = games.map((value, index) => (index === gameWinner ? value + 1 : value))
-    const nextCompleted = [
-      ...completedGames,
-      { game: gameNumber, score: [...score], winner: gameWinner },
-    ]
+    const nextCompleted = [...completedGames, { game: gameNumber, score: [...score], winner: gameWinner }]
     const nextGameNumber = gameNumber + 1
 
     setGames(nextGames)
     setCompletedGames(nextCompleted)
     setScore([0, 0])
     setServing(gameWinner)
+    setServerNumber(1)
     setGameNumber(nextGameNumber)
 
-    void recordEvent('GAME_COMPLETED', {
-      winner: gameWinner,
-      completedScore: [...score],
-    }, {
+    void recordEvent('GAME_COMPLETED', { winner: gameWinner, completedScore: [...score] }, {
       ...before,
       score: [0, 0],
       games: nextGames,
@@ -266,7 +298,6 @@ function App() {
 
   const finishMatch = async () => {
     if (games[0] === games[1]) return
-
     if (matchId) {
       try {
         setSyncStatus('ĐANG HOÀN TẤT')
@@ -274,15 +305,8 @@ function App() {
         await supabaseRequest(`/rest/v1/matches?id=eq.${matchId}`, {
           method: 'PATCH',
           body: JSON.stringify({
-            score1: score[0],
-            score2: score[1],
-            games1: games[0],
-            games2: games[1],
-            serving,
-            game_number: gameNumber,
-            completed_games: completedGames,
-            history,
-            status: 'COMPLETED',
+            score1: score[0], score2: score[1], games1: games[0], games2: games[1], serving,
+            game_number: gameNumber, completed_games: completedGames, history, status: 'COMPLETED',
             updated_at: new Date().toISOString(),
           }),
         })
@@ -293,7 +317,6 @@ function App() {
         return
       }
     }
-
     setScreen('complete')
   }
 
@@ -302,8 +325,10 @@ function App() {
     setScore([0, 0])
     setGames([0, 0])
     setServing(0)
+    setServerNumber(1)
     setGameNumber(1)
     setHistory([])
+    setRedoStack([])
     setCompletedGames([])
     setSyncStatus('SẴN SÀNG')
     setScreen('home')
@@ -311,37 +336,17 @@ function App() {
 
   if (screen === 'setup') {
     return (
-      <main className="shell">
+      <main className="shell dark-shell">
         <section className="card setup-card">
           <div className="badge">CORE MATCH</div>
           <h1>TẠO TRẬN ĐẤU</h1>
           <p>Thiết lập trận đấu mới để bắt đầu luồng trọng tài.</p>
-
           <div className="form-grid">
-            <label>
-              Đội 1
-              <input value={config.team1} onChange={(e) => setConfig({ ...config, team1: e.target.value })} />
-            </label>
-            <label>
-              Đội 2
-              <input value={config.team2} onChange={(e) => setConfig({ ...config, team2: e.target.value })} />
-            </label>
-            <label>
-              Điểm thắng game
-              <select value={config.target} onChange={(e) => setConfig({ ...config, target: Number(e.target.value) })}>
-                <option value="11">11 điểm</option>
-                <option value="15">15 điểm</option>
-                <option value="21">21 điểm</option>
-              </select>
-            </label>
-            <label>
-              Thắng cách biệt
-              <select value={config.winBy} onChange={(e) => setConfig({ ...config, winBy: Number(e.target.value) })}>
-                <option value="2">2 điểm</option>
-              </select>
-            </label>
+            <label>Đội 1<input value={config.team1} onChange={(e) => setConfig({ ...config, team1: e.target.value })} /></label>
+            <label>Đội 2<input value={config.team2} onChange={(e) => setConfig({ ...config, team2: e.target.value })} /></label>
+            <label>Điểm thắng game<select value={config.target} onChange={(e) => setConfig({ ...config, target: Number(e.target.value) })}><option value="11">11 điểm</option><option value="15">15 điểm</option><option value="21">21 điểm</option></select></label>
+            <label>Thắng cách biệt<select value={config.winBy} onChange={(e) => setConfig({ ...config, winBy: Number(e.target.value) })}><option value="2">2 điểm</option></select></label>
           </div>
-
           <button onClick={startMatch}>BẮT ĐẦU TRẬN ĐẤU</button>
           <button className="secondary" onClick={() => setScreen('home')}>QUAY LẠI</button>
           <small>{syncStatus}</small>
@@ -351,74 +356,87 @@ function App() {
   }
 
   if (screen === 'match') {
+    const team1Name = config.team1 || 'ĐỘI 1'
+    const team2Name = config.team2 || 'ĐỘI 2'
+    const setLabel = `SET ${Math.min(gameNumber, 3)}/3`
+
     return (
-      <main className="shell">
-        <section className="card match-card">
-          <div className="topline">
-            <div className="badge">TRẬN ĐẤU ĐANG DIỄN RA</div>
-            <div className="game-label">GAME {gameNumber}</div>
-          </div>
-
-          <div className="sync-line"><span className="sync-dot" /> {syncStatus}</div>
-
-          <div className="games-strip">
-            <span>GAME: {games[0]}</span>
-            <strong>—</strong>
-            <span>{games[1]}</span>
-          </div>
-
-          <div className="scoreboard">
-            <div className={`team ${serving === 0 ? 'serving' : ''}`}>
-              <div className="serve-chip">{serving === 0 ? 'ĐANG GIAO BÓNG' : 'NHẬN BÓNG'}</div>
-              <div className="team-name">{config.team1 || 'ĐỘI 1'}</div>
-              <div className="score">{score[0]}</div>
-              <button disabled={gameWinner !== null} onClick={() => addPoint(0)}>+ ĐIỂM ĐỘI 1</button>
+      <main className="referee-page">
+        <div className="phone-canvas">
+          <header className="ref-header">
+            <button className="header-action exit" onClick={() => setScreen('home')}><span>‹</span> Thoát trận</button>
+            <div className="brand">
+              <div className="brand-ball">●</div>
+              <div><strong>PICKLEBALL</strong><b>REFEREE</b><small>TRỌNG TÀI TRONG TAY BẠN</small></div>
             </div>
+            <button className="header-action options" onClick={changeServe}><span>⚙</span> Tùy chọn</button>
+          </header>
 
-            <div className="dash">—</div>
+          <section className="score-hero">
+            <div className="hero-card green-card"><span>ĐIỂM ĐỘI GIAO</span><strong>{score[serving]}</strong><small>{serving === 0 ? team1Name : team2Name}</small></div>
+            <div className="hero-card blue-card"><span>ĐIỂM ĐỘI NHẬN</span><strong>{score[serving === 0 ? 1 : 0]}</strong><small>{serving === 0 ? team2Name : team1Name}</small></div>
+            <div className="hero-card yellow-card"><span>LƯỢT GIAO</span><strong>{serverNumber}</strong></div>
+          </section>
 
-            <div className={`team ${serving === 1 ? 'serving' : ''}`}>
-              <div className="serve-chip">{serving === 1 ? 'ĐANG GIAO BÓNG' : 'NHẬN BÓNG'}</div>
-              <div className="team-name">{config.team2 || 'ĐỘI 2'}</div>
-              <div className="score">{score[1]}</div>
-              <button disabled={gameWinner !== null} onClick={() => addPoint(1)}>+ ĐIỂM ĐỘI 2</button>
+          <section className="set-row">
+            <div className="team-tab"><i className="dot green-dot" />{team1Name}</div>
+            <div className="set-center"><b>{setLabel}</b><strong>{games[0]} <span>-</span> {games[1]}</strong></div>
+            <div className="team-tab">{team2Name}<i className="dot blue-dot" /></div>
+          </section>
+
+          <section className="roster-row">
+            <div className="roster-card left"><i className="dot green-dot" /><div><span>{defaultPlayers[0][0]}</span><span>{defaultPlayers[0][1]}</span></div><b>›</b></div>
+            <div className="roster-card right"><i className="dot blue-dot" /><div><span>{defaultPlayers[1][0]}</span><span>{defaultPlayers[1][1]}</span></div><b>›</b></div>
+          </section>
+
+          <section className="court" aria-label="Sơ đồ sân">
+            <div className="court-side court-green">
+              <div className="player-box top"><span className="player-number">2</span><p>{defaultPlayers[0][0]}</p></div>
+              <div className="player-box bottom active-player"><span className="player-number">1</span><p>{defaultPlayers[0][1]}</p>{serving === 0 && <span className="ball">●</span>}</div>
             </div>
-          </div>
+            <div className="kitchen left-kitchen" />
+            <div className="net"><span /><span /><span /><span /><span /><span /><span /></div>
+            <div className="kitchen right-kitchen" />
+            <div className="court-side court-blue">
+              <div className="player-box top"><span className="player-number">1</span><p>{defaultPlayers[1][0]}</p>{serving === 1 && <span className="ball">●</span>}</div>
+              <div className="player-box bottom"><span className="player-number">2</span><p>{defaultPlayers[1][1]}</p></div>
+            </div>
+            <div className={`serve-arrow ${serving === 1 ? 'reverse' : ''}`}>➜</div>
+          </section>
 
-          <div className="meta">
-            <span className="pill">Mục tiêu {config.target}</span>
-            <span className="pill">Cách biệt {config.winBy}</span>
-            <span className="pill">IN_PROGRESS</span>
-            <span className="pill">Undo {history.length}</span>
-          </div>
+          <section className="point-actions">
+            <button className="point-button team1-point" disabled={gameWinner !== null} onClick={() => addPoint(0)}>＋ <strong>ĐIỂM</strong><span>{team1Name}</span></button>
+            <button className="point-button team2-point" disabled={gameWinner !== null} onClick={() => addPoint(1)}>＋ <strong>ĐIỂM</strong><span>{team2Name}</span></button>
+          </section>
+
+          <section className="undo-row">
+            <button disabled={!history.length} onClick={undo}><span>↶</span> HOÀN TÁC</button>
+            <button disabled={!redoStack.length} onClick={redo}><span>↷</span> LÀM LẠI</button>
+          </section>
 
           {gameWinner !== null && (
-            <div className="game-ready">
-              <strong>{gameWinner === 0 ? config.team1 : config.team2} đủ điều kiện thắng game</strong>
-              <span>{score[0]} — {score[1]}</span>
+            <section className="game-ready compact-ready">
+              <strong>{gameWinner === 0 ? team1Name : team2Name} đủ điều kiện thắng game</strong>
               <button className="success" onClick={completeGame}>XÁC NHẬN KẾT THÚC GAME</button>
-            </div>
+            </section>
           )}
 
-          <div className="control-grid">
-            <button className="secondary" onClick={changeServe}>ĐỔI QUYỀN GIAO BÓNG</button>
-            <button className="secondary" disabled={!history.length} onClick={undo}>HOÀN TÁC</button>
-          </div>
-
-          {completedGames.length > 0 && (
-            <div className="game-history">
-              {completedGames.map((item) => (
-                <div key={item.game}>
-                  <span>Game {item.game}</span>
-                  <strong>{item.score[0]} — {item.score[1]}</strong>
+          <section className="timeouts-grid">
+            {[0, 1].map((team) => (
+              <div className={`timeout-card ${team === 0 ? 'team-green' : 'team-blue'}`} key={team}>
+                <h3>{team === 0 ? team1Name : team2Name}</h3>
+                <div className="timeout-options">
+                  <button onClick={() => useTimeout(team, 0)} disabled={!timeouts[team][0]}><span className="timer-icon">⏱</span><div><b>Time-out</b><small>1 phút</small><em>{timeouts[team][0] ? `Còn ${timeouts[team][0]}` : 'Đã dùng'}</em></div></button>
+                  <button onClick={() => useTimeout(team, 1)} disabled={!timeouts[team][1]}><span className="medical-icon">✚</span><div><b>Y tế</b><small>3 phút</small><em>{timeouts[team][1] ? `Còn ${timeouts[team][1]}` : 'Đã dùng'}</em></div></button>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </section>
 
-          <button className="danger" disabled={games[0] === games[1]} onClick={finishMatch}>KẾT THÚC TRẬN ĐẤU</button>
-          <small>Snapshot + lịch sử hoàn tác được lưu vào Supabase. Các hành động chính cũng được ghi vào event log để phục vụ audit và Match Engine.</small>
-        </section>
+          <section className="ref-tip"><span>💡</span><div><b>Mẹo trọng tài</b><p>Luôn kiểm tra vị trí VĐV và người giao bóng trước mỗi lượt.</p></div></section>
+          <div className="sync-foot"><span className="sync-dot" />{syncStatus}</div>
+          {completedGames.length > 0 && <button className="finish-link" disabled={games[0] === games[1]} onClick={finishMatch}>KẾT THÚC TRẬN ĐẤU</button>}
+        </div>
       </main>
     )
   }
@@ -426,30 +444,12 @@ function App() {
   if (screen === 'complete') {
     const winner = games[0] > games[1] ? 0 : 1
     return (
-      <main className="shell">
-        <section className="card">
-          <div className="badge">HOÀN TẤT</div>
-          <h1>KẾT THÚC TRẬN ĐẤU</h1>
-          <p className="winner">{winner === 0 ? config.team1 : config.team2} thắng trận</p>
-          <div className="final-score">{games[0]} — {games[1]}</div>
-          <div className="sync-line"><span className="sync-dot" /> {syncStatus}</div>
-          <button onClick={startNewMatch}>VỀ TRANG ĐẦU</button>
-        </section>
-      </main>
+      <main className="shell dark-shell"><section className="card"><div className="badge">HOÀN TẤT</div><h1>KẾT THÚC TRẬN ĐẤU</h1><p className="winner">{winner === 0 ? config.team1 : config.team2} thắng trận</p><div className="final-score">{games[0]} — {games[1]}</div><div className="sync-line"><span className="sync-dot" /> {syncStatus}</div><button onClick={startNewMatch}>VỀ TRANG ĐẦU</button></section></main>
     )
   }
 
   return (
-    <main className="shell">
-      <section className="card">
-        <div className="badge">THOC SOFTWARE</div>
-        <h1>PICKLEBALL REFEREE</h1>
-        <p>Ứng dụng hỗ trợ trọng tài điều hành trận đấu Pickleball.</p>
-        <div className="status"><span></span> Hệ thống đã chạy thành công</div>
-        <button onClick={() => setScreen('setup')}>TẠO TRẬN ĐẤU</button>
-        <small>{syncStatus}</small>
-      </section>
-    </main>
+    <main className="shell dark-shell"><section className="card"><div className="badge">THOC SOFTWARE</div><h1>PICKLEBALL REFEREE</h1><p>Ứng dụng hỗ trợ trọng tài điều hành trận đấu Pickleball.</p><div className="status"><span /> Hệ thống đã chạy thành công</div><button onClick={() => setScreen('setup')}>TẠO TRẬN ĐẤU</button><small>{syncStatus}</small></section></main>
   )
 }
 
