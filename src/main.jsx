@@ -1,41 +1,33 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
 
-function LoginScreen() {
+function LoginScreen({ onLogin }) {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [remember, setRemember] = useState(true)
+  const [error, setError] = useState('')
 
   const submit = (event) => {
     event.preventDefault()
-    alert('Màn hình đăng nhập V1 đã sẵn sàng. Xác thực tài khoản sẽ được kết nối ở bước tiếp theo.')
+    const cleanPhone = phone.trim()
+    if (!cleanPhone || !password.trim()) {
+      setError('Anh nhập số điện thoại và mật khẩu để tiếp tục.')
+      return
+    }
+    localStorage.setItem('pr_logged_in', '1')
+    localStorage.setItem('pr_phone', cleanPhone)
+    onLogin(cleanPhone)
   }
 
   return (
-    <main className="app-shell">
-      <section className="hero">
-        <div className="brand-mark" aria-label="Pickleball Referee">
-          <div className="ball">●</div>
-          <div>
-            <strong>PICKLEBALL</strong>
-            <b>REFEREE</b>
-          </div>
-        </div>
-        <p className="brand-values">CÔNG BẰNG · CHUYÊN NGHIỆP · PHÁT TRIỂN</p>
-        <div className="hero-copy">Fair Play<br />Better Pickleball</div>
-      </section>
-
-      <section className="login-card">
-        <header>
-          <h1>Đăng nhập</h1>
-          <h2>Pickleball Referee</h2>
-          <p>Trợ lý trọng tài của bạn</p>
-        </header>
+    <main className="simple-login-page">
+      <section className="simple-login-card">
+        <div className="simple-logo">P</div>
+        <h1>PICKLEBALL REFEREE</h1>
+        <p>Trọng tài trong tay bạn</p>
 
         <form onSubmit={submit}>
-          <label className="field">
+          <label>
             <span>Số điện thoại</span>
             <input
               inputMode="tel"
@@ -46,56 +38,95 @@ function LoginScreen() {
             />
           </label>
 
-          <label className="field password-field">
+          <label>
             <span>Mật khẩu</span>
             <input
-              type={showPassword ? 'text' : 'password'}
+              type="password"
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Nhập mật khẩu"
             />
-            <button className="eye" type="button" onClick={() => setShowPassword((value) => !value)}>
-              {showPassword ? 'Ẩn' : 'Hiện'}
-            </button>
           </label>
 
-          <div className="login-options">
-            <label className="remember">
-              <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
-              <span>Ghi nhớ đăng nhập</span>
-            </label>
-            <button type="button" className="link-button">Quên mật khẩu?</button>
-          </div>
-
-          <button className="primary-button" type="submit">ĐĂNG NHẬP <span>→</span></button>
+          {error ? <div className="login-error">{error}</div> : null}
+          <button className="login-submit" type="submit">ĐĂNG NHẬP</button>
         </form>
 
-        <div className="divider"><span>hoặc</span></div>
+        <small>Bản thử nghiệm V1 · Chỉ cần nhập đủ 2 ô để vào app</small>
+      </section>
+    </main>
+  )
+}
 
-        <div className="biometric-grid">
-          <button type="button">◉ <span>Đăng nhập<br />bằng Face ID</span></button>
-          <button type="button">◎ <span>Đăng nhập<br />bằng Touch ID</span></button>
+function HomeScreen({ phone, onLogout }) {
+  return (
+    <main className="home-page">
+      <header className="home-header">
+        <div>
+          <span>PICKLEBALL</span>
+          <strong>REFEREE</strong>
         </div>
+        <button onClick={onLogout}>Đăng xuất</button>
+      </header>
 
-        <blockquote>“Trọng tài tốt hơn,<br />để Pickleball phát triển hơn mỗi ngày!”</blockquote>
-        <footer>
-          <span>Phiên bản 1.0.0</span>
-          <span>Bảo mật · Ổn định · Dễ sử dụng</span>
-        </footer>
+      <section className="welcome-card">
+        <p>Xin chào</p>
+        <h1>{phone || 'Trọng tài'}</h1>
+        <span>Ứng dụng đã chạy thực tế.</span>
       </section>
 
-      <section className="principles">
-        <div><strong>♧</strong><span>KẾT NỐI<br />CỘNG ĐỒNG</span></div>
-        <div><strong>◇</strong><span>MINH BẠCH<br />CÔNG BẰNG</span></div>
-        <div><strong>▥</strong><span>VÌ SỰ PHÁT TRIỂN<br />PICKLEBALL</span></div>
+      <section className="quick-actions">
+        <button>
+          <b>＋</b>
+          <span>Tạo trận đấu</span>
+        </button>
+        <button>
+          <b>▦</b>
+          <span>Lịch sử trận</span>
+        </button>
+        <button>
+          <b>✓</b>
+          <span>Luật thi đấu</span>
+        </button>
+        <button>
+          <b>⚙</b>
+          <span>Cài đặt</span>
+        </button>
+      </section>
+
+      <section className="status-card">
+        <div className="status-dot" />
+        <div>
+          <strong>Hệ thống sẵn sàng</strong>
+          <p>Đây là màn hình chính đầu tiên của PICKLEBALL REFEREE V1.</p>
+        </div>
       </section>
     </main>
   )
 }
 
 function App() {
-  return <LoginScreen />
+  const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem('pr_logged_in') === '1')
+  const [phone, setPhone] = useState(() => localStorage.getItem('pr_phone') || '')
+
+  useEffect(() => {
+    document.title = 'Pickleball Referee'
+  }, [])
+
+  const login = (value) => {
+    setPhone(value)
+    setLoggedIn(true)
+  }
+
+  const logout = () => {
+    localStorage.removeItem('pr_logged_in')
+    localStorage.removeItem('pr_phone')
+    setLoggedIn(false)
+    setPhone('')
+  }
+
+  return loggedIn ? <HomeScreen phone={phone} onLogout={logout} /> : <LoginScreen onLogin={login} />
 }
 
 createRoot(document.getElementById('root')).render(<App />)
