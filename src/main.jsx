@@ -5,54 +5,56 @@ import './styles.css'
 function App() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   const handleSubmit = (event) => {
     event.preventDefault()
 
     if (!phone.trim() || !password.trim()) {
-      setMessage('Vui lòng nhập số điện thoại và mật khẩu.')
+      setError('Vui lòng nhập số điện thoại và mật khẩu.')
       return
     }
 
-    setMessage('Đăng nhập thành công.')
+    setError('')
   }
 
   return (
     <main className="login-page">
-      <section className="login-panel" aria-label="Đăng nhập PICKLEBALL REFEREE">
+      <section className="login-card" aria-label="Đăng nhập PICKLEBALL REFEREE">
         <h1>PICKLEBALL REFEREE</h1>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <input
             type="tel"
             inputMode="tel"
             autoComplete="tel"
+            enterKeyHint="next"
             aria-label="Số điện thoại"
             placeholder="Số điện thoại"
             value={phone}
             onChange={(event) => {
               setPhone(event.target.value)
-              setMessage('')
+              setError('')
             }}
           />
 
           <input
             type="password"
             autoComplete="current-password"
+            enterKeyHint="go"
             aria-label="Mật khẩu"
             placeholder="Mật khẩu"
             value={password}
             onChange={(event) => {
               setPassword(event.target.value)
-              setMessage('')
+              setError('')
             }}
           />
 
           <button type="submit">Đăng nhập</button>
         </form>
 
-        {message ? <p className="login-message" role="status">{message}</p> : null}
+        {error ? <p className="form-error" role="alert">{error}</p> : null}
       </section>
     </main>
   )
