@@ -51,6 +51,31 @@ function App() {
     return null
   }, [score, config])
 
+  const currentSnapshot = () => ({
+    score: [...score],
+    games: [...games],
+    serving,
+    gameNumber,
+    completedGames: [...completedGames],
+  })
+
+  const recordEvent = async (eventType, payload = {}, snapshot = currentSnapshot()) => {
+    if (!matchId) return
+    try {
+      await supabaseRequest('/rest/v1/match_events', {
+        method: 'POST',
+        body: JSON.stringify({
+          match_id: matchId,
+          event_type: eventType,
+          payload,
+          snapshot,
+        }),
+      })
+    } catch (error) {
+      console.error('Event log error', error)
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -72,8 +97,8 @@ function App() {
           setServing(match.serving)
           setGameNumber(match.game_number)
           setCompletedGames(Array.isArray(match.completed_games) ? match.completed_games : [])
+          setHistory(Array.isArray(match.history) ? match.history : [])
           setMatchId(match.id)
-          setHistory([])
           setScreen('match')
           setSyncStatus('ĐÃ KHÔI PHỤC TRẬN ĐANG DIỄN RA')
         } else {
@@ -111,6 +136,7 @@ function App() {
             serving,
             game_number: gameNumber,
             completed_games: completedGames,
+            history,
             updated_at: new Date().toISOString(),
           }),
         })
@@ -122,13 +148,12 @@ function App() {
     }, 250)
 
     return () => clearTimeout(timer)
-  }, [matchId, screen, config, score, games, serving, gameNumber, completedGames])
+  }, [matchId, screen, config, score, games, serving, gameNumber, completedGames, history])
 
   const pushHistory = () => {
-    setHistory((prev) => [
-      ...prev,
-      { score: [...score], games: [...games], serving, gameNumber, completedGames: [...completedGames] },
-    ])
+    const snapshot = currentSnapshot()
+    setHistory((prev) => [...prev, snapshot].slice(-100))
+    return snapshot
   }
 
   const startMatch = async () => {
@@ -149,19 +174,33 @@ function App() {
           serving: 0,
           game_number: 1,
           completed_games: [],
+          history: [],
           status: 'IN_PROGRESS',
         }),
       })
 
+      const id = rows?.[0]?.id || null
       setScore([0, 0])
       setGames([0, 0])
       setServing(0)
       setGameNumber(1)
       setHistory([])
       setCompletedGames([])
-      setMatchId(rows?.[0]?.id || null)
+      setMatchId(id)
       setScreen('match')
       setSyncStatus('ĐÃ LƯU')
+
+      if (id) {
+        await supabaseRequest('/rest/v1/match_events', {
+          method: 'POST',
+          body: JSON.stringify({
+            match_id: id,
+            event_type: 'MATCH_STARTED',
+            payload: { target: config.target, winBy: config.winBy },
+            snapshot: { score: [0, 0], games: [0, 0], serving: 0, gameNumber: 1, completedGames: [] },
+          }),
+        })
+      }
     } catch (error) {
       console.error(error)
       setSyncStatus('LỖI TẠO TRẬN')
@@ -170,38 +209,59 @@ function App() {
 
   const addPoint = (side) => {
     if (gameWinner !== null) return
-    pushHistory()
-    setScore((prev) => prev.map((value, index) => (index === side ? value + 1 : value)))
+    const before = pushHistory()
+    const nextScore = score.map((value, index) => (index === side ? value + 1 : value))
+    setScore(nextScore)
+    void recordEvent('POINT_ADDED', { side }, { ...before, score: nextScore })
   }
 
   const changeServe = () => {
-    pushHistory()
-    setServing((prev) => (prev === 0 ? 1 : 0))
+    const before = pushHistory()
+    const nextServing = serving === 0 ? 1 : 0
+    setServing(nextServing)
+    void recordEvent('SERVE_CHANGED', { from: serving, to: nextServing }, { ...before, serving: nextServing })
   }
 
   const undo = () => {
     const last = history.at(-1)
     if (!last) return
+    const beforeUndo = currentSnapshot()
     setScore(last.score)
     setGames(last.games)
     setServing(last.serving)
     setGameNumber(last.gameNumber)
     setCompletedGames(last.completedGames)
     setHistory((prev) => prev.slice(0, -1))
+    void recordEvent('UNDO_APPLIED', { revertedFrom: beforeUndo }, last)
   }
 
   const completeGame = () => {
     if (gameWinner === null) return
-    pushHistory()
+    const before = pushHistory()
     const nextGames = games.map((value, index) => (index === gameWinner ? value + 1 : value))
-    setGames(nextGames)
-    setCompletedGames((prev) => [
-      ...prev,
+    const nextCompleted = [
+      ...completedGames,
       { game: gameNumber, score: [...score], winner: gameWinner },
-    ])
+    ]
+    const nextGameNumber = gameNumber + 1
+
+    setGames(nextGames)
+    setCompletedGames(nextCompleted)
     setScore([0, 0])
     setServing(gameWinner)
-    setGameNumber((prev) => prev + 1)
+    setGameNumber(nextGameNumber)
+
+    void recordEvent('GAME_COMPLETED', {
+      winner: gameWinner,
+      completedScore: [...score],
+    }, {
+      ...before,
+      score: [0, 0],
+      games: nextGames,
+      serving: gameWinner,
+      gameNumber: nextGameNumber,
+      completedGames: nextCompleted,
+    })
   }
 
   const finishMatch = async () => {
@@ -210,6 +270,7 @@ function App() {
     if (matchId) {
       try {
         setSyncStatus('ĐANG HOÀN TẤT')
+        await recordEvent('MATCH_COMPLETED', { winner: games[0] > games[1] ? 0 : 1 })
         await supabaseRequest(`/rest/v1/matches?id=eq.${matchId}`, {
           method: 'PATCH',
           body: JSON.stringify({
@@ -220,6 +281,7 @@ function App() {
             serving,
             game_number: gameNumber,
             completed_games: completedGames,
+            history,
             status: 'COMPLETED',
             updated_at: new Date().toISOString(),
           }),
@@ -327,6 +389,7 @@ function App() {
             <span className="pill">Mục tiêu {config.target}</span>
             <span className="pill">Cách biệt {config.winBy}</span>
             <span className="pill">IN_PROGRESS</span>
+            <span className="pill">Undo {history.length}</span>
           </div>
 
           {gameWinner !== null && (
@@ -354,7 +417,7 @@ function App() {
           )}
 
           <button className="danger" disabled={games[0] === games[1]} onClick={finishMatch}>KẾT THÚC TRẬN ĐẤU</button>
-          <small>Trạng thái trận đang được lưu tự động vào Supabase. Refresh trang sẽ khôi phục trận IN_PROGRESS gần nhất.</small>
+          <small>Snapshot + lịch sử hoàn tác được lưu vào Supabase. Các hành động chính cũng được ghi vào event log để phục vụ audit và Match Engine.</small>
         </section>
       </main>
     )
