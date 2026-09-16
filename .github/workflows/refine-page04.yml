@@ -16,42 +16,32 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           x=p.read_text()
-          # Keep the navy product identity while using readable elevated cards.
           extra='''
-          .info{background:#0b1f3a!important;color:#fff!important}.info .top{color:#fff!important}.info .back{color:#fff!important}
+          .info{background:#0b1f3a!important;color:#fff!important}.info .top,.info .back{color:#fff!important}
           .icard{background:#132b49!important;border-color:#52677f!important}.ititle{color:#fff}.flabel{color:#d7e0ec!important}.hint{color:#b8c6d9!important}
           .seg button{background:#0d223d!important;border-color:#52677f!important;color:#dbe7ff!important}.seg button.on{background:#155eef!important;border-color:#7ca6ff!important;color:#fff!important}
           .teamInput,.startbox{background:#0d223d!important;border-color:#304b69!important}.teamInput input,.note{background:#081a30!important;border-color:#3f5874!important;color:#fff!important}.teamInput b,.startbox b{color:#b8c6d9!important}
           .joined{background:#081a30!important;border-color:#52677f!important}.joined strong{color:#fff!important;border-color:#52677f!important}.joined button{color:#8fb4ff!important}
           .sportChoice{height:78px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px}.sportIcon{font-size:27px;line-height:1}.sportName{font-size:13px;font-weight:950}.sportMeta{font-size:10px;font-weight:700;opacity:.75}
           .formatline{display:grid;grid-template-columns:92px 1fr;gap:7px;align-items:center;margin:5px 0}.formatline .flabel{margin:0}.formatline .seg{min-width:0}.formatline .ruleRow button{height:38px}
-          .startgrid{grid-template-columns:1fr 70px 1fr!important;align-items:stretch}.startScore{background:#081a30;border:1px solid #52677f;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center}.startScore small{font-size:8px;color:#8fa8c7;font-weight:850}.startScore strong{font-size:20px;color:#fff;margin-top:3px}
+          .startgrid{grid-template-columns:1fr 76px 1fr!important;align-items:stretch}.startScore{background:#081a30;border:1px solid #52677f;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.startScore small{font-size:8px;color:#8fa8c7;font-weight:850}.startScore strong{font-size:20px;color:#fff;margin-top:3px}
           @media(max-height:740px){.sportChoice{height:62px!important}.sportIcon{font-size:22px}.formatline{margin:3px 0}.formatline .ruleRow button{height:34px}}
           '''
-          x=x.replace('</style>',''+extra+'</style>',1)
-          # Sport choice: icon, name, matchup stacked vertically.
-          x=x.replace('>👥 Đánh đôi</button><button data-a="single" class="','><span class="sportIcon">👥</span><span class="sportName">Đánh đôi</span><span class="sportMeta">2 vs 2</span></button><button data-a="single" class="')
-          x=x.replace('>● Đánh đơn</button></div></section>','><span class="sportIcon">👤</span><span class="sportName">Đánh đơn</span><span class="sportMeta">1 vs 1</span></button></div></section>')
-          x=x.replace('class="'+"'\">👥 Đánh đôi</button>", 'class="'+"' sportChoice\"><span class="sportIcon">👥</span><span class="sportName">Đánh đôi</span><span class="sportMeta">2 vs 2</span></button>") if False else x
-          # The generated string contains dynamic class expressions; add sportChoice by targeting data actions.
-          x=x.replace('<button data-a="double" class="','<button data-a="double" class="sportChoice ')
-          x=x.replace('<button data-a="single" class="','<button data-a="single" class="sportChoice ')
-          # Replace any remaining plain labels safely.
-          x=x.replace('>👥 Đánh đôi</button>','><span class="sportIcon">👥</span><span class="sportName">Đánh đôi</span><span class="sportMeta">2 vs 2</span></button>')
-          x=x.replace('>● Đánh đơn</button>','><span class="sportIcon">👤</span><span class="sportName">Đánh đơn</span><span class="sportMeta">1 vs 1</span></button>')
-          # Make each match-format item a single horizontal row.
-          x=x.replace('<div class="flabel">Số set</div><div class="seg">','<div class="formatline"><div class="flabel">Số set</div><div class="seg">')
-          x=x.replace('</button></div><div class="flabel">Điểm thắng</div>','</button></div></div><div class="formatline"><div class="flabel">Điểm thắng</div>')
-          # close Điểm thắng row immediately after its 3-option group, before optional custom control
-          marker="</button></div>'+(custom?'<div class=\"maxrow\">"
-          if marker in x: x=x.replace(marker,"</button></div></div>'+(custom?'<div class=\"maxrow\">",1)
+          x=x.replace('</style>',extra+'</style>',1)
+          x=x.replace('<button data-a="double" class="','<button data-a="double" class="sportChoice ',1)
+          x=x.replace('<button data-a="single" class="','<button data-a="single" class="sportChoice ',1)
+          x=x.replace('>👥 Đánh đôi</button>','><span class="sportIcon">👥</span><span class="sportName">Đánh đôi</span><span class="sportMeta">2 vs 2</span></button>',1)
+          x=x.replace('>● Đánh đơn</button>','><span class="sportIcon">👤</span><span class="sportName">Đánh đơn</span><span class="sportMeta">1 vs 1</span></button>',1)
+          x=x.replace('<div class="flabel">Số set</div><div class="seg">','<div class="formatline"><div class="flabel">Số set</div><div class="seg">',1)
+          x=x.replace("</button></div><div class=\"flabel\">Điểm thắng</div>","</button></div></div><div class=\"formatline\"><div class=\"flabel\">Điểm thắng</div>",1)
+          needle="</button></div>'+(custom?'<div class=\"maxrow\">"
+          if needle in x: x=x.replace(needle,"</button></div></div>'+(custom?'<div class=\"maxrow\">",1)
           x=x.replace("+'<div class=\"flabel\">Điều kiện thắng</div><div class=\"seg ruleRow\">'","+'<div class=\"formatline\"><div class=\"flabel\">Điều kiện thắng</div><div class=\"seg ruleRow\">'",1)
-          marker2="</button></div>'+(s.limitMode==='maximum'?'<div class=\"maxrow\">"
-          if marker2 in x: x=x.replace(marker2,"</button></div></div>'+(s.limitMode==='maximum'?'<div class=\"maxrow\">",1)
-          # Add a central starting-score block between the two teams.
-          old='<div class="startgrid"><div class="startbox"><b>ĐỘI A</b><div class="joined"><button data-a="aMinus">−</button><strong>'+"'+s.startA+'"+'</strong><button data-a="aPlus">+</button></div></div><div class="startbox"><b>ĐỘI B</b>'
-          new='<div class="startgrid"><div class="startbox"><b>ĐỘI A</b><div class="joined"><button data-a="aMinus">−</button><strong>'+"'+s.startA+'"+'</strong><button data-a="aPlus">+</button></div></div><div class="startScore"><small>TỶ SỐ BẮT ĐẦU</small><strong>'+"'+s.startA+' – '+s.startB+'"+'</strong></div><div class="startbox"><b>ĐỘI B</b>'
-          x=x.replace(old,new)
+          needle2="</button></div>'+(s.limitMode==='maximum'?'<div class=\"maxrow\">"
+          if needle2 in x: x=x.replace(needle2,"</button></div></div>'+(s.limitMode==='maximum'?'<div class=\"maxrow\">",1)
+          old='</button></div></div><div class="startbox"><b>ĐỘI B</b>'
+          new='</button></div></div><div class="startScore"><small>TỶ SỐ BẮT ĐẦU</small><strong>'+"'+s.startA+' – '+s.startB+'"+'</strong></div><div class="startbox"><b>ĐỘI B</b>'
+          x=x.replace(old,new,1)
           p.write_text(x)
       - name: Commit patch
         run: |
