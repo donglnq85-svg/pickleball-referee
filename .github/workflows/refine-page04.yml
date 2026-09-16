@@ -1,4 +1,4 @@
-name: Refine Page 04
+name: Fix Page 04 layout
 on:
   push:
     paths:
@@ -10,43 +10,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch Page 04
+      - name: Apply safe Page 04 overrides
         shell: python
         run: |
           from pathlib import Path
           p=Path('index.html')
           x=p.read_text()
           extra='''
-          .info{background:#0b1f3a!important;color:#fff!important}.info .top,.info .back{color:#fff!important}
-          .icard{background:#132b49!important;border-color:#52677f!important}.ititle{color:#fff}.flabel{color:#d7e0ec!important}.hint{color:#b8c6d9!important}
-          .seg button{background:#0d223d!important;border-color:#52677f!important;color:#dbe7ff!important}.seg button.on{background:#155eef!important;border-color:#7ca6ff!important;color:#fff!important}
-          .teamInput,.startbox{background:#0d223d!important;border-color:#304b69!important}.teamInput input,.note{background:#081a30!important;border-color:#3f5874!important;color:#fff!important}.teamInput b,.startbox b{color:#b8c6d9!important}
-          .joined{background:#081a30!important;border-color:#52677f!important}.joined strong{color:#fff!important;border-color:#52677f!important}.joined button{color:#8fb4ff!important}
-          .sportChoice{height:78px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px}.sportIcon{font-size:27px;line-height:1}.sportName{font-size:13px;font-weight:950}.sportMeta{font-size:10px;font-weight:700;opacity:.75}
-          .formatline{display:grid;grid-template-columns:92px 1fr;gap:7px;align-items:center;margin:5px 0}.formatline .flabel{margin:0}.formatline .seg{min-width:0}.formatline .ruleRow button{height:38px}
-          .startgrid{grid-template-columns:1fr 76px 1fr!important;align-items:stretch}.startScore{background:#081a30;border:1px solid #52677f;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.startScore small{font-size:8px;color:#8fa8c7;font-weight:850}.startScore strong{font-size:20px;color:#fff;margin-top:3px}
-          @media(max-height:740px){.sportChoice{height:62px!important}.sportIcon{font-size:22px}.formatline{margin:3px 0}.formatline .ruleRow button{height:34px}}
+          /* Page 04 bright cards + overlap-safe sizing */
+          .info{background:#0b1f3a!important;color:#101828!important;gap:5px!important}
+          .info .top,.info .back{color:#fff!important}.info .top{height:38px!important}.info .top h2{font-size:19px!important}
+          .info .icard{background:#fff!important;border:1px solid #d9e2ec!important;color:#101828!important;border-radius:13px!important;padding:7px 9px!important;overflow:hidden!important;min-height:0!important}
+          .info .ititle{color:#101828!important;font-size:14px!important;margin-bottom:5px!important}.info .num{background:#155eef!important;color:#fff!important}
+          .info .flabel{color:#475467!important;font-size:11px!important}.info .hint{color:#667085!important;font-size:9px!important;margin:0 0 4px!important}
+          .info .seg button{background:#f8fafc!important;border-color:#cbd5e1!important;color:#344054!important;height:34px!important;font-size:12px!important}.info .seg button.on{background:#eaf1ff!important;border-color:#5b8cff!important;color:#155eef!important}
+          .info .teamInput,.info .startbox{background:#f8fafc!important;border-color:#d9e2ec!important;padding:5px!important}.info .teamInput input,.info .note{background:#fff!important;border-color:#cbd5e1!important;color:#101828!important}.info .teamInput b,.info .startbox b{color:#155eef!important}
+          .info .joined{background:#eef4ff!important;border-color:#b2ccff!important;height:33px!important}.info .joined strong{color:#101828!important;border-color:#b2ccff!important;font-size:15px!important}.info .joined button{color:#155eef!important;font-size:18px!important}
+          .info .sportChoice{height:56px!important;gap:0!important}.info .sportIcon{font-size:20px!important}.info .sportName{font-size:12px!important}.info .sportMeta{font-size:9px!important}
+          .info .formatline{grid-template-columns:82px minmax(0,1fr)!important;gap:5px!important;margin:3px 0!important}.info .formatline .ruleRow button{height:34px!important;font-size:10px!important}
+          .info .startgrid{grid-template-columns:minmax(0,1fr) 68px minmax(0,1fr)!important;gap:5px!important}.info .startScore{background:#eef4ff!important;border-color:#b2ccff!important;color:#101828!important}.info .startScore small{color:#667085!important;font-size:7px!important}.info .startScore strong{color:#155eef!important;font-size:17px!important}
+          .info .note{height:38px!important;font-size:12px!important}.info .startBtn{height:46px!important;font-size:16px!important}
+          .info .i1{flex:0 1 88px!important}.info .i2{flex:1 1 145px!important}.info .i3{flex:1.35 1 190px!important}.info .i4{flex:1 1 112px!important}.info .i5{flex:.7 1 72px!important}
+          @media(max-height:760px){.info{gap:3px!important}.info .top{height:34px!important}.info .icard{padding:5px 7px!important}.info .ititle{font-size:12px!important;margin-bottom:3px!important}.info .num{width:21px!important;height:21px!important;font-size:10px!important}.info .sportChoice{height:44px!important}.info .sportIcon{font-size:16px!important}.info .seg button{height:29px!important;font-size:10px!important}.info .formatline{margin:2px 0!important}.info .formatline .ruleRow button{height:29px!important;font-size:9px!important}.info .teamInput input{height:25px!important;font-size:10px!important}.info .joined{height:28px!important}.info .note{height:30px!important}.info .startBtn{height:40px!important}}
           '''
           x=x.replace('</style>',extra+'</style>',1)
-          x=x.replace('<button data-a="double" class="','<button data-a="double" class="sportChoice ',1)
-          x=x.replace('<button data-a="single" class="','<button data-a="single" class="sportChoice ',1)
-          x=x.replace('>👥 Đánh đôi</button>','><span class="sportIcon">👥</span><span class="sportName">Đánh đôi</span><span class="sportMeta">2 vs 2</span></button>',1)
-          x=x.replace('>● Đánh đơn</button>','><span class="sportIcon">👤</span><span class="sportName">Đánh đơn</span><span class="sportMeta">1 vs 1</span></button>',1)
-          x=x.replace('<div class="flabel">Số set</div><div class="seg">','<div class="formatline"><div class="flabel">Số set</div><div class="seg">',1)
-          x=x.replace("</button></div><div class=\"flabel\">Điểm thắng</div>","</button></div></div><div class=\"formatline\"><div class=\"flabel\">Điểm thắng</div>",1)
-          needle="</button></div>'+(custom?'<div class=\"maxrow\">"
-          if needle in x: x=x.replace(needle,"</button></div></div>'+(custom?'<div class=\"maxrow\">",1)
-          x=x.replace("+'<div class=\"flabel\">Điều kiện thắng</div><div class=\"seg ruleRow\">'","+'<div class=\"formatline\"><div class=\"flabel\">Điều kiện thắng</div><div class=\"seg ruleRow\">'",1)
-          needle2="</button></div>'+(s.limitMode==='maximum'?'<div class=\"maxrow\">"
-          if needle2 in x: x=x.replace(needle2,"</button></div></div>'+(s.limitMode==='maximum'?'<div class=\"maxrow\">",1)
-          old='</button></div></div><div class="startbox"><b>ĐỘI B</b>'
-          new='</button></div></div><div class="startScore"><small>TỶ SỐ BẮT ĐẦU</small><strong>'+"'+s.startA+' – '+s.startB+'"+'</strong></div><div class="startbox"><b>ĐỘI B</b>'
-          x=x.replace(old,new,1)
           p.write_text(x)
       - name: Commit patch
         run: |
           git config user.name "THOC Software Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Refine Page 04 identity and horizontal format layout" || exit 0
+          git commit -m "Fix Page 04 overlap and brighten cards" || exit 0
           git push
