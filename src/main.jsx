@@ -1,14 +1,44 @@
-import React, { useState } from 'react'
-import { createRoot } from 'react-dom/client'
 import './styles.css'
 
-function App(){
- const [screen,setScreen]=useState('login'); const [a,setA]=useState(6); const [b,setB]=useState(4); const [serving,setServing]=useState('A');
- const back=()=>setScreen('home');
- if(screen==='login') return <main className="page center"><section className="login"><h1>PICKLEBALL<br/>REFEREE</h1><p>Chính xác. Công bằng. Phát triển.</p><input placeholder="Số điện thoại" inputMode="tel"/><input placeholder="Mật khẩu" type="password"/><button onClick={()=>setScreen('home')}>Đăng nhập</button></section></main>
- if(screen==='home') return <main className="page"><header><span>Xin chào</span><h2>Trọng tài</h2></header><section className="card"><b>Trận tiếp theo</b><small>Sân 1 · 10:00 · Hôm nay</small><h3>Nguyễn An / Trần Bình</h3><small>VS</small><h3>Lê Minh / Phạm Huy</h3><button onClick={()=>setScreen('match')}>Bắt đầu điều hành</button></section><button className="row" onClick={()=>setScreen('create')}>＋ Tạo trận mới <span>›</span></button><button className="row">Lịch thi đấu <span>›</span></button><button className="row">Lịch sử trận đấu <span>›</span></button></main>
- if(screen==='create') return <main className="page"><nav onClick={back}>‹ <b>Tạo trận đấu</b></nav><label>Sân thi đấu</label><input defaultValue="Sân 1"/><label>Loại trận</label><input defaultValue="Đôi nam"/><label>Đội A</label><input defaultValue="Nguyễn An / Trần Bình"/><label>Đội B</label><input defaultValue="Lê Minh / Phạm Huy"/><button onClick={()=>setScreen('match')}>Tạo trận đấu</button></main>
- if(screen==='match') return <main className="page match"><nav onClick={back}>‹ <b>Trận đấu</b></nav><small>Sân 1 · Game 1</small><div className="teams"><section><b>ĐỘI A</b><p>Nguyễn An<br/>Trần Bình</p><strong>{a}</strong></section><section><b>ĐỘI B</b><p>Lê Minh<br/>Phạm Huy</p><strong>{b}</strong></section></div><button className="serve" onClick={()=>setServing(serving==='A'?'B':'A')}>● Đội {serving} giao bóng</button><div className="scoreBtns"><button onClick={()=>setA(Math.max(0,a-1))}>−<small>Điểm A</small></button><button onClick={()=>setA(a+1)}>＋<small>Điểm A</small></button><button onClick={()=>setB(Math.max(0,b-1))}>−<small>Điểm B</small></button><button onClick={()=>setB(b+1)}>＋<small>Điểm B</small></button></div><button className="secondary" onClick={()=>setScreen('end')}>Kết thúc game</button></main>
- return <main className="page center"><section className="login"><h2>Kết thúc game</h2><strong className="final">{a} - {b}</strong><p>Game thắng thuộc về</p><h2>{a>b?'Đội A':b>a?'Đội B':'Chưa xác định'}</h2><button onClick={()=>{setA(0);setB(0);setScreen('match')}}>Chơi game tiếp theo</button><button className="secondary" onClick={back}>Về trang chủ</button></section></main>
+const root = document.getElementById('root')
+let screen = 'login'
+let scoreA = 6
+let scoreB = 4
+let serving = 'A'
+
+function button(text, action, cls = '') {
+  return `<button class="${cls}" data-action="${action}">${text}</button>`
 }
-createRoot(document.getElementById('root')).render(<App />)
+
+function render() {
+  if (!root) return
+
+  if (screen === 'login') {
+    root.innerHTML = `<main class="page center"><section class="login"><h1>PICKLEBALL<br>REFEREE</h1><p>Chính xác. Công bằng. Phát triển.</p><input placeholder="Số điện thoại" inputmode="tel"><input placeholder="Mật khẩu" type="password">${button('Đăng nhập','home')}</section></main>`
+  } else if (screen === 'home') {
+    root.innerHTML = `<main class="page"><header><span>Xin chào</span><h2>Trọng tài</h2></header><section class="card"><b>Trận tiếp theo</b><small>Sân 1 · 10:00 · Hôm nay</small><h3>Nguyễn An / Trần Bình</h3><small>VS</small><h3>Lê Minh / Phạm Huy</h3>${button('Bắt đầu điều hành','match')}</section>${button('＋ Tạo trận mới <span>›</span>','create','row')}${button('Lịch thi đấu <span>›</span>','noop','row')}${button('Lịch sử trận đấu <span>›</span>','noop','row')}</main>`
+  } else if (screen === 'create') {
+    root.innerHTML = `<main class="page"><nav data-action="home">‹ <b>Tạo trận đấu</b></nav><label>Sân thi đấu</label><input value="Sân 1"><label>Loại trận</label><input value="Đôi nam"><label>Đội A</label><input value="Nguyễn An / Trần Bình"><label>Đội B</label><input value="Lê Minh / Phạm Huy">${button('Tạo trận đấu','match')}</main>`
+  } else if (screen === 'match') {
+    root.innerHTML = `<main class="page match"><nav data-action="home">‹ <b>Trận đấu</b></nav><small>Sân 1 · Game 1</small><div class="teams"><section><b>ĐỘI A</b><p>Nguyễn An<br>Trần Bình</p><strong>${scoreA}</strong></section><section><b>ĐỘI B</b><p>Lê Minh<br>Phạm Huy</p><strong>${scoreB}</strong></section></div>${button(`● Đội ${serving} giao bóng`,'serve','serve')}<div class="scoreBtns">${button('−<small>Điểm A</small>','a-')}${button('＋<small>Điểm A</small>','a+')}${button('−<small>Điểm B</small>','b-')}${button('＋<small>Điểm B</small>','b+')}</div>${button('Kết thúc game','end','secondary')}</main>`
+  } else {
+    const winner = scoreA > scoreB ? 'Đội A' : scoreB > scoreA ? 'Đội B' : 'Chưa xác định'
+    root.innerHTML = `<main class="page center"><section class="login"><h2>Kết thúc game</h2><strong class="final">${scoreA} - ${scoreB}</strong><p>Game thắng thuộc về</p><h2>${winner}</h2>${button('Chơi game tiếp theo','next')}${button('Về trang chủ','home','secondary')}</section></main>`
+  }
+}
+
+document.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-action]')
+  if (!target) return
+  const action = target.dataset.action
+  if (['home','create','match','end'].includes(action)) screen = action
+  if (action === 'serve') serving = serving === 'A' ? 'B' : 'A'
+  if (action === 'a-') scoreA = Math.max(0, scoreA - 1)
+  if (action === 'a+') scoreA++
+  if (action === 'b-') scoreB = Math.max(0, scoreB - 1)
+  if (action === 'b+') scoreB++
+  if (action === 'next') { scoreA = 0; scoreB = 0; screen = 'match' }
+  render()
+})
+
+render()
