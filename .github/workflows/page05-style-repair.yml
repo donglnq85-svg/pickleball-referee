@@ -1,0 +1,24 @@
+name: Page 05 Style Repair
+on:
+  push:
+    paths: ['page05-style-repair-trigger.txt']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html'); x=p.read_text()
+          x=x.replace('<style>/* PAGE05_DEMO_POSITION */','/* PAGE05_DEMO_POSITION */',1)
+          x=x.replace('</style></style></head>','</style></head>',1)
+          p.write_text(x)
+      - run: |
+          git config user.name "THOC Software Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Repair Page 05 demo stylesheet"
+          git push
