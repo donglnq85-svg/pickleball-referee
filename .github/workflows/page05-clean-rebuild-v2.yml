@@ -1,0 +1,21 @@
+name: Page 05 Clean Rebuild V2
+on:
+  push:
+    paths:
+      - page05-clean-rebuild-v2-trigger.txt
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild Page 05
+        run: python3 scripts/page05_clean_rebuild.py
+      - name: Commit
+        run: |
+          git config user.name "THOC Software Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Rebuild Page 05 cleanly while preserving approved pages"
+          git push
