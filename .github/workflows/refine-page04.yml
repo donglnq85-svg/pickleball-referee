@@ -1,4 +1,4 @@
-name: Fix Page 04 vertical layout
+name: Rebalance Page 04 lower section
 on:
   push:
     paths:
@@ -10,23 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix Page 04 layout allocation
+      - name: Rebalance lower layout
         shell: python
         run: |
           from pathlib import Path
           p=Path('index.html')
           x=p.read_text()
           extra='''
-          /* Page 04 emergency layout correction: content-sized sections, no flex stretching */
-          .info{display:flex!important;flex-direction:column!important;justify-content:flex-start!important;gap:7px!important;padding:10px 12px 12px!important;overflow:hidden!important}
-          .info .top{flex:0 0 42px!important;height:42px!important;min-height:42px!important;margin:0!important}
-          .info .icard{flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:9px 10px!important;overflow:visible!important;border-radius:14px!important}
-          .info .i1{flex:0 0 auto!important;height:104px!important}.info .i2{flex:0 0 auto!important;height:146px!important}.info .i3{flex:0 0 auto!important;height:188px!important}.info .i4{flex:0 0 auto!important;height:112px!important}.info .i5{flex:0 0 auto!important;height:72px!important}
-          .info .ititle{height:25px!important;min-height:25px!important;margin:0 0 6px!important;line-height:25px!important}.info .num{flex:0 0 24px!important}
-          .info .sportChoice{height:62px!important;min-height:62px!important}.info .teamsInput{height:103px!important;align-items:stretch!important}.info .teamInput{height:103px!important;overflow:hidden!important}.info .teamInput input{height:30px!important;margin-top:4px!important}
-          .info .i3 .formatline{height:34px!important;min-height:34px!important;margin:2px 0!important}.info .i3 .ruleRow button{height:39px!important}.info .i3 .maxrow{height:34px!important;min-height:34px!important;margin-top:3px!important}
-          .info .startgrid{height:65px!important}.info .startbox,.info .startScore{height:65px!important;overflow:hidden!important}.info .startbox .joined{height:31px!important;margin-top:4px!important}.info .hint{margin:0 0 5px!important}.info .note{height:34px!important;min-height:34px!important;resize:none!important}.info .startBtn{flex:0 0 48px!important;height:48px!important;margin:0!important}
-          @media(max-height:800px){.info{gap:5px!important;padding-top:7px!important}.info .top{flex-basis:36px!important;height:36px!important;min-height:36px!important}.info .i1{height:91px!important}.info .i2{height:125px!important}.info .i3{height:164px!important}.info .i4{height:94px!important}.info .i5{height:59px!important}.info .icard{padding:6px 8px!important}.info .ititle{height:21px!important;min-height:21px!important;line-height:21px!important;margin-bottom:4px!important}.info .sportChoice{height:51px!important;min-height:51px!important}.info .teamsInput,.info .teamInput{height:88px!important}.info .teamInput input{height:24px!important;margin-top:3px!important}.info .i3 .formatline{height:28px!important;min-height:28px!important;margin:1px 0!important}.info .i3 .ruleRow button{height:32px!important}.info .i3 .maxrow{height:28px!important;min-height:28px!important}.info .startgrid,.info .startbox,.info .startScore{height:50px!important}.info .startbox .joined{height:25px!important}.info .note{height:27px!important;min-height:27px!important}.info .startBtn{flex-basis:40px!important;height:40px!important}}
+          /* Page 04 screenshot correction: remove lower overlap and distribute remaining height */
+          .info{gap:8px!important;padding-bottom:14px!important}
+          .info .i1{height:106px!important}.info .i2{height:150px!important}.info .i3{height:190px!important}.info .i4{height:124px!important;overflow:hidden!important}.info .i5{height:76px!important;overflow:hidden!important}
+          .info .i4 .hint{font-size:9px!important;line-height:12px!important;margin:0 0 7px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.info .startgrid{height:69px!important;gap:8px!important}.info .startbox,.info .startScore{height:69px!important}.info .startbox{padding:6px!important}.info .startbox .joined{height:34px!important;margin-top:5px!important}.info .startScore{min-width:0!important}.info .startScore strong{font-size:18px!important}.info .i5 .ititle{margin-bottom:7px!important}.info .note{height:35px!important;min-height:35px!important;display:block!important}.info .startBtn{flex:0 0 50px!important;height:50px!important;margin-top:1px!important}
+          @media(min-height:850px){.info{justify-content:flex-start!important}.info .i1{height:112px!important}.info .i2{height:154px!important}.info .i3{height:194px!important}.info .i4{height:128px!important}.info .i5{height:78px!important}.info .startBtn{height:52px!important;flex-basis:52px!important}}
+          @media(max-height:800px){.info{gap:5px!important;padding-bottom:8px!important}.info .i1{height:91px!important}.info .i2{height:125px!important}.info .i3{height:164px!important}.info .i4{height:99px!important}.info .i5{height:61px!important}.info .i4 .hint{font-size:8px!important;line-height:10px!important;margin-bottom:4px!important}.info .startgrid,.info .startbox,.info .startScore{height:54px!important}.info .startbox .joined{height:27px!important;margin-top:3px!important}.info .note{height:29px!important;min-height:29px!important}.info .startBtn{height:41px!important;flex-basis:41px!important}}
           '''
           x=x.replace('</style>',extra+'</style>',1)
           p.write_text(x)
@@ -35,5 +31,5 @@ jobs:
           git config user.name "THOC Software Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Fix Page 04 vertical layout regression" || exit 0
+          git commit -m "Rebalance Page 04 lower section spacing" || exit 0
           git push
