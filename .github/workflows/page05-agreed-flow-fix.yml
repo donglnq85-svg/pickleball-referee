@@ -1,0 +1,34 @@
+name: Page 05 Agreed Flow Fix
+on:
+  push:
+    paths:
+      - 'page05-agreed-flow-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fix no-toss flow and starting serve logic
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace("saved='',picked='',winner='',choice='',flipping=false,selectedSpot=null", "saved='',picked='',winner='',choice='',flipping=false,selectedSpot=null,agreed=false,agreedServe='',agreedSide=''", 1)
+          s=s.replace("function go(){var P=players(),serveTeam=choice==='serve'?winner:(winner==='A'?'B':'A'),sideTeam=choice==='side'?winner:(winner==='A'?'B':'A');", "function go(){var P=players(),serveTeam=agreed?agreedServe:(choice==='serve'?winner:(winner==='A'?'B':'A')),sideTeam=agreed?agreedSide:(choice==='side'?winner:(winner==='A'?'B':'A'));if(agreed&&(!serveTeam||!sideTeam)){app.innerHTML='<main class=\"screen q5minimal\"><header class=\"q4mHead\"><button data-toss=\"review\">‹</button><div><h2>Chuẩn bị trận</h2><p>Thiết lập theo thống nhất</p></div><span></span></header><div class=\"q5d\"><section class=\"q5dCard\"><div class=\"q5dTitle\"><span class=\"q5dNum\">1</span><div><b>Đội giao bóng trước</b><small>Hỏi hai đội và chọn đúng đội giao bóng.</small></div></div><div class=\"q5dSides\"><button data-toss=\"agreeServeA\" class=\"'+(agreedServe==='A'?'on':'')+'\">Đội A</button><button data-toss=\"agreeServeB\" class=\"'+(agreedServe==='B'?'on':'')+'\">Đội B</button></div></section><section class=\"q5dCard\"><div class=\"q5dTitle\"><span class=\"q5dNum\">2</span><div><b>Đội chọn bên sân</b><small>Chọn đội đã được thống nhất quyền chọn bên.</small></div></div><div class=\"q5dSides\"><button data-toss=\"agreeSideA\" class=\"'+(agreedSide==='A'?'on':'')+'\">Đội A</button><button data-toss=\"agreeSideB\" class=\"'+(agreedSide==='B'?'on':'')+'\">Đội B</button></div></section><button class=\"q5dNext\" data-toss=\"agreeContinue\" '+(!agreedServe||!agreedSide||agreedServe===agreedSide?'disabled':'')+'>Tiếp tục xếp vị trí</button><p class=\"q5dHint\">Không bốc thăm · Trọng tài xác nhận quyền giao bóng và quyền chọn bên theo thống nhất thực tế.</p></div></main>';return;}", 1)
+          s=s.replace("var z=window.q5d,recvTeam=serveTeam==='A'?'B':'A',recv=z.server;", "var z=window.q5d,recvTeam=serveTeam==='A'?'B':'A';z.server=(serveTeam==='A'?z.a:z.b).index(0);var recv=(recvTeam==='A'?z.a:z.b).index(0);", 1)
+          s=s.replace("Bốc thăm đã hoàn tất<small>Đội '+serveTeam+' giao bóng trước · Đội '+sideTeam+' chọn bên sân", "'+(agreed?'Đã xác nhận theo thống nhất':'Bốc thăm đã hoàn tất')+'<small>Đội '+serveTeam+' giao bóng trước · Đội '+sideTeam+' chọn bên sân", 1)
+          s=s.replace("else if(a==='server0'||a==='server1'){window.q5d.server=Number(a.slice(-1));go();return}", "else if(a==='server0'||a==='server1'){var idx=Number(a.slice(-1)),arr=(serveTeam==='A'?window.q5d.a:window.q5d.b);if(arr[idx]!==0)arr.reverse();go();return}", 1)
+          s=s.replace("else if(a==='skip')return go();", "else if(a==='skip'){agreed=true;agreedServe='';agreedSide='';return go();}else if(a==='agreeServeA'||a==='agreeServeB'){agreedServe=a.slice(-1);if(agreedSide===agreedServe)agreedSide='';return go();}else if(a==='agreeSideA'||a==='agreeSideB'){agreedSide=a.slice(-1);if(agreedServe===agreedSide)agreedServe='';return go();}else if(a==='agreeContinue'){if(agreedServe&&agreedSide&&agreedServe!==agreedSide)return go();return}", 1)
+          s=s.replace("picked='';winner='';choice='';flipping=false;draw()", "picked='';winner='';choice='';flipping=false;agreed=false;agreedServe='';agreedSide='';draw()", 1)
+          p.write_text(s)
+          PY
+          git config user.name 'THOC Software Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix agreed setup flow and legal starting server' || exit 0
+          git push
