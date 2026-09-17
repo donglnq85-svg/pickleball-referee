@@ -1,0 +1,25 @@
+name: Repair Page 04 Runner
+on:
+  push:
+    paths: ['page04-runner-fix.txt']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: python
+        run: |
+          from pathlib import Path
+          p=Path('.github/workflows/rebuild-page04-final.yml')
+          x=p.read_text()
+          x=x.replace('pat=re.compile(r"function info\\(\\)\\{.*?\\n\\}\\nfunction create",re.S)','pat=re.compile(r"function info\\(\\)\\{.*?function create\\(\\)",re.S)')
+          x=x.replace("function create'''","function create()'''")
+          p.write_text(x)
+      - run: |
+          git config user.name "THOC Software Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/workflows/rebuild-page04-final.yml
+          git commit -m "Fix Page 04 rebuild matcher"
+          git push
