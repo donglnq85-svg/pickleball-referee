@@ -1,4 +1,4 @@
-name: Optional maximum score toggle
+name: Full viewport Page 04 distribution
 on:
   push:
     paths:
@@ -10,21 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add maximum score toggle input
+      - name: Rebuild Page 04 vertical distribution
         shell: python
         run: |
           from pathlib import Path
           p=Path('index.html')
           x=p.read_text()
-          old="""<div class=\"formatline ruleLine\"><div class=\"flabel\">Điều kiện thắng</div><div class=\"seg ruleRow\"><button class=\"${s.limitMode==='touch'?'on':''}\" onclick=\"s.limitMode='touch';render()\">Chạm<small>Chạm điểm là thắng</small></button><button class=\"${s.limitMode==='unlimited'?'on':''}\" onclick=\"s.limitMode='unlimited';render()\">Không giới hạn<small>Thắng cách 2</small></button>${s.limitMode==='maximum'?`<div class=\"maxChoice on\"><span>Điểm tối đa</span><div class=\"miniStep\"><button onclick=\"s.maxPoints=Math.max(s.winPoints,s.maxPoints-1);render()\">−</button><strong>${s.maxPoints}</strong><button onclick=\"s.maxPoints++;render()\">+</button></div></div>`:`<button onclick=\"s.limitMode='maximum';render()\">Điểm tối đa<small>Thắng cách 2</small></button>`}</div></div>"""
-          new="""<div class=\"formatline ruleLine\"><div class=\"flabel\">Điều kiện thắng</div><div class=\"seg ruleRow twoRules\"><button class=\"${s.limitMode==='touch'?'on':''}\" onclick=\"s.limitMode='touch';render()\">Chạm<small>Chạm điểm là thắng</small></button><button class=\"${s.limitMode!=='touch'?'on':''}\" onclick=\"s.limitMode='unlimited';render()\">Thắng cách 2<small>Không giới hạn</small></button></div></div><div class=\"formatline maxToggleLine\"><div class=\"flabel\">Điểm tối đa</div><div class=\"maxToggleWrap\"><button class=\"toggle ${s.limitMode==='maximum'?'on':''}\" onclick=\"s.limitMode=s.limitMode==='maximum'?'unlimited':'maximum';if(s.limitMode==='maximum'&&s.maxPoints<=s.winPoints)s.maxPoints=s.winPoints+2;render()\"><span></span></button>${s.limitMode==='maximum'?`<div class=\"maxInput\"><button onclick=\"s.maxPoints=Math.max(s.winPoints+1,s.maxPoints-1);render()\">−</button><strong>${s.maxPoints}</strong><button onclick=\"s.maxPoints++;render()\">+</button></div>`:`<span class=\"maxOff\">Tắt</span>`}</div></div>"""
-          if old not in x:
-              raise SystemExit('Smart condition fragment not found; aborting safely')
-          x=x.replace(old,new,1)
           css='''
-          /* Optional maximum-score toggle: fixed layout, data appears only when enabled */
-          .info .i3{height:196px!important}.info .i3 .ruleLine{height:46px!important;min-height:46px!important}.twoRules{grid-template-columns:1fr 1fr!important}.info .twoRules>button{height:46px!important}.maxToggleLine{height:38px!important;min-height:38px!important}.maxToggleWrap{height:100%;display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}.toggle{width:46px!important;height:27px!important;min-width:46px;border:0!important;border-radius:999px!important;background:#cbd5e1!important;padding:3px!important;display:flex;align-items:center;justify-content:flex-start}.toggle span{width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0002}.toggle.on{background:#155eef!important;justify-content:flex-end}.maxInput{height:34px;width:142px;display:grid;grid-template-columns:38px 1fr 38px;border:1px solid #b2ccff;border-radius:9px;overflow:hidden;background:#fff}.maxInput button{border:0;background:#eef4ff;color:#155eef;font-size:19px;font-weight:950}.maxInput strong{display:grid;place-items:center;border-left:1px solid #d5e1f5;border-right:1px solid #d5e1f5;color:#101828;font-size:17px}.maxOff{font-size:11px;font-weight:800;color:#98a2b3;min-width:142px}.info .i4{height:128px!important}.info .i5{height:78px!important}
-          @media(max-height:800px){.info .i3{height:166px!important}.info .i3 .ruleLine{height:38px!important;min-height:38px!important}.info .twoRules>button{height:38px!important}.maxToggleLine{height:30px!important;min-height:30px!important}.toggle{width:40px!important;height:24px!important;min-width:40px}.toggle span{width:18px;height:18px}.maxInput{height:29px;width:124px;grid-template-columns:32px 1fr 32px}.maxOff{min-width:124px}}
+          /* Page 04: distribute the whole setup over the available viewport */
+          .info{height:100dvh!important;display:grid!important;grid-template-rows:44px minmax(96px,.82fr) minmax(126px,1.08fr) minmax(174px,1.48fr) minmax(104px,.9fr) minmax(66px,.58fr) 52px!important;gap:8px!important;padding:10px 12px 12px!important;overflow:hidden!important;align-content:stretch!important}
+          .info .top,.info .icard,.info .startBtn{height:auto!important;min-height:0!important;max-height:none!important;flex:none!important;margin:0!important;box-sizing:border-box!important}.info .top{align-self:stretch!important}.info .icard{display:flex!important;flex-direction:column!important;padding:9px 10px!important;overflow:hidden!important}.info .ititle{flex:0 0 25px!important;margin:0 0 6px!important}.info .i1,.info .i2,.info .i3,.info .i4,.info .i5{height:auto!important;min-height:0!important;max-height:none!important}
+          .info .i1 .seg{flex:1!important;min-height:0!important}.info .sportChoice{height:100%!important;min-height:0!important;max-height:76px!important;align-self:center!important}.info .i2 .teamsInput{flex:1!important;height:auto!important;min-height:0!important}.info .i2 .teamInput{height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important}.info .i2 .teamInput input{flex:1!important;min-height:27px!important;max-height:34px!important}
+          .info .i3{justify-content:flex-start!important}.info .i3 .formatline{height:auto!important;min-height:34px!important;flex:1 1 0!important;margin:2px 0!important}.info .i3 .ruleLine{min-height:42px!important}.info .maxToggleLine{min-height:34px!important}.info .i3 .seg>button{height:100%!important;min-height:32px!important}.info .twoRules>button{height:100%!important;min-height:40px!important}.maxToggleWrap{height:100%!important;min-height:32px!important}.maxInput{height:34px!important}.toggle{flex:none!important}
+          .info .i4 .hint{flex:0 0 auto!important;margin-bottom:6px!important}.info .startgrid{flex:1!important;height:auto!important;min-height:0!important}.info .startbox,.info .startScore{height:100%!important;min-height:0!important}.info .startbox{display:flex!important;flex-direction:column!important;justify-content:center!important}.info .startbox .joined{height:34px!important;margin-top:5px!important}.info .i5 .note{flex:1!important;height:auto!important;min-height:30px!important;max-height:none!important}.info .startBtn{height:100%!important;min-height:46px!important;align-self:stretch!important}
+          @media(max-height:760px){.info{grid-template-rows:36px minmax(76px,.72fr) minmax(104px,1fr) minmax(145px,1.38fr) minmax(84px,.8fr) minmax(52px,.5fr) 42px!important;gap:5px!important;padding:7px 10px 8px!important}.info .icard{padding:6px 8px!important}.info .ititle{flex-basis:21px!important;margin-bottom:3px!important}.info .sportChoice{max-height:58px!important}.info .i2 .teamInput input{min-height:22px!important;max-height:27px!important}.info .i3 .formatline{min-height:27px!important;margin:1px 0!important}.info .i3 .ruleLine{min-height:35px!important}.info .maxToggleLine{min-height:28px!important}.info .startbox .joined{height:27px!important;margin-top:3px!important}.info .i5 .note{min-height:25px!important}.info .startBtn{min-height:38px!important}}
           '''
           x=x.replace('</style>',css+'</style>',1)
           p.write_text(x)
@@ -33,5 +32,5 @@ jobs:
           git config user.name "THOC Software Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Add optional maximum score toggle" || exit 0
+          git commit -m "Distribute Page 04 across full viewport" || exit 0
           git push
