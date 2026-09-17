@@ -1,0 +1,48 @@
+name: Page 05 Player Context Toss Fix
+on:
+  push:
+    paths:
+      - 'page05-player-context-toss-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Keep player context visible and fix toss continuation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          # Put player names directly into the toss screen so referee never needs to go back.
+          old="function draw(){var pickHtml=!picked?"
+          new="function draw(){var P=players(),teams='<div class=\"q5teamStrip\"><div><b>Đội A</b><span>'+P.A.join(' · ')+'</span></div><div><b>Đội B</b><span>'+P.B.join(' · ')+'</span></div></div>';var pickHtml=!picked?"
+          if old not in s: raise SystemExit('draw anchor missing')
+          s=s.replace(old,new,1)
+          old2="<div class=\"q7mBody\"><section class=\"q7mCard\"><h3>Bốc thăm</h3>"
+          new2="<div class=\"q7mBody\">'+teams+'<section class=\"q7mCard\"><h3>Bốc thăm</h3>"
+          if old2 not in s: raise SystemExit('body anchor missing')
+          s=s.replace(old2,new2,1)
+          # After the toss result, explicitly offer the winner its legal choice and keep buttons live.
+          s=s.replace("Đội <b>'+winner+'</b> thắng · mặt ","Đội <b>'+winner+'</b> thắng · mặt ",1)
+          # Prevent review from leaving stale agreed-mode state.
+          s=s.replace("else if(a==='review'){choice='';draw();return}","else if(a==='review'){choice='';agreed=false;agreedServe='';agreedSide='';draw();return}",1)
+          # Team-name strip also appears in setup flow, based on the same saved Page 04 inputs.
+          anchor="<div class=\"q5d\"><div class=\"q5dSummary\">"
+          repl="<div class=\"q5d\"><div class=\"q5teamStrip\"><div><b>Đội A</b><span>'+P.A.join(' · ')+'</span></div><div><b>Đội B</b><span>'+P.B.join(' · ')+'</span></div></div><div class=\"q5dSummary\">"
+          if anchor not in s: raise SystemExit('setup anchor missing')
+          s=s.replace(anchor,repl,1)
+          # Add compact demo-style player context CSS before closing head.
+          css='''<style>/* PAGE05_PLAYER_CONTEXT */.q5teamStrip{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.q5teamStrip>div{background:#fff;border:1px solid #e4e7ec;border-radius:12px;padding:9px 10px;min-width:0}.q5teamStrip b{display:block;font-size:11px;color:#155eef;margin-bottom:3px}.q5teamStrip span{display:block;font-size:12px;font-weight:750;color:#101828;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>'''
+          s=s.replace('</head>',css+'</head>',1)
+          p.write_text(s)
+          PY
+          git config user.name 'THOC Software Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Show player names throughout Page 05 and repair toss flow'
+          git push
