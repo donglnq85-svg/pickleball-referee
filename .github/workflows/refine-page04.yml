@@ -1,4 +1,4 @@
-name: Smart Page 04 format setup
+name: Fix Page 04 vertical layout
 on:
   push:
     paths:
@@ -10,20 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply smart format panel
+      - name: Fix Page 04 layout allocation
         shell: python
         run: |
           from pathlib import Path
           p=Path('index.html')
           x=p.read_text()
           extra='''
-          /* Page 04 smart compact format panel */
-          .info{gap:5px!important}.info .icard{padding:8px 10px!important}.info .ititle{margin-bottom:5px!important}.info .i1{flex:0 0 104px!important}.info .i2{flex:1 1 142px!important}.info .i3{flex:0 0 auto!important}.info .i4{flex:0 0 96px!important}.info .i5{flex:0 0 66px!important}
-          .info .i3 .formatline{display:grid!important;grid-template-columns:78px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;min-height:34px!important;margin:3px 0!important;padding:0!important}.info .i3 .flabel{font-size:10px!important;font-weight:900!important;color:#475467!important;white-space:nowrap!important}.info .i3 .seg{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:1fr!important;gap:5px!important;width:100%!important}.info .i3 .seg button{height:34px!important;min-width:0!important;padding:2px 4px!important;border-radius:9px!important;font-size:11px!important;line-height:12px!important}.info .i3 .ruleRow{grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-flow:initial!important}.info .i3 .ruleRow button{height:42px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;font-size:10px!important;line-height:11px!important}.info .i3 .ruleRow small{font-size:7px!important;line-height:8px!important;font-weight:700!important;color:#667085!important}.info .i3 .ruleRow button.on small{color:#3973e6!important}
-          .info .i3 .maxrow{min-height:38px!important;height:38px!important;display:grid!important;grid-template-columns:78px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;background:#f8fafc!important;border:1px solid #e1e7ef!important;border-radius:9px!important;padding:3px 5px 3px 8px!important;margin:4px 0 0!important}.info .i3 .maxrow .joined{justify-self:end!important;width:112px!important;height:30px!important;grid-template-columns:29px 54px 29px!important}.info .i3 .maxrow .joined strong{min-width:54px!important;font-size:16px!important}.info .i3 .maxrow .joined button{font-size:15px!important}
-          .info .i3 .joined{height:30px!important}.info .i3 .joined button{font-size:15px!important}.info .i3 .joined strong{font-size:15px!important}
-          .info .sportChoice{height:62px!important;min-height:62px!important}.info .sportIcon{width:24px!important;height:24px!important;font-size:18px!important}.info .teamInput input{height:27px!important}.info .startgrid{grid-template-columns:minmax(0,1fr) 68px minmax(0,1fr)!important}.info .startbox{padding:5px!important}.info .startbox .joined{height:31px!important}.info .note{height:36px!important}.info .startBtn{height:44px!important}
-          @media(max-height:760px){.info{gap:3px!important}.info .icard{padding:5px 7px!important}.info .i1{flex:0 0 80px!important}.info .i2{flex:1 1 116px!important}.info .i3 .formatline{grid-template-columns:68px minmax(0,1fr)!important;min-height:27px!important;gap:4px!important;margin:1px 0!important}.info .i3 .flabel{font-size:8px!important}.info .i3 .seg{gap:3px!important}.info .i3 .seg button{height:27px!important;font-size:9px!important}.info .i3 .ruleRow button{height:34px!important;font-size:8px!important}.info .i3 .ruleRow small{font-size:6px!important}.info .i3 .maxrow{height:30px!important;min-height:30px!important;grid-template-columns:68px minmax(0,1fr)!important;gap:4px!important;padding:2px 3px 2px 6px!important;margin-top:2px!important}.info .i3 .maxrow .joined{height:25px!important;width:98px!important;grid-template-columns:25px 48px 25px!important}.info .i3 .maxrow .joined strong{min-width:48px!important;font-size:13px!important}.info .sportChoice{height:48px!important;min-height:48px!important}.info .sportIcon{width:18px!important;height:18px!important;font-size:14px!important}.info .teamInput input{height:22px!important}.info .i4{flex:0 0 73px!important}.info .i5{flex:0 0 48px!important}.info .note{height:27px!important}.info .startBtn{height:37px!important}}
+          /* Page 04 emergency layout correction: content-sized sections, no flex stretching */
+          .info{display:flex!important;flex-direction:column!important;justify-content:flex-start!important;gap:7px!important;padding:10px 12px 12px!important;overflow:hidden!important}
+          .info .top{flex:0 0 42px!important;height:42px!important;min-height:42px!important;margin:0!important}
+          .info .icard{flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:9px 10px!important;overflow:visible!important;border-radius:14px!important}
+          .info .i1{flex:0 0 auto!important;height:104px!important}.info .i2{flex:0 0 auto!important;height:146px!important}.info .i3{flex:0 0 auto!important;height:188px!important}.info .i4{flex:0 0 auto!important;height:112px!important}.info .i5{flex:0 0 auto!important;height:72px!important}
+          .info .ititle{height:25px!important;min-height:25px!important;margin:0 0 6px!important;line-height:25px!important}.info .num{flex:0 0 24px!important}
+          .info .sportChoice{height:62px!important;min-height:62px!important}.info .teamsInput{height:103px!important;align-items:stretch!important}.info .teamInput{height:103px!important;overflow:hidden!important}.info .teamInput input{height:30px!important;margin-top:4px!important}
+          .info .i3 .formatline{height:34px!important;min-height:34px!important;margin:2px 0!important}.info .i3 .ruleRow button{height:39px!important}.info .i3 .maxrow{height:34px!important;min-height:34px!important;margin-top:3px!important}
+          .info .startgrid{height:65px!important}.info .startbox,.info .startScore{height:65px!important;overflow:hidden!important}.info .startbox .joined{height:31px!important;margin-top:4px!important}.info .hint{margin:0 0 5px!important}.info .note{height:34px!important;min-height:34px!important;resize:none!important}.info .startBtn{flex:0 0 48px!important;height:48px!important;margin:0!important}
+          @media(max-height:800px){.info{gap:5px!important;padding-top:7px!important}.info .top{flex-basis:36px!important;height:36px!important;min-height:36px!important}.info .i1{height:91px!important}.info .i2{height:125px!important}.info .i3{height:164px!important}.info .i4{height:94px!important}.info .i5{height:59px!important}.info .icard{padding:6px 8px!important}.info .ititle{height:21px!important;min-height:21px!important;line-height:21px!important;margin-bottom:4px!important}.info .sportChoice{height:51px!important;min-height:51px!important}.info .teamsInput,.info .teamInput{height:88px!important}.info .teamInput input{height:24px!important;margin-top:3px!important}.info .i3 .formatline{height:28px!important;min-height:28px!important;margin:1px 0!important}.info .i3 .ruleRow button{height:32px!important}.info .i3 .maxrow{height:28px!important;min-height:28px!important}.info .startgrid,.info .startbox,.info .startScore{height:50px!important}.info .startbox .joined{height:25px!important}.info .note{height:27px!important;min-height:27px!important}.info .startBtn{flex-basis:40px!important;height:40px!important}}
           '''
           x=x.replace('</style>',extra+'</style>',1)
           p.write_text(x)
@@ -32,5 +35,5 @@ jobs:
           git config user.name "THOC Software Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Rebuild Page 04 format setup as compact control panel" || exit 0
+          git commit -m "Fix Page 04 vertical layout regression" || exit 0
           git push
