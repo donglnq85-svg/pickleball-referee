@@ -1,0 +1,37 @@
+name: Page 05 Team Identity Clarity
+on:
+  push:
+    paths:
+      - 'page05-team-identity-clarity-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Make team and both player names unmistakable
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="teams='<div class=\"q5teamStrip\"><div><b>Đội A</b><span>'+P.A.join(' · ')+'</span></div><div><b>Đội B</b><span>'+P.B.join(' · ')+'</span></div></div>'"
+          new="teams='<div class=\"q5teamStrip\"><div><b>ĐỘI A</b><span>'+P.A.map(function(n){return '<strong>'+n+'</strong>'}).join('')+'</span></div><div><b>ĐỘI B</b><span>'+P.B.map(function(n){return '<strong>'+n+'</strong>'}).join('')+'</span></div></div>'"
+          if old not in s: raise SystemExit('team strip JS anchor missing')
+          s=s.replace(old,new,1)
+          old2="<div class=\"q5teamStrip\"><div><b>Đội A</b><span>'+P.A.join(' · ')+'</span></div><div><b>Đội B</b><span>'+P.B.join(' · ')+'</span></div></div>"
+          new2="<div class=\"q5teamStrip\"><div><b>ĐỘI A</b><span>'+P.A.map(function(n){return '<strong>'+n+'</strong>'}).join('')+'</span></div><div><b>ĐỘI B</b><span>'+P.B.map(function(n){return '<strong>'+n+'</strong>'}).join('')+'</span></div></div>"
+          if old2 not in s: raise SystemExit('setup strip anchor missing')
+          s=s.replace(old2,new2,1)
+          css='''<style>/* PAGE05_TEAM_IDENTITY_CLARITY */.q5teamStrip{gap:10px!important;margin-bottom:12px!important}.q5teamStrip>div{padding:12px!important;border-radius:14px!important;min-height:92px!important}.q5teamStrip b{font-size:14px!important;line-height:18px!important;font-weight:900!important;margin-bottom:7px!important;color:#155eef!important}.q5teamStrip span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}.q5teamStrip strong{display:block!important;font-size:15px!important;line-height:20px!important;font-weight:800!important;color:#101828!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.q5teamStrip strong+strong{margin-top:3px!important}</style>'''
+          s=s.replace('</head>',css+'</head>',1)
+          p.write_text(s)
+          PY
+          git config user.name 'THOC Software Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Make Page 05 team and player identities clear'
+          git push
