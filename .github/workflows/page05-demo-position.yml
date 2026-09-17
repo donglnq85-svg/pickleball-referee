@@ -1,0 +1,39 @@
+name: Page 05 Demo Position
+on:
+  push:
+    paths: ['page05-position-trigger.txt']
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('index.html'); x=p.read_text()
+          marker='</style></head><body>'
+          css='''<style>/* PAGE05_DEMO_POSITION */.q5d{flex:1;min-height:0;background:#f5f7fa;border-radius:20px;padding:14px;overflow:auto;color:#101828}.q5dSummary{padding:11px 12px;border-radius:12px;background:#eef4ff;color:#1849a9;font-size:12px;font-weight:800}.q5dSummary small{display:block;margin-top:3px;color:#667085;font-size:10px}.q5dCard{margin-top:12px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 2px rgba(16,24,40,.05)}.q5dTitle{display:flex;align-items:center;gap:9px;margin-bottom:10px}.q5dNum{width:28px;height:28px;border-radius:50%;background:#155eef;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900}.q5dTitle b{display:block;font-size:15px}.q5dTitle small{display:block;margin-top:2px;color:#98a2b3;font-size:10px}.q5dSides,.q5dSwap{display:grid;grid-template-columns:1fr 1fr;gap:8px}.q5dSides button,.q5dSwap button{height:46px;border:1px solid #e1e6ee;border-radius:11px;background:#f8fafc;color:#344054;font-size:12px;font-weight:800}.q5dSides button.on{border:2px solid #155eef;background:#eef4ff;color:#155eef}.q5dCourt{position:relative;width:100%;aspect-ratio:2.2/1;margin-top:10px;background:#159297;border:3px solid #f3ffff;border-radius:10px;overflow:hidden}.q5dNet{position:absolute;left:50%;top:0;bottom:0;width:4px;background:#071725;transform:translateX(-50%)}.q5dKitchen{position:absolute;top:0;bottom:0;width:15.91%;background:rgba(8,82,86,.34)}.q5dKitchen.l{right:50%;border-left:2px solid #fff}.q5dKitchen.r{left:50%;border-right:2px solid #fff}.q5dMid{position:absolute;top:50%;height:2px;background:#fff;width:34.09%}.q5dMid.l{left:0}.q5dMid.r{right:0}.q5dP{position:absolute;transform:translate(-50%,-50%);min-width:66px;max-width:92px;padding:6px 7px;border:2px solid #fff;border-radius:10px;background:#fff;color:#101828;text-align:center;font-size:9px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.q5dP.aTop{left:16%;top:28%}.q5dP.aBot{left:16%;top:72%}.q5dP.bTop{left:84%;top:28%}.q5dP.bBot{left:84%;top:72%}.q5dP.server{background:#155eef;color:#fff}.q5dP.receiver{outline:3px solid #fdb022}.q5dServeList{display:grid;grid-template-columns:1fr 1fr;gap:8px}.q5dServeList button{min-height:54px;border:1px solid #e1e6ee;border-radius:11px;background:#f8fafc;color:#344054;font-size:11px;font-weight:800;padding:7px}.q5dServeList button.on{border:2px solid #155eef;background:#eef4ff;color:#155eef}.q5dHint{margin:9px 0 0;text-align:center;color:#667085;font-size:10px;line-height:1.4}.q5dNext{width:100%;height:50px;margin-top:12px;border:0;border-radius:12px;background:#155eef;color:#fff;font-size:15px;font-weight:850}</style>'''
+          if 'PAGE05_DEMO_POSITION' not in x: x=x.replace(marker,css+marker,1)
+          old="else if(a==='serve'||a==='side')choice=a;"
+          new="else if(a==='serve'||a==='side'){choice=a;go();return;}"
+          if old not in x: raise SystemExit('choice anchor missing')
+          x=x.replace(old,new,1)
+          pattern=r"function go\(\)\{.*?\}document\.addEventListener\('click',function\(e\)\{var t=e\.target\.closest\('\[data-toss\]'\)"
+          replacement="""function players(){var d=document.createElement('div');d.innerHTML=saved;function v(id,f){var e=d.querySelector('#'+id);return e&&e.value?e.value:f}return{A:[v('a1','VĐV A1'),v('a2','VĐV A2')],B:[v('b1','VĐV B1'),v('b2','VĐV B2')]}}function go(){var P=players(),serveTeam=choice==='serve'?winner:(winner==='A'?'B':'A'),sideTeam=choice==='side'?winner:(winner==='A'?'B':'A');if(!window.q5d)window.q5d={side:'left',a:[0,1],b:[0,1],server:0};var z=window.q5d,recvTeam=serveTeam==='A'?'B':'A',recv=z.server;function nm(t,i){return P[t][(t==='A'?z.a:z.b)[i]]}function court(){var left=z.side==='left'?sideTeam:(sideTeam==='A'?'B':'A'),aLeft=left==='A';var serverName=nm(serveTeam,z.server),receiverName=nm(recvTeam,recv);return '<div class=\"q5dCourt\"><div class=\"q5dKitchen l\"></div><div class=\"q5dKitchen r\"></div><div class=\"q5dMid l\"></div><div class=\"q5dMid r\"></div><div class=\"q5dNet\"></div><div class=\"q5dP '+(aLeft?'aTop':'bTop')+(serveTeam==='A'&&z.server===0?' server':'')+(recvTeam==='A'&&recv===0?' receiver':'')+'\">'+nm('A',0)+'</div><div class=\"q5dP '+(aLeft?'aBot':'bBot')+(serveTeam==='A'&&z.server===1?' server':'')+(recvTeam==='A'&&recv===1?' receiver':'')+'\">'+nm('A',1)+'</div><div class=\"q5dP '+(aLeft?'bTop':'aTop')+(serveTeam==='B'&&z.server===0?' server':'')+(recvTeam==='B'&&recv===0?' receiver':'')+'\">'+nm('B',0)+'</div><div class=\"q5dP '+(aLeft?'bBot':'aBot')+(serveTeam==='B'&&z.server===1?' server':'')+(recvTeam==='B'&&recv===1?' receiver':'')+'\">'+nm('B',1)+'</div></div>'}app.innerHTML='<main class=\"screen q5minimal\"><header class=\"q4mHead\"><button data-toss=\"review\">‹</button><div><h2>Chuẩn bị trận</h2><p>Xếp vị trí và giao bóng</p></div><span></span></header><div class=\"q5d\"><div class=\"q5dSummary\">Bốc thăm đã hoàn tất<small>Đội '+serveTeam+' giao bóng trước · Đội '+sideTeam+' chọn bên sân</small></div><section class=\"q5dCard\"><div class=\"q5dTitle\"><span class=\"q5dNum\">1</span><div><b>Chọn bên sân</b><small>Đội '+sideTeam+' chọn bên theo góc nhìn trọng tài</small></div></div><div class=\"q5dSides\"><button data-toss=\"left\" class=\"'+(z.side==='left'?'on':'')+'\">Bên trái</button><button data-toss=\"right\" class=\"'+(z.side==='right'?'on':'')+'\">Bên phải</button></div></section><section class=\"q5dCard\"><div class=\"q5dTitle\"><span class=\"q5dNum\">2</span><div><b>Xếp vị trí VĐV</b><small>Chỉ đổi khi VĐV đang đứng ngược vị trí</small></div></div>'+court()+'<div class=\"q5dSwap\"><button data-toss=\"swapA\">⇅ Đổi VĐV Đội A</button><button data-toss=\"swapB\">⇅ Đổi VĐV Đội B</button></div></section><section class=\"q5dCard\"><div class=\"q5dTitle\"><span class=\"q5dNum\">3</span><div><b>Người giao bóng đầu tiên</b><small>Chọn VĐV của Đội '+serveTeam+'</small></div></div><div class=\"q5dServeList\"><button data-toss=\"server0\" class=\"'+(z.server===0?'on':'')+'\">'+nm(serveTeam,0)+'</button><button data-toss=\"server1\" class=\"'+(z.server===1?'on':'')+'\">'+nm(serveTeam,1)+'</button></div><p class=\"q5dHint\">Màu xanh: người giao bóng · viền vàng: người đỡ bóng đối diện.</p></section><button class=\"q5dNext\" data-toss=\"ready\">Sẵn sàng bắt đầu</button></div></main>'}document.addEventListener('click',function(e){var t=e.target.closest('[data-toss]')"""
+          x2,n=re.subn(pattern,replacement,x,count=1,flags=re.S)
+          if n!=1: raise SystemExit('go anchor missing')
+          x=x2
+          anchor="var a=t.dataset.toss;if(a==='pickA'"
+          inject="var a=t.dataset.toss;if(a==='left'||a==='right'){window.q5d.side=a;go();return}else if(a==='swapA'||a==='swapB'){var k=a.slice(-1).toLowerCase();window.q5d[k].reverse();go();return}else if(a==='server0'||a==='server1'){window.q5d.server=Number(a.slice(-1));go();return}else if(a==='ready'){var note=app.querySelector('.q5dHint');if(note)note.textContent='Thiết lập đã sẵn sàng. Bước điều hành trận sẽ dùng cấu hình này.';return}else if(a==='pickA'"
+          if anchor not in x: raise SystemExit('handler anchor missing')
+          x=x.replace(anchor,inject,1)
+          p.write_text(x)
+      - run: |
+          git config user.name "THOC Software Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Build demo-style position and serve experience"
+          git push
