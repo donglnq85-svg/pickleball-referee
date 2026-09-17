@@ -1,0 +1,51 @@
+from pathlib import Path
+p=Path('index.html'); s=p.read_text()
+marker='<script>\n(function(){var app=document.getElementById(\'app\'),saved='
+i=s.find(marker)
+if i<0: raise SystemExit('legacy Page05 extension not found')
+s=s[:i]
+if not s.rstrip().endswith('</html>'): raise SystemExit('unexpected base app')
+css='''<style>
+/* PAGE05_CLEAN_V1 */
+.p5{position:fixed;inset:0;z-index:50;background:#0b1f3a;color:#101828;padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.p5head{height:62px;display:grid;grid-template-columns:38px 1fr 38px;align-items:center;color:#fff}.p5head button{border:0;background:none;color:#fff;font-size:32px}.p5head div{text-align:center}.p5head h2{margin:0;font-size:20px}.p5head p{margin:2px 0 0;font-size:10px;color:#b8c6d9}
+.p5body{flex:1;min-height:0;overflow:auto;background:#f5f7fa;border-radius:20px;padding:14px}.p5teams{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.p5team{background:#fff;border:1px solid #e4e7ec;border-radius:14px;padding:12px}.p5team b{display:block;color:#155eef;font-size:14px;margin-bottom:6px}.p5team strong{display:block;font-size:15px;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p5card{background:#fff;border-radius:16px;padding:15px;margin-top:10px}.p5card h3{margin:0 0 5px;font-size:17px}.p5card p{margin:0 0 12px;color:#667085;font-size:11px;line-height:1.45}.p5grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.p5btn{min-height:52px;border:1px solid #e1e6ee;border-radius:11px;background:#f8fafc;color:#344054;font-weight:800}.p5btn.on{border:2px solid #155eef;background:#eef4ff;color:#155eef}.p5primary{width:100%;height:52px;margin-top:12px;border:0;border-radius:12px;background:#155eef;color:#fff;font-size:15px;font-weight:850}.p5primary:disabled{background:#cbd5e1}.p5coin{width:72px;height:72px;border-radius:50%;margin:12px auto;display:grid;place-items:center;background:#155eef;color:#fff;font-size:20px;font-weight:900}.p5result{padding:11px;border-radius:11px;background:#eef4ff;color:#1849a9;text-align:center;font-weight:850;margin:10px 0}
+.p5court{position:relative;width:100%;aspect-ratio:2.2/1;margin:10px 0;background:#159297;border:3px solid #f3ffff;border-radius:10px;overflow:hidden}.p5net{position:absolute;left:50%;top:0;bottom:0;width:4px;background:#071725;transform:translateX(-50%)}.p5nv{position:absolute;top:0;bottom:0;width:15.91%;background:#0d737777}.p5nv.l{right:50%;border-left:2px solid white}.p5nv.r{left:50%;border-right:2px solid white}.p5mid{position:absolute;top:50%;height:2px;width:34.09%;background:white}.p5mid.l{left:0}.p5mid.r{right:0}.p5player{position:absolute;transform:translate(-50%,-50%);min-width:72px;max-width:100px;padding:6px;border-radius:9px;background:#fff;text-align:center;font-size:10px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.p5player.server{background:#155eef;color:#fff}.p5player.receiver{outline:3px solid #fdb022}.p5hint{text-align:center;color:#667085;font-size:10px;line-height:1.4;margin:8px 0 0}
+</style>'''
+s=s.replace('</head>',css+'</head>',1)
+js=r'''<script>
+(function(){
+  var app=document.getElementById('app'), saved='', step='method', method='', picked='', tossWinner='', firstChoice='', serveTeam='', sideTeam='', side='left', order={A:[0,1],B:[0,1]}, serverSlot=0;
+  function esc(x){return String(x||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function P(){var d=document.createElement('div');d.innerHTML=saved;function v(id,f){var e=d.querySelector('#'+id);return esc(e&&e.value?e.value:f)}return{A:[v('a1','VĐV A1'),v('a2','VĐV A2')],B:[v('b1','VĐV B1'),v('b2','VĐV B2')]}}
+  function teams(){var p=P();return '<div class="p5teams"><div class="p5team"><b>ĐỘI A</b><strong>'+p.A[0]+'</strong><strong>'+p.A[1]+'</strong></div><div class="p5team"><b>ĐỘI B</b><strong>'+p.B[0]+'</strong><strong>'+p.B[1]+'</strong></div></div>'}
+  function shell(body){app.innerHTML='<main class="p5"><header class="p5head"><button data-p5="back">‹</button><div><h2>Chuẩn bị trận</h2><p>Bốc thăm · vị trí · giao bóng</p></div><span></span></header><div class="p5body">'+teams()+body+'</div></main>'}
+  function draw(){
+    if(step==='method')return shell('<section class="p5card"><h3>Xác định quyền trước trận</h3><p>Chọn cách hai đội xác định quyền giao bóng và chọn bên sân.</p><div class="p5grid"><button class="p5btn" data-p5="toss">Bốc thăm</button><button class="p5btn" data-p5="agree">Đã thống nhất</button></div></section>');
+    if(step==='pick')return shell('<section class="p5card"><h3>Bốc thăm</h3><p>Một đội chọn mặt đồng xu; đội kia nhận mặt còn lại.</p><div class="p5grid"><button class="p5btn '+(picked==='A'?'on':'')+'" data-p5="pickA">Đội A · Đỏ</button><button class="p5btn '+(picked==='B'?'on':'')+'" data-p5="pickB">Đội B · Đỏ</button></div><button class="p5primary" data-p5="flip" '+(!picked?'disabled':'')+'>Tung đồng xu</button></section>');
+    if(step==='choice')return shell('<section class="p5card"><h3>Kết quả bốc thăm</h3><div class="p5coin">'+(tossWinner===picked?'ĐỎ':'XANH')+'</div><div class="p5result">Đội '+tossWinner+' thắng bốc thăm</div><p>Đội thắng chọn một quyền. Đội còn lại nhận quyền kia.</p><div class="p5grid"><button class="p5btn" data-p5="chooseServe">Giao bóng trước</button><button class="p5btn" data-p5="chooseSide">Chọn bên sân</button></div></section>');
+    if(step==='agreeServe')return shell('<section class="p5card"><h3>Đội giao bóng trước</h3><p>Hỏi hai đội và xác nhận đội giao bóng đầu tiên.</p><div class="p5grid"><button class="p5btn" data-p5="serveA">Đội A</button><button class="p5btn" data-p5="serveB">Đội B</button></div></section>');
+    if(step==='agreeSide')return shell('<section class="p5card"><h3>Đội chọn bên sân</h3><p>Xác nhận đội có quyền chọn bên sân.</p><div class="p5grid"><button class="p5btn" data-p5="sideA" '+(serveTeam==='A'?'disabled':'')+'>Đội A</button><button class="p5btn" data-p5="sideB" '+(serveTeam==='B'?'disabled':'')+'>Đội B</button></div></section>');
+    if(step==='side')return shell('<div class="p5result">Đội '+serveTeam+' giao trước · Đội '+sideTeam+' chọn sân</div><section class="p5card"><h3>Đội '+sideTeam+' chọn bên sân</h3><p>Theo góc nhìn của trọng tài.</p><div class="p5grid"><button class="p5btn '+(side==='left'?'on':'')+'" data-p5="left">Bên trái</button><button class="p5btn '+(side==='right'?'on':'')+'" data-p5="right">Bên phải</button></div><button class="p5primary" data-p5="toPosition">Tiếp tục</button></section>');
+    if(step==='position')return positions();
+  }
+  function positions(){var p=P(), other=serveTeam==='A'?'B':'A', recvSlot=serverSlot, leftTeam=side==='left'?sideTeam:(sideTeam==='A'?'B':'A');function n(t,slot){return p[t][order[t][slot]]}function cls(t,slot){return (t===serveTeam&&slot===serverSlot?' server':'')+(t===other&&slot===recvSlot?' receiver':'')}function pos(t,slot){var isLeft=t===leftTeam;return 'left:'+(isLeft?'16':'84')+'%;top:'+(slot===0?'28':'72')+'%'}var court='<div class="p5court"><div class="p5nv l"></div><div class="p5nv r"></div><div class="p5mid l"></div><div class="p5mid r"></div><div class="p5net"></div><div class="p5player'+cls('A',0)+'" style="'+pos('A',0)+'">'+n('A',0)+'</div><div class="p5player'+cls('A',1)+'" style="'+pos('A',1)+'">'+n('A',1)+'</div><div class="p5player'+cls('B',0)+'" style="'+pos('B',0)+'">'+n('B',0)+'</div><div class="p5player'+cls('B',1)+'" style="'+pos('B',1)+'">'+n('B',1)+'</div></div>';return shell('<div class="p5result">Đội '+serveTeam+' giao trước · Đội '+sideTeam+' chọn sân</div><section class="p5card"><h3>Xếp vị trí VĐV</h3><p>Đổi hai VĐV trong từng đội cho đúng vị trí thực tế trên sân.</p>'+court+'<div class="p5grid"><button class="p5btn" data-p5="swapA">⇅ Đổi VĐV Đội A</button><button class="p5btn" data-p5="swapB">⇅ Đổi VĐV Đội B</button></div></section><section class="p5card"><h3>Người giao bóng đầu tiên</h3><p>Chọn VĐV của Đội '+serveTeam+'. Người đỡ đối diện được xác định tự động.</p><div class="p5grid"><button class="p5btn '+(serverSlot===0?'on':'')+'" data-p5="server0">'+n(serveTeam,0)+'</button><button class="p5btn '+(serverSlot===1?'on':'')+'" data-p5="server1">'+n(serveTeam,1)+'</button></div><p class="p5hint">Xanh: giao bóng · vàng: đỡ bóng.</p></section><button class="p5primary" data-p5="ready">Sẵn sàng bắt đầu</button>')}
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-p5]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();var a=b.dataset.p5;
+    if(a==='back'){app.innerHTML=saved;return}
+    if(a==='toss'){method='toss';step='pick';draw();return} if(a==='agree'){method='agree';step='agreeServe';draw();return}
+    if(a==='pickA'||a==='pickB'){picked=a.slice(-1);draw();return}
+    if(a==='flip'){tossWinner=Math.random()<.5?'A':'B';step='choice';draw();return}
+    if(a==='chooseServe'||a==='chooseSide'){firstChoice=a==='chooseServe'?'serve':'side';if(firstChoice==='serve'){serveTeam=tossWinner;sideTeam=tossWinner==='A'?'B':'A'}else{sideTeam=tossWinner;serveTeam=tossWinner==='A'?'B':'A'}step='side';draw();return}
+    if(a==='serveA'||a==='serveB'){serveTeam=a.slice(-1);step='agreeSide';draw();return}
+    if(a==='sideA'||a==='sideB'){sideTeam=a.slice(-1);if(sideTeam===serveTeam)return;step='side';draw();return}
+    if(a==='left'||a==='right'){side=a;draw();return} if(a==='toPosition'){step='position';draw();return}
+    if(a==='swapA'||a==='swapB'){order[a.slice(-1)].reverse();draw();return}
+    if(a==='server0'||a==='server1'){serverSlot=+a.slice(-1);draw();return}
+    if(a==='ready'){var h=app.querySelector('.p5hint');if(h)h.textContent='Thiết lập hợp lệ và sẵn sàng cho bước điều hành trận.';return}
+  },true);
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-a="saveInfo"]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();Array.from(app.querySelectorAll('[data-player]')).forEach(function(x){x.setAttribute('value',x.value)});saved=app.innerHTML;step='method';method='';picked='';tossWinner='';serveTeam='';sideTeam='';side='left';order={A:[0,1],B:[0,1]};serverSlot=0;draw()},true);
+})();
+</script>'''
+s=s+js
+p.write_text(s)
