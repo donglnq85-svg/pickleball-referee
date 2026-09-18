@@ -174,7 +174,7 @@ function prepareOrders(){var left=endSide==='left'?endTeam:other(endTeam);['A','
 function positions(){
  var p=players(),leftTeam=endSide==='left'?endTeam:other(endTeam),rightTeam=other(leftTeam),recvTeam=other(serveTeam);
  var serveEven=(serveTeam==='A'?startA:startB)%2===0,recvEven=(recvTeam==='A'?startA:startB)%2===0;
- var serverId=starter[serveTeam],receiverId=recvEven?starter[recvTeam]:1-starter[recvTeam];\n var ss=order[serveTeam].indexOf(serverId),rs=order[recvTeam].indexOf(receiverId);
+ var serverId=starter[serveTeam],ss=order[serveTeam].indexOf(serverId),receiverId=order[recvTeam][1-ss],rs=1-ss;
  function name(t,k){return p[t][order[t][k]]}function pos(t,k){return'left:'+(t===leftTeam?'16':'84')+'%;top:'+(k===0?'28':'72')+'%'}function cls(t,k){return t===serveTeam&&k===ss?' server':(t===recvTeam&&k===rs?' receiver':'')}function ball(t,k){return t===serveTeam&&k===ss?'<i class="p5v3ball '+(t===leftTeam?'r':'l')+'"></i>':''}
  var court='<div class="p5v3labels"><span>ĐỘI '+leftTeam+'</span><span>ĐỘI '+rightTeam+'</span></div><div class="p5v3court"><div class="p5v3nv l"></div><div class="p5v3nv r"></div><div class="p5v3mid l"></div><div class="p5v3mid r"></div><div class="p5v3net"></div>'+['A','B'].map(function(t){return[0,1].map(function(k){var idx=order[t][k]+1;return'<div class="p5v3p'+cls(t,k)+'" style="'+pos(t,k)+'"><span class="p5v3pid">'+t+idx+'</span><span class="p5v3pname">'+name(t,k)+'</span>'+ball(t,k)+'</div>'}).join('')}).join('')+'</div>';
  var call=serveTeam==='A'?startA+'–'+startB+'–2':startB+'–'+startA+'–2';
