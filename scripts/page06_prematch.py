@@ -1,0 +1,32 @@
+from pathlib import Path
+p=Path("index.html")
+s=p.read_text()
+if "PAGE06_PREMATCH_V1" in s: raise SystemExit("already built")
+css='''<style>
+/* PAGE06_PREMATCH_V1 */
+.p6{position:fixed;inset:0;z-index:120;background:#0b1f3a;padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;color:#101828}.p6h{height:62px;display:grid;grid-template-columns:38px 1fr 38px;align-items:center;color:#fff}.p6h button{border:0;background:none;color:#fff;font-size:32px}.p6h div{text-align:center}.p6h h2{margin:0;font-size:20px}.p6h p{margin:2px 0 0;font-size:10px;color:#b8c6d9}.p6b{flex:1;min-height:0;overflow:auto;background:#f5f7fa;border-radius:20px;padding:14px}.p6card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px}.p6card h3{font-size:16px;margin:0 0 9px}.p6sum{font-size:12px;line-height:1.55;color:#475467}.p6sum b{color:#101828}.p6check{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid #eef2f6;font-size:12px;line-height:1.35}.p6check input{width:20px;height:20px;flex:0 0 auto}.p6check strong{display:block}.p6check small{display:block;color:#667085;margin-top:2px}.p6times{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.p6time{height:42px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;font-weight:800;font-size:11px}.p6time.on{border:2px solid #155eef;background:#eef4ff;color:#155eef}.p6timer{text-align:center;font-size:48px;font-weight:950;letter-spacing:2px;margin:10px 0}.p6primary{width:100%;height:52px;border:0;border-radius:12px;background:#155eef;color:#fff;font-weight:900;font-size:14px;margin-top:10px}.p6primary:disabled{background:#cbd5e1}.p6secondary{width:100%;height:46px;border:1px solid #b2ccff;border-radius:11px;background:#fff;color:#1849a9;font-weight:850}.p6note{font-size:10px;color:#667085;line-height:1.4;margin:8px 0 0}.p6done{color:#067647;font-weight:850;font-size:12px;line-height:1.5}
+</style>'''
+s=s.replace("</head>",css+"</head>",1)
+js=r'''<script>
+(function(){
+var app=document.getElementById('app'),p5html='',phase='brief',warm=3,left=180,timer=null,checked={info:false,score:false,line:false,scoreIssue:false,timeout:false,court:false,questions:false};
+function allBrief(){return Object.keys(checked).every(function(k){return checked[k]})}
+function row(k,title,detail){return '<label class="p6check"><input type="checkbox" data-p6check="'+k+'" '+(checked[k]?'checked':'')+'><span><strong>'+title+'</strong><small>'+detail+'</small></span></label>'}
+function summary(){var cards=Array.from(document.createElement('div').children);var m=p5html.match(/Đội ([AB]) giao trước · ([0-9–-]+)/);return '<b>VĐV và vị trí:</b> Đã xác nhận tại Trang 05<br><b>Giao bóng:</b> '+(m?('Đội '+m[1]+' · '+m[2]):'Đã xác định tại Trang 05')}
+function fmt(x){var m=Math.floor(x/60),q=x%60;return (m<10?'0':'')+m+':'+(q<10?'0':'')+q}
+function stop(){if(timer){clearInterval(timer);timer=null}}
+function draw(){
+var body='<section class="p6card"><h3>1. Xác nhận thông tin trận</h3><div class="p6sum">'+summary()+'</div>'+row('info','Thông tin trận đấu chính xác','Xác nhận VĐV, thể thức, tỷ số bắt đầu, bên sân và quyền giao bóng.')+'</section>';
+body+='<section class="p6card"><h3>2. Phổ biến trước trận</h3>'+row('score','Chờ trọng tài xướng đủ tỷ số','Không bắt đầu động tác giao bóng trước khi trọng tài xướng đầy đủ tỷ số.')+row('line','Trách nhiệm gọi line','Gọi OUT rõ ràng, kịp thời theo trách nhiệm line call của VĐV.')+row('scoreIssue','Sai hoặc không rõ tỷ số','Báo trọng tài đúng thời điểm; không tự ý dừng rally sau khi giao bóng đã thực hiện.')+row('timeout','Yêu cầu time-out','Báo rõ ràng với trọng tài trong thời điểm hợp lệ.')+row('court','Điều kiện sân / luật điều chỉnh','Thông báo bất thường sân, hinder hoặc điều chỉnh luật được giải phê duyệt nếu có.')+row('questions','Câu hỏi của VĐV','Hỏi hai đội có câu hỏi nào trước khi bắt đầu không.')+'</section>';
+if(phase==='brief')body+='<section class="p6card"><h3>3. Khởi động</h3><p class="p6note">Chỉ bắt đầu sau khi hoàn tất xác nhận và phổ biến.</p><div class="p6times">'+[1,2,3,5].map(function(n){return '<button class="p6time '+(warm===n?'on':'')+'" data-p6time="'+n+'">'+n+' phút</button>'}).join('')+'<button class="p6time" data-p6="custom">Khác</button></div><button class="p6primary" data-p6="warmup" '+(!allBrief()?'disabled':'')+'>Bắt đầu khởi động</button></section>';
+else if(phase==='warm')body+='<section class="p6card"><h3>3. Đang khởi động</h3><div class="p6timer">'+fmt(left)+'</div><button class="p6secondary" data-p6="plus">+30 giây</button><button class="p6primary" data-p6="endWarm">Kết thúc khởi động</button></section>';
+else body+='<section class="p6card"><h3>4. Sẵn sàng thi đấu</h3><div class="p6done">✓ Xác nhận hoàn tất<br>✓ Phổ biến hoàn tất<br>✓ Khởi động hoàn tất</div><p class="p6note">Đưa hai đội về đúng vị trí đã thiết lập và kiểm tra sẵn sàng lần cuối.</p><button class="p6primary" data-p6="start">BẮT ĐẦU TRẬN</button></section>';
+app.innerHTML='<main class="p6"><header class="p6h"><button data-p6="back">‹</button><div><h2>Chuẩn bị trước trận</h2><p>Xác nhận · Phổ biến · Khởi động · Sẵn sàng</p></div><span></span></header><div class="p6b">'+body+'</div></main>'
+}
+function begin(){left=Math.round(warm*60);phase='warm';draw();timer=setInterval(function(){left--;if(left<=0){stop();left=0;phase='ready'}draw()},1000)}
+document.addEventListener('change',function(e){var k=e.target.dataset.p6check;if(!k)return;checked[k]=e.target.checked;draw()},true);
+document.addEventListener('click',function(e){var b=e.target.closest('[data-p6],[data-p6time]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();if(b.dataset.p6time){warm=+b.dataset.p6time;return draw()}var a=b.dataset.p6;if(a==='back'){stop();app.innerHTML=p5html;return}if(a==='custom'){var v=prompt('Thời gian khởi động (phút)','4');v=parseFloat(v);if(v>0&&v<=30){warm=v;draw()}return}if(a==='warmup')return begin();if(a==='plus'){left+=30;return draw()}if(a==='endWarm'){stop();phase='ready';return draw()}if(a==='start'){b.textContent='Sẵn sàng vào điều hành trận';b.disabled=true}},true);
+document.addEventListener('click',function(e){var b=e.target.closest('[data-p5="ready"]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();p5html=app.innerHTML;phase='brief';checked={info:false,score:false,line:false,scoreIssue:false,timeout:false,court:false,questions:false};stop();draw()},true)
+})();
+</script>'''
+p.write_text(s+js)
