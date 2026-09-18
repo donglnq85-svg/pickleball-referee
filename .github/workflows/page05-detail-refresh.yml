@@ -1,0 +1,18 @@
+name: Page 05 Detail Refresh
+on:
+  push:
+    paths: [page05-detail-refresh-trigger.txt]
+permissions:
+  contents: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/page05_detail_refresh.py
+      - run: |
+          git config user.name "THOC Software Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Refine Page 05 ball coin and helper copy"
+          git push
