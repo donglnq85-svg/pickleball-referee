@@ -1,0 +1,11 @@
+from pathlib import Path
+p=Path("index.html")
+s=p.read_text()
+s=s.replace('.p5player.server{background:#155eef;color:#fff}', '.p5player.server{background:#155eef;color:#fff}.p5ball{position:absolute;width:12px;height:12px;border-radius:50%;background:#ffd21f;border:2px solid #fff;box-shadow:0 1px 3px #0004;top:50%;transform:translateY(-50%)}.p5ball.right{right:-18px}.p5ball.left{left:-18px}')
+s=s.replace('<div class="coin"><span>NGỬA</span></div>', '<div class="coin coinHeads"><span>NGỬA</span></div>')
+s=s.replace('<div class="coin flip"><span>\'+face+\'</span></div>', '<div class="coin flip \'+(face==="SẤP"?"coinTails":"coinHeads")+\'"><span>\'+face+\'</span></div>')
+s=s.replace('.coin span{z-index:2}', '.coin span{z-index:2}.coinHeads{background:radial-gradient(circle at 32% 25%,#fff5b5 0 6%,#f7c948 18%,#d99b14 58%,#8b5b00 100%);border-color:#7b5200;color:#3b2600}.coinTails{background:radial-gradient(circle at 32% 25%,#dbeafe 0 6%,#60a5fa 18%,#2563eb 58%,#123a8c 100%);border-color:#102e6f;color:#fff;text-shadow:0 1px #102e6f}')
+s=s.replace("function cls(t,slot){return t===serveTeam&&slot===serverSlot?' server':(t===recvTeam&&slot===recvSlot?' receiver':'')}", "function cls(t,slot){return t===serveTeam&&slot===serverSlot?' server':(t===recvTeam&&slot===recvSlot?' receiver':'')}\n function ball(t,slot){return t===serveTeam&&slot===serverSlot?'<i class=\\\"p5ball '+(t===leftTeam?'right':'left')+'\\\"></i>':''}")
+s=s.replace("'+n(t,k)+'</div>'", "'+n(t,k)+ball(t,k)+'</div>'")
+s=s.replace('Đặt hai VĐV của mỗi đội đúng vị trí thực tế. App tự xác định người giao và người đỡ theo vị trí đúng luật; không có bước chọn người giao.', 'Đặt hai VĐV của mỗi đội đúng vị trí thực tế.')
+p.write_text(s)
