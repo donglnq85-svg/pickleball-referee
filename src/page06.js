@@ -27,7 +27,6 @@
   let setup = null;
   let page = 0;
   let checked = {};
-  let matchConfirmed = false;
   let warmMinutes = 3;
   let warmStarted = false;
   let warmDone = false;
@@ -138,7 +137,7 @@
       <div class="p6side"><small>BÊN PHẢI TRỌNG TÀI</small><b>Đội ${setup.side.A === 'phải' ? 'A' : 'B'}</b></div></div></section>`;
   }
   function content() {
-    if (page === 0) return `<p class="p6intro">Đối chiếu tên VĐV, thể thức, tỷ số và vị trí giao/đỡ với hai đội. Nếu cần sửa, quay lại màn thiết lập.</p>${matchCard()}<div class="p6note" role="status">${matchConfirmed ? 'Đã xác nhận thông tin trận. Có thể tiếp tục.' : 'Sau khi kiểm tra, nhấn “Xác nhận thông tin trận” ở cuối màn hình.'}</div>`;
+    if (page === 0) return `<p class="p6intro">Đối chiếu tên VĐV, thể thức, tỷ số và vị trí giao/đỡ với hai đội. Nếu cần sửa, quay lại màn thiết lập.</p>${matchCard()}<div class="p6note">Sau khi kiểm tra, nhấn “Xác nhận và tiếp tục” để sang bước kiểm tra trước trận.</div>`;
     if (page === 1) return `<p class="p6intro">Kiểm tra nhanh điều kiện thực tế trước khi VĐV khởi động. Các mục dưới đây là gợi ý công việc cho trọng tài; yêu cầu của ban tổ chức vẫn được ưu tiên.</p><section class="p6panel"><h2>Kiểm tra sân và dụng cụ</h2>${rows('inspect')}</section><div class="p6note">Nếu phát hiện vấn đề an toàn, xử lý trước khi tiếp tục và báo ban tổ chức khi cần.</div>`;
     if (page === 2) return `<p class="p6intro">Dùng các câu nhắc ngắn để hai đội hiểu cách trọng tài điều hành trận. Xác nhận từng mục sau khi đã trao đổi.</p><section class="p6panel"><h2>Nội dung cần trao đổi</h2>${rows('brief')}</section><div class="p6note">Nội dung về line call và thời lượng tạm dừng phụ thuộc thể thức, lực lượng trọng tài và quy định giải; cần đối chiếu trước trận.</div>`;
     if (page === 3 && !warmStarted && !warmDone) return `<p class="p6intro">Chọn thời lượng khởi động theo thông báo của giải hoặc thống nhất trên sân. Đồng hồ là công cụ hỗ trợ, không mặc định một thời lượng luật định.</p><section class="p6panel"><h2>Thời lượng khởi động</h2><div class="p6times">${[1,2,3,5].map(n => `<button type="button" data-p6minute="${n}" class="${warmMinutes === n ? 'on' : ''}">${n} phút</button>`).join('')}</div><label class="p6custom">Thời lượng khác <input type="number" data-p6custom min="1" max="30" inputmode="numeric" value="${warmMinutes}" aria-label="Thời lượng khởi động (phút)"> phút</label></section>`;
@@ -151,14 +150,14 @@
   }
   function render() {
     if (!setup) return;
-    const enabled = page === 0 ? matchConfirmed : page === 1 ? complete('inspect') :
+    const enabled = page === 0 ? true : page === 1 ? complete('inspect') :
       page === 2 ? complete('brief') : page === 3 ? warmDone : complete('ready');
-    const action = page === 0 && !matchConfirmed ? 'Xác nhận thông tin trận' :
+    const action = page === 0 ? 'Xác nhận và tiếp tục' :
       page === 3 && !warmStarted && !warmDone ? 'Bắt đầu khởi động' :
       page === 3 && warmStarted ? 'Đang khởi động…' : page === 4 ? 'BẮT ĐẦU TRẬN' : 'Tiếp tục';
     const group = page === 1 ? 'inspect' : page === 2 ? 'brief' : page === 4 ? 'ready' : null;
     const remainingChecks = group ? checks[group].filter(([key]) => !checked[key]).length : 0;
-    const instruction = page === 0 ? (matchConfirmed ? 'Thông tin trận đã được xác nhận' : 'Kiểm tra thông tin phía trên rồi nhấn xác nhận') :
+    const instruction = page === 0 ? 'Kiểm tra thông tin phía trên rồi xác nhận' :
       page === 3 ? (warmStarted ? 'Nhấn “Kết thúc sớm” nếu khởi động đã xong' : warmDone ? 'Đã hoàn tất khởi động' : 'Chọn thời lượng rồi bắt đầu đồng hồ') :
       remainingChecks ? `Còn ${remainingChecks} mục cần xác nhận ở phía trên` : 'Đã hoàn tất các mục của bước này';
     app.innerHTML = `<main class="p6guide"><header class="p6head"><div class="p6headTop"><button type="button" class="p6back" data-p6action="back" aria-label="Quay lại">‹</button><b>TRỢ LÝ TRỌNG TÀI · 06</b><span>${page + 1}/5</span></div>
@@ -176,7 +175,6 @@
     page05Html = event.detail.html;
     setup = readPage05(event.detail);
     checked = {};
-    matchConfirmed = false;
     page = 0;
     warmStarted = warmDone = false;
     warmMinutes = 3;
@@ -210,7 +208,6 @@
       case 'end': remaining = currentRemaining(); warmStarted = false; warmDone = true; stopClock(); render(); break;
       case 'next':
         if (button.disabled) return;
-        if (page === 0 && !matchConfirmed) { matchConfirmed = true; return render(); }
         if (page === 3 && !warmDone) {
           warmStarted = true;
           deadline = Date.now() + warmMinutes * 60000;
