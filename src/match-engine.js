@@ -45,7 +45,7 @@ export function createMatch(config, final) {
     A: score.A % 2 === 0 ? final.right.A : 1-final.right.A,
     B: score.B % 2 === 0 ? final.right.B : 1-final.right.B
   } : {A:0,B:0};
-  const state={version:1,id:globalThis.crypto?.randomUUID?.() || String(Date.now()),createdAt:now,updatedAt:now,status:'playing',phase:'match',config:copy(config),players:copy(config.players),score,game:1,gamesWon:{A:0,B:0},games:[],serving,serverNumber:config.type==='double'?2:null,firstServer:config.type==='double'?1-(final.serverIndex||0):0,anchor,courtLeft:final.courtLeft,notice:'',events:[],undo:[],redo:[],timeout:{A:0,B:0},timeoutTotal:{A:0,B:0},medical:{A:[0,0],B:[0,0]},pause:null};
+  const state={version:1,id:globalThis.crypto?.randomUUID?.() || String(Date.now()),createdAt:now,updatedAt:now,status:'playing',phase:'match',config:copy(config),players:copy(config.players),score,game:1,gamesWon:{A:0,B:0},games:[],serving,initialServing:serving,serverNumber:config.type==='double'?2:null,firstServer:config.type==='double'?1-(final.serverIndex||0):0,anchor,courtLeft:final.courtLeft,notice:'',events:[],undo:[],redo:[],timeout:{A:0,B:0},timeoutTotal:{A:0,B:0},medical:{A:[0,0],B:[0,0]},pause:null};
   return state;
 }
 export function snapshot(s) {
@@ -101,7 +101,7 @@ export function nextGame(s, final) {
   if(s.status!=='gameEnd') return s;
   return transact(s,'nextGame',()=>{
     s.game++;s.score={A:s.config.start.A,B:s.config.start.B};
-    s.serving=final.serving;s.serverNumber=s.config.type==='double'?2:null;
+    s.serving=final.serving;s.initialServing=final.serving;s.serverNumber=s.config.type==='double'?2:null;
     s.firstServer=s.config.type==='double'?1-(final.serverIndex||0):0;s.courtLeft=final.courtLeft;
     if(s.config.type==='double') for(const team of ['A','B'])s.anchor[team]=s.score[team]%2===0?final.right[team]:1-final.right[team];
     s.status='playing';s.phase='match';s.pause=null;s.timeout={A:0,B:0};s.notice='Game '+s.game+' · xướng '+scoreCall(s);

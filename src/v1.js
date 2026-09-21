@@ -53,11 +53,18 @@ function renderWarm(){
     running?button('Kết thúc khởi động','finishWarm') : `${button('Bỏ qua khởi động','skipWarm','v1-secondary')}${button('Bắt đầu đồng hồ','startWarm')}`);
   if(running)warmInterval=setInterval(()=>{const sec=Math.max(0,Math.ceil((draft.warmDeadline-Date.now())/1000));const node=app.querySelector('[data-clock]');if(node)node.textContent=clock(sec);if(sec===0){clearInterval(warmInterval);draft.warmDeadline=0;save();startFinal()}},300);
 }
-function startFinal(){if(!draft)return;clearInterval(warmInterval);draft.phase='final';draft.warmDeadline=0;save();screen='final';if(draft.config.type==='double')window.v1OpenFinalSetup(draft.formHtml,draft.config.start);else renderSingleFinal()}
+function startFinal(){if(!draft)return;clearInterval(warmInterval);draft.phase='final';draft.warmDeadline=0;save();screen='final';if(draft.next)return renderNextFinal();if(draft.config.type==='double')window.v1OpenFinalSetup(draft.formHtml,draft.config.start);else renderSingleFinal()}
 window.addEventListener('v1-final-back',()=>{if(draft){draft.phase='warmup';save();renderWarm()}});
 function renderSingleFinal(){
   const f=draft.final||{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0};draft.final=f;save();screen='finalSingle';
   base('Final Setup',`<p class="v1-muted">Sau khởi động · theo góc nhìn trọng tài</p><h2>Kiểm tra vị trí thực tế</h2><div class="v1-setting"><b>Ai giao trước?</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="serve:${t}" class="${f.serving===t?'selected':''}">Đội ${t} · ${escape(draft.config.players[t][0])}</button>`).join('')}</div></div><div class="v1-setting"><b>Ai ở bên trái trọng tài?</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="end:${t}" class="${f.courtLeft===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div>${courtPreview(draft.config,f)}<div class="v1-call">${draft.config.start[f.serving]} – ${draft.config.start[other(f.serving)]}</div><p>${escape(draft.config.players[f.serving][0])} giao → ${escape(draft.config.players[other(f.serving)][0])} đỡ</p>`,button('Xem lại và bắt đầu','reviewFinal'));
+}
+function renderNextFinal(){
+  const f=draft.final,c=draft.config;
+  f.serverIndex=c.type==='single'?0:(c.start[f.serving]%2===0?f.right[f.serving]:1-f.right[f.serving]);
+  f.receiverIndex=c.type==='single'?0:(c.start[f.serving]%2===0?f.right[other(f.serving)]:1-f.right[other(f.serving)]);
+  save();screen='finalNext';
+  base(`Final Setup · Game ${state.game+1}`,`<p class="v1-muted">Đội giao và bên sân dự kiến đã được chuyển từ game trước. Kiểm tra vị trí thực tế trước khi bắt đầu.</p><div class="v1-setting"><b>Đội giao trước</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="nextServe:${t}" class="${f.serving===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div><div class="v1-setting"><b>Bên trái trọng tài</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="nextEnd:${t}" class="${f.courtLeft===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div>${c.type==='double'?`<div class="v1-setting"><b>Vị trí VĐV</b><div class="v1-options">${['A','B'].map(t=>button(`Đổi vị trí Đội ${t}`,'nextSwap:'+t,'v1-secondary')).join('')}</div></div>`:''}${courtPreview(c,f)}<div class="v1-call">${c.start[f.serving]} – ${c.start[other(f.serving)]}${c.type==='double'?' – 2':''}</div><div class="v1-pair">${escape(c.players[f.serving][f.serverIndex])} GIAO → ${escape(c.players[other(f.serving)][f.receiverIndex])} ĐỠ</div>`,button('Xác nhận và bắt đầu game','reviewFinal'));
 }
 function parseDoublesFinal(detail){
   const doc=document.createElement('div');doc.innerHTML=detail.html;
@@ -130,9 +137,17 @@ document.addEventListener('click',event=>{
   if(action.startsWith('serve:')){draft.final.serving=action.slice(6);return renderSingleFinal()}
   if(action.startsWith('end:')){draft.final.courtLeft=action.slice(4);return renderSingleFinal()}
   if(action==='reviewFinal')return renderReview();
-  if(action==='editFinal')return draft.config.type==='single'?renderSingleFinal():startFinal();
+  if(action==='editFinal')return draft.next?renderNextFinal():draft.config.type==='single'?renderSingleFinal():startFinal();
+  if(action.startsWith('nextServe:')){draft.final.serving=action.slice(10);return renderNextFinal()}
+  if(action.startsWith('nextEnd:')){draft.final.courtLeft=action.slice(8);return renderNextFinal()}
+  if(action.startsWith('nextSwap:')){const team=action.slice(9);draft.final.right[team]=1-draft.final.right[team];return renderNextFinal()}
   if(action==='begin'){if(state?.status==='gameEnd')nextGame(state,draft.final);else state=createMatch(draft.config,draft.final);state.formHtml=draft.formHtml;draft=null;save();medicalChoice=null;return renderMatch()}
-  if(action==='nextGame'){draft={config:state.config,formHtml:state.formHtml||lastFormHtml,phase:'final',final:null};save();return startFinal()}
+  if(action==='nextGame'){
+    const serving=other(state.initialServing||state.serving),courtLeft=other(state.courtLeft),right={A:0,B:0};
+    if(state.config.type==='double')for(const team of ['A','B'])right[team]=state.config.start[team]%2===0?state.anchor[team]:1-state.anchor[team];
+    draft={config:state.config,formHtml:state.formHtml||lastFormHtml,phase:'final',next:true,final:{serving,courtLeft,right,serverIndex:0,receiverIndex:0}};
+    save();return startFinal();
+  }
   if(action==='undo'){if(!state)return;const wasFinished=state.status==='finished';undo(state);if(wasFinished&&state.status!=='finished'){history=read(HISTORY,[]).filter(m=>m.id!==state.id);write(HISTORY,history)}if(state.status!=='finished')write(ACTIVE,state);else recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
   if(action==='redo'){if(!state)return;redo(state);if(state.status!=='finished')write(ACTIVE,state);else recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
   if(action.startsWith('rally:')){if(!state)return;rally(state,action.slice(6));write(ACTIVE,state);recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
