@@ -47,7 +47,9 @@
     app.querySelectorAll('[data-player]').forEach(input => { players[input.dataset.player] = input.value.trim(); });
     const pressed = selector => {
       const item = app.querySelector(selector + '[aria-pressed="true"]') || app.querySelector(selector + '.on');
-      return item ? item.textContent.trim() : '';
+      if (!item) return '';
+      const parts = [...item.children].map(child => child.textContent.trim()).filter(Boolean);
+      return parts.length ? parts.join(' · ') : item.textContent.trim();
     };
     page04 = {
       players, type: pressed('.q4mChoices button') || 'Đánh đôi',
