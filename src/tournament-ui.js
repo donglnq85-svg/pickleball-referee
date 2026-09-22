@@ -48,7 +48,12 @@ window.addEventListener('tournament-open',openTournament);
 window.addEventListener('tournament-return',event=>{const context=event.detail;if(!context)return;tournamentId=context.tournamentId;const loaded=repo.get(tournamentId),active=loaded?.workSessions.find(s=>s.status==='active');if(!active)return openTournament();workSessionId=active.id;screen='court';render()});
 document.addEventListener('change',event=>{
   if(!screen)return;
-  if(event.target.matches('[data-t2-scope]')){scopeKind=event.target.value;renderTournament();return}
+  if(event.target.matches('[data-t2-scope]')){
+    const pendingLabel=app.querySelector('[data-t2-form="assignment"] [name="label"]')?.value||'';
+    scopeKind=event.target.value;renderTournament();
+    const restored=app.querySelector('[data-t2-form="assignment"] [name="label"]');if(restored)restored.value=pendingLabel;
+    return
+  }
   if(screen==='prematch'&&event.target.name==='serving'){
     const match=selectedMatch(selected()),select=app.querySelector('[name="serverIndex"]');
     if(select)for(const entry of select.options){const index=Number(entry.value),name=match.players[event.target.value][index];entry.textContent=`${event.target.value}${index+1} · ${name}`}
