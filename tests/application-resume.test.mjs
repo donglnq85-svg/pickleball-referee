@@ -7,6 +7,7 @@ import {createTournamentRepository} from '../src/tournament-persistence.js';
 import {callPlayers,startWaiting,waitingElapsedSeconds,markPlayersArrived,initializePreMatch,confirmAthlete,skipWarmup,setPreMatchFinalSetup,createMatchStartSnapshot} from '../src/tournament-operations.js';
 import {beginTournamentMatch} from '../src/tournament-launch.js';
 import {resolveApplicationResume} from '../src/application-resume.js';
+import {deriveCanonicalResult,confirmCanonicalResult} from '../src/tournament-results.js';
 
 const memory=()=>{const values=new Map();return {getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)}};
 const final={serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0};
@@ -61,6 +62,7 @@ test('a just-finished Tournament Match reloads to Court Manager and never duplic
   confirmAthlete(saved,match.id,'A1');confirmAthlete(saved,match.id,'B1');skipWarmup(saved,match.id);
   setPreMatchFinalSetup(saved,match.id,{start:{A:0,B:0},final:{serving:'A',courtLeft:'A'}});createMatchStartSnapshot(saved,match.id);tournaments.save(saved);
   const session=beginTournamentMatch(t.id,work.id,match.id,null,db);rally(session,'A');createMatchRepository(db).saveSession(session);
+  const after=tournaments.get(t.id),result=deriveCanonicalResult(after,session);confirmCanonicalResult(after,match.id,result.id);tournaments.save(after);
   const first=resolveApplicationResume(db),second=resolveApplicationResume(db);
   assert.deepEqual(first,{kind:'tournament',screen:'court',tournamentId:t.id,workSessionId:work.id,matchId:null});assert.deepEqual(second,first);
   assert.equal(Object.keys(createMatchRepository(db).load().matches).length,1);

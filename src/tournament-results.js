@@ -1,0 +1,141 @@
+const clone=value=>structuredClone(value);
+const id=()=>globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;
+const iso=value=>new Date(value??Date.now()).toISOString();
+const text=(value,label)=>{if(typeof value!=='string'||!value.trim())throw Error(`${label} không được để trống.`);return value.trim()};
+const matchById=(t,matchId)=>{const match=t.schedule.find(item=>item.id===matchId);if(!match)throw Error('Không tìm thấy trận.');return match};
+const groupById=(t,groupId)=>{const group=t.structure.groups.find(item=>item.id===groupId);if(!group)throw Error('Không tìm thấy bảng.');return group};
+const touch=(t,type,detail={},at=Date.now())=>{t.updatedAt=iso(at);t.events.push({id:id(),at:t.updatedAt,type,...detail})};
+const ledger=t=>(t.resultLedger??={byMatch:{}});
+const snapshots=t=>(t.groupSnapshots??=[]);
+const completions=t=>(t.groupCompletions??=[]);
+const rankingVersions=t=>(t.rankingRulesVersions??=[]);
+
+const teamKey=(match,team)=>match.entrantIds?.[team]||`${match.type}:${match.players[team].map(name=>name.trim().toLocaleLowerCase('vi')).join('|')}`;
+const resultEntry=(t,matchId)=>ledger(t).byMatch[matchId]||null;
+export const currentResult=(t,matchId)=>{
+  const entry=resultEntry(t,matchId);return entry?.versions.find(version=>version.id===entry.currentVersionId)||null;
+};
+
+function normalizeGames(games){
+  if(!Array.isArray(games)||!games.length)throw Error('Kết quả game không hợp lệ.');
+  return games.map((game,index)=>{
+    const A=Number(game.score?.A),B=Number(game.score?.B);
+    if(!Number.isInteger(A)||!Number.isInteger(B)||A<0||B<0||A===B)throw Error('Kết quả game không hợp lệ.');
+    const winner=A>B?'A':'B';
+    return {game:index+1,score:{A,B},winner};
+  });
+}
+function resultBody(match,session,games){
+  const normalized=normalizeGames(games),gamesWon={A:0,B:0};for(const game of normalized)gamesWon[game.winner]++;
+  if(gamesWon.A===gamesWon.B)throw Error('Kết quả trận chưa xác định đội thắng.');
+  return {matchSessionId:session.id,matchEndedAt:session.finishedAt,type:session.config.type,players:clone(session.players),games:normalized,gamesWon,winner:gamesWon.A>gamesWon.B?'A':'B',
+    entrants:{A:{id:teamKey(match,'A'),players:clone(match.players.A)},B:{id:teamKey(match,'B'),players:clone(match.players.B)}}};
+}
+function appendResult(t,match,body,source,at=Date.now()){
+  const store=ledger(t),entry=store.byMatch[match.id]??={currentVersionId:null,versions:[]};
+  const previous=entry.versions.find(item=>item.id===entry.currentVersionId)||null;
+  if(previous)previous.isCurrent=false;
+  const version={id:id(),version:(previous?.version||0)+1,isCurrent:true,status:'PENDING_CONFIRMATION',scheduledMatchId:match.id,
+    derivedAt:iso(at),confirmedAt:null,...clone(body),source:clone(source)};
+  entry.versions.push(version);entry.currentVersionId=version.id;store.byMatch[match.id]=entry;
+  touch(t,'canonicalResultVersionCreated',{matchId:match.id,resultVersionId:version.id,version:version.version},at);return clone(version);
+}
+
+export function deriveCanonicalResult(t,matchSession,at=Date.now()){
+  if(matchSession?.status!=='finished'||!matchSession.finishedAt)throw Error('Match chưa kết thúc.');
+  const matchId=matchSession.tournamentContext?.scheduledMatchId,match=matchById(t,matchId);
+  if(match.matchSessionId!==matchSession.id||matchSession.tournamentContext?.tournamentId!==t.id)throw Error('Match Session không thuộc trận trong giải.');
+  const source={kind:'MATCH_STATE',matchUpdatedAt:matchSession.updatedAt,eventCount:matchSession.events?.length||0};
+  const entry=resultEntry(t,match.id),current=currentResult(t,match.id),latestMatch=[...(entry?.versions||[])].reverse().find(item=>item.source.kind==='MATCH_STATE');
+  if(latestMatch?.source.matchUpdatedAt===source.matchUpdatedAt&&latestMatch.source.eventCount===source.eventCount)return clone(current);
+  return appendResult(t,match,resultBody(match,matchSession,matchSession.games),source,at);
+}
+
+export function confirmCanonicalResult(t,matchId,resultVersionId,at=Date.now()){
+  const entry=resultEntry(t,matchId),result=currentResult(t,matchId);
+  if(!entry||!result||result.id!==resultVersionId||!result.isCurrent)throw Error('Chỉ phiên bản kết quả hiện tại mới được xác nhận.');
+  if(result.status==='CONFIRMED')return clone(result);
+  result.status='CONFIRMED';result.confirmedAt=iso(at);touch(t,'canonicalResultConfirmed',{matchId,resultVersionId},at);return clone(result);
+}
+
+export function correctCanonicalResult(t,matchId,{games,reason,actor='referee'},at=Date.now()){
+  const match=matchById(t,matchId),previous=currentResult(t,matchId);
+  if(!previous)throw Error('Chưa có Canonical Result để sửa.');
+  const sessionLike={id:previous.matchSessionId,finishedAt:previous.matchEndedAt,config:{type:previous.type},players:previous.players};
+  const body=resultBody(match,sessionLike,games);
+  return appendResult(t,match,body,{kind:'RESULT_CORRECTION',parentResultVersionId:previous.id,reason:text(reason,'Lý do sửa kết quả'),actor:text(actor,'Người sửa')},at);
+}
+
+export function addRankingRulesVersion(t,{label,authority,criteria=[],qualification={kind:'unknown'}}){
+  if(!Array.isArray(criteria))throw Error('Tiêu chí xếp hạng không hợp lệ.');
+  const normalized=criteria.map(item=>({metric:text(item.metric,'Chỉ số xếp hạng'),direction:['asc','desc'].includes(item.direction)?item.direction:'desc'}));
+  if(!qualification||!['unknown','top'].includes(qualification.kind)||qualification.kind==='top'&&(!Number.isInteger(qualification.count)||qualification.count<1))throw Error('Quy tắc đi tiếp không hợp lệ.');
+  const version={id:id(),label:text(label,'Tên Ranking Rules Version'),authority:text(authority,'Nguồn Ranking Rules'),criteria:normalized,qualification:clone(qualification),createdAt:iso()};
+  rankingVersions(t).push(version);t.activeRankingRulesVersionId=version.id;touch(t,'rankingRulesVersionAdded',{rankingRulesVersionId:version.id});return clone(version);
+}
+
+const metrics={
+  matchWins:s=>s.matchWins,matchLosses:s=>s.matchLosses,gameWins:s=>s.gameWins,gameLosses:s=>s.gameLosses,
+  pointsWon:s=>s.pointsWon,pointsLost:s=>s.pointsLost,gameDifferential:s=>s.gameWins-s.gameLosses,pointDifferential:s=>s.pointsWon-s.pointsLost
+};
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+export function calculateGroupSnapshot(t,groupId,rankingRulesVersionId=t.activeRankingRulesVersionId,at=Date.now()){
+  groupById(t,groupId);const rules=rankingVersions(t).find(item=>item.id===rankingRulesVersionId)||null;
+  const matches=t.schedule.filter(item=>item.groupId===groupId),results=matches.map(match=>currentResult(t,match.id)).filter(result=>result?.status==='CONFIRMED');
+  const table=new Map();
+  const row=entrant=>{if(!table.has(entrant.id))table.set(entrant.id,{entrantId:entrant.id,players:clone(entrant.players),played:0,matchWins:0,matchLosses:0,gameWins:0,gameLosses:0,pointsWon:0,pointsLost:0,rank:null,qualification:'UNKNOWN'});return table.get(entrant.id)};
+  for(const result of results)for(const team of ['A','B']){
+    const own=row(result.entrants[team]),opponent=team==='A'?'B':'A';own.played++;own.matchWins+=result.winner===team?1:0;own.matchLosses+=result.winner===team?0:1;
+    own.gameWins+=result.gamesWon[team];own.gameLosses+=result.gamesWon[opponent];for(const game of result.games){own.pointsWon+=game.score[team];own.pointsLost+=game.score[opponent]}
+  }
+  let status='RANKED',reason=null,ordered=[...table.values()];
+  if(!rules||!rules.criteria.length){status='NEEDS_CONFIRMATION';reason='RANKING_RULES_INCOMPLETE'}
+  else if(rules.criteria.some(rule=>!metrics[rule.metric])){status='NEEDS_CONFIRMATION';reason='RANKING_METRIC_UNSUPPORTED'}
+  else{
+    ordered.sort((a,b)=>{for(const rule of rules.criteria){const delta=metrics[rule.metric](a)-metrics[rule.metric](b);if(delta)return rule.direction==='asc'?delta:-delta}return a.entrantId.localeCompare(b.entrantId)});
+    for(let index=0;index<ordered.length;index++){
+      const tied=index>0&&rules.criteria.every(rule=>metrics[rule.metric](ordered[index])===metrics[rule.metric](ordered[index-1]));
+      const tiedNext=index<ordered.length-1&&rules.criteria.every(rule=>metrics[rule.metric](ordered[index])===metrics[rule.metric](ordered[index+1]));
+      ordered[index].rank=tied||tiedNext?null:index+1;if(tied||tiedNext){status='NEEDS_CONFIRMATION';reason='UNRESOLVED_TIE'}
+    }
+  }
+  let qualificationStatus='UNKNOWN',qualified=[];
+  if(rules?.qualification.kind==='top'&&status==='RANKED'){
+    qualificationStatus='KNOWN';qualified=ordered.slice(0,rules.qualification.count).map(item=>item.entrantId);for(const item of ordered)item.qualification=qualified.includes(item.entrantId)?'QUALIFIED':'NOT_QUALIFIED';
+  }else if(rules?.qualification.kind==='top')qualificationStatus='NEEDS_CONFIRMATION';
+  const prior=[...snapshots(t)].reverse().find(item=>item.groupId===groupId)||null;
+  const resultVersionIds=results.map(item=>item.id).sort(),rankingProjection=ordered.map(item=>[item.entrantId,item.rank]),impact=[];
+  if(!prior||!same(prior.resultVersionIds,resultVersionIds))impact.push('RESULT_CHANGED');
+  if(!prior||prior.status!==status||!same(prior.rows.map(item=>[item.entrantId,item.rank]),rankingProjection))impact.push('RANKING_CHANGED');
+  if(!prior||prior.qualification.status!==qualificationStatus||!same(prior.qualification.qualified,qualified))impact.push('QUALIFICATION_CHANGED');
+  const snapshot={id:id(),groupId,createdAt:iso(at),rankingRulesVersionId:rules?.id||rankingRulesVersionId||null,resultVersionIds,status,reason,rows:clone(ordered),qualification:{status:qualificationStatus,qualified},impact};
+  snapshots(t).push(snapshot);touch(t,'groupSnapshotCalculated',{groupId,groupSnapshotId:snapshot.id,impact},at);return clone(snapshot);
+}
+
+export function assessGroupCompletion(t,groupId,at=Date.now()){
+  groupById(t,groupId);const matches=t.schedule.filter(item=>item.groupId===groupId),confirmed=matches.filter(match=>currentResult(t,match.id)?.status==='CONFIRMED');
+  const latest=[...snapshots(t)].reverse().find(item=>item.groupId===groupId)||null,expected=confirmed.map(match=>currentResult(t,match.id).id).sort();
+  let status='IN_PROGRESS',reason='MATCHES_OR_RESULTS_PENDING';
+  if(matches.length&&confirmed.length===matches.length){
+    if(latest&&same(latest.resultVersionIds,expected)&&latest.status==='RANKED'&&latest.qualification.status==='KNOWN'){status='READY';reason=null}
+    else{status='NEEDS_CONFIRMATION';reason='RANKING_OR_QUALIFICATION_UNRESOLVED'}
+  }
+  const completion={id:id(),groupId,createdAt:iso(at),status,reason,matchIds:matches.map(item=>item.id),resultVersionIds:expected,groupSnapshotId:latest?.id||null};
+  completions(t).push(completion);touch(t,'groupCompletionAssessed',{groupId,groupCompletionId:completion.id,status},at);return clone(completion);
+}
+
+export function validateResultOperations(t){
+  const versions=t.rankingRulesVersions||[];if(t.activeRankingRulesVersionId!=null&&!versions.some(item=>item.id===t.activeRankingRulesVersionId))throw Error('Ranking Rules Version không hợp lệ.');
+  for(const item of versions)if(!item.id||!item.label||!Array.isArray(item.criteria)||!item.qualification)throw Error('Ranking Rules Version không hợp lệ.');
+  const byMatch=t.resultLedger?.byMatch||{};
+  for(const [matchId,entry] of Object.entries(byMatch)){
+    matchById(t,matchId);if(!entry||!Array.isArray(entry.versions)||!entry.versions.some(item=>item.id===entry.currentVersionId))throw Error('Canonical Result ledger không hợp lệ.');
+    if(entry.versions.filter(item=>item.isCurrent).length!==1||entry.versions.find(item=>item.isCurrent)?.id!==entry.currentVersionId||new Set(entry.versions.map(item=>item.version)).size!==entry.versions.length)throw Error('Canonical Result phải có đúng một phiên bản hiện tại.');
+    for(const result of entry.versions)if(!['PENDING_CONFIRMATION','CONFIRMED'].includes(result.status)||result.scheduledMatchId!==matchId||!result.matchEndedAt||!result.source)throw Error('Canonical Result không hợp lệ.');
+  }
+  const allResultIds=new Set(Object.values(byMatch).flatMap(entry=>entry.versions.map(item=>item.id)));
+  for(const snapshot of t.groupSnapshots||[]){groupById(t,snapshot.groupId);if(!Array.isArray(snapshot.resultVersionIds)||snapshot.resultVersionIds.some(resultId=>!allResultIds.has(resultId))||
+    snapshot.rankingRulesVersionId&&!versions.some(item=>item.id===snapshot.rankingRulesVersionId)||!['RANKED','NEEDS_CONFIRMATION'].includes(snapshot.status))throw Error('Group Snapshot không hợp lệ.');}
+  for(const completion of t.groupCompletions||[]){groupById(t,completion.groupId);if(!['IN_PROGRESS','READY','NEEDS_CONFIRMATION'].includes(completion.status)||!Array.isArray(completion.resultVersionIds)||completion.resultVersionIds.some(resultId=>!allResultIds.has(resultId))||completion.groupSnapshotId&&!t.groupSnapshots.some(item=>item.id===completion.groupSnapshotId))throw Error('Group Completion không hợp lệ.');}
+  return true;
+}

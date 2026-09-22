@@ -1,6 +1,7 @@
 import {createMatchRepository} from './match-persistence.js';
 import {createTournamentRepository} from './tournament-persistence.js';
 import {assignmentMatches} from './tournament-domain.js';
+import {currentResult} from './tournament-results.js';
 
 const unfinishedMatch=match=>match&&match.status!=='finished';
 const preMatchStarted=match=>{
@@ -31,7 +32,10 @@ export function resolveApplicationResume(storage){
     const workSession=tournament?.workSessions.find(item=>item.id===pointer.workSessionId&&item.status==='active');
     if(tournament&&workSession){
       const assignment=tournament.assignments.find(item=>item.id===workSession.assignmentId);
-      const candidates=assignment?assignmentMatches(tournament,assignment.id).filter(match=>!match.matchSessionId):[];
+      const scoped=assignment?assignmentMatches(tournament,assignment.id):[];
+      const pendingResult=scoped.find(match=>{const session=match.matchSessionId&&matches.get(match.matchSessionId),result=currentResult(tournament,match.id);return session?.status==='finished'&&result?.status!=='CONFIRMED'});
+      if(pendingResult)return {kind:'tournament',screen:'result',tournamentId:tournament.id,workSessionId:workSession.id,matchId:pendingResult.id};
+      const candidates=scoped.filter(match=>!match.matchSessionId);
       candidates.sort((a,b)=>lastOperationalAt(tournament,b.id).localeCompare(lastOperationalAt(tournament,a.id)));
       const preMatch=candidates.find(preMatchStarted);
       if(preMatch)return {kind:'tournament',screen:'prematch',tournamentId:tournament.id,workSessionId:workSession.id,matchId:preMatch.id};

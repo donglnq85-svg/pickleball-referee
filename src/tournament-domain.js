@@ -1,4 +1,6 @@
 
+import {validateResultOperations,currentResult} from './tournament-results.js';
+
 export const TOURNAMENT_SCHEMA_VERSION = 1;
 const clone = value => structuredClone(value);
 const id = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
@@ -18,7 +20,7 @@ const touch = (t, type, detail={}) => {
 
 export function createTournament(name) {
   const at=now();return {schemaVersion:TOURNAMENT_SCHEMA_VERSION,id:id(),name:requireText(name,'Tên giải'),status:'draft',createdAt:at,updatedAt:at,
-    rulesVersions:[],activeRulesVersionId:null,structure:{courts:[],groups:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
+    rulesVersions:[],activeRulesVersionId:null,rankingRulesVersions:[],activeRankingRulesVersionId:null,resultLedger:{byMatch:{}},groupSnapshots:[],groupCompletions:[],structure:{courts:[],groups:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
 }
 
 export function addRulesVersion(t,{label,authority,scoring='unknown',format=null,procedures={equipmentCheck:'unknown'}}) {
@@ -87,10 +89,11 @@ export function courtManagerView(t,workSessionId,matchRepository=null) {
   const assignment=find(t.assignments,workSession.assignmentId,'phân công');
   const matches=assignmentMatches(t,assignment.id).map(entry=>{
     const session=entry.matchSessionId&&matchRepository?.get(entry.matchSessionId);
-    return {...clone(entry),progress:session?.status||'not_started'};
+    const result=currentResult(t,entry.id);
+    return {...clone(entry),progress:session?.status||'not_started',resultStatus:result?.status||'NOT_DERIVED',resultVersionId:result?.id||null};
   });
   return {tournamentId:t.id,workSession:clone(workSession),assignment:clone(assignment),matches,
-    progress:{total:matches.length,unknown:matches.filter(m=>m.readiness==='unknown').length,ready:matches.filter(m=>m.readiness==='ready').length,blocked:matches.filter(m=>m.readiness==='blocked').length,finished:matches.filter(m=>m.progress==='finished').length}};
+    progress:{total:matches.length,unknown:matches.filter(m=>m.readiness==='unknown').length,ready:matches.filter(m=>m.readiness==='ready').length,blocked:matches.filter(m=>m.readiness==='blocked').length,finished:matches.filter(m=>m.progress==='finished').length,resultsConfirmed:matches.filter(m=>m.resultStatus==='CONFIRMED').length}};
 }
 
 export function validateTournament(t) {
@@ -126,5 +129,6 @@ export function validateTournament(t) {
   for(const a of t.assignments){const refs={court:t.structure.courts,group:t.structure.groups,match:t.schedule}[a.scope?.kind];if(!refs||!Array.isArray(a.scope.ids)||!a.scope.ids.length)throw Error('Phạm vi phân công không hợp lệ.');for(const ref of a.scope.ids)find(refs,ref,'đối tượng phân công');}
   for(const s of t.workSessions){find(t.assignments,s.assignmentId,'phân công');if(!['active','completed'].includes(s.status))throw Error('Nhiệm vụ không hợp lệ.');}
   if(t.workSessions.filter(s=>s.status==='active').length>1)throw Error('Chỉ một nhiệm vụ được hoạt động trong một giải.');
+  validateResultOperations(t);
   return true;
 }
