@@ -20,7 +20,7 @@ function base(title,body,footer='',overlay=''){
 function button(text,act,cls='v1-main'){return `<button class="${cls}" data-v1="${act}">${text}</button>`}
 function mainHome(){
   const place=app.querySelector('#v1-home-actions');if(!place)return;
-  const active=repository.active(),pending=repository.load().draft,count=repository.history().length;
+  const latest=repository.active(),active=latest?.status==='finished'?null:latest,pending=repository.load().draft,count=repository.history().length;
   place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
 }
 new MutationObserver(()=>{if(app.querySelector('#v1-home-actions')&&!app.querySelector('#v1-home-actions button'))mainHome()}).observe(app,{subtree:true,childList:true});
