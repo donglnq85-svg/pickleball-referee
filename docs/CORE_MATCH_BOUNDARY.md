@@ -18,3 +18,9 @@ The `events` array records transitions and Undo/Redo actions. Complete snapshots
 Rule reference: [USA Pickleball Official Rulebook 2026](https://usapickleball.org/rules/) and [USA Pickleball side-out scoring guidance](https://usapickleball.org/pickleball-skills/level-one/pickleball-scoring-positioning-side-out-scoring/). Recreational touch-point, cap, handicap and game counts follow the explicitly selected Quick Match configuration.
 
 Run `node --test tests/*.test.mjs` and `npm run build`. These tests cover Singles and Doubles matches through completion, service changes, courts, handicap, Undo/Redo across repository reopen, legacy migration and corrupt storage. Candidate browser QA is required before any production release.
+
+## Match State correctness audit
+
+For doubles, a point changes the current server's court, while losing server 1 passes the serve to the partner **without changing the team's score or their court positions**. Thus the serving team's score parity alone cannot identify the service court of server 2. The engine derives the server's service court from the current server identity and the team's right-court player; it then derives the receiver from the diagonally corresponding court on the opposite end. Singles derives its service court directly from the serving player's score. `court-view.js` only renders `matchView` and never applies an additional rule.
+
+`tests/match-state-correctness.test.mjs` asserts server/receiver identity, lane, opposite court ends and opposite rendered rows at every transition, including handicap, side-out, first-to-second server, correction, changed ends, next game, Undo/Redo and reopen from persistence. The service oracle checks known sequences separately from the geometric invariant.
