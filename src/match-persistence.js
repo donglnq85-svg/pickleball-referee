@@ -46,9 +46,16 @@ export function createMatchRepository(storage) {
     commit(doc);
     return clone(match);
   }
+  function insertSessionIfAbsent(match){
+    validateMatchState(match);
+    const doc=load();
+    if(doc.matches[match.id])return clone(doc.matches[match.id]);
+    doc.matches[match.id]=clone(match);doc.activeId=match.id;
+    commit(doc);return clone(match);
+  }
   function saveDraft(draft) {const doc=load();doc.draft=draft===null?null:clone(draft);commit(doc)}
   function active() {const doc=load();return doc.activeId?doc.matches[doc.activeId]:null}
   function history() {return Object.values(load().matches).filter(m=>m.status==='finished').sort((a,b)=>b.createdAt.localeCompare(a.createdAt))}
   function get(id) {return load().matches[id]||null}
-  return {load,active,history,get,saveSession,saveDraft};
+  return {load,active,history,get,saveSession,insertSessionIfAbsent,saveDraft};
 }
