@@ -21,6 +21,36 @@ export function scoreCall(state) {
   if (state.config.type === 'double') points.push(state.serverNumber);
   return points.join(' – ');
 }
+// Read model for the referee-facing screen. Court slots use the referee's viewpoint:
+// the left end's right service court is below, the right end's is above.
+export function matchView(state) {
+  const receiving=other(state.serving);
+  const server=serverIndex(state),receiver=receiverIndex(state);
+  const participants=[];
+  for(const team of ['A','B']){
+    const left=team===state.courtLeft;
+    const right=rightPlayer(state,team);
+    if(state.config.type==='single'){
+      const rightCourt=state.score[state.serving]%2===0;
+      participants.push({team,index:0,name:state.players[team][0],end:left?'left':'right',lane:rightCourt?'right':'left',top:left?!rightCourt:rightCourt,server:team===state.serving,receiver:team===receiving,ball:team===state.serving});
+    }else for(let index=0;index<2;index++){
+      const rightCourt=index===right;
+      participants.push({team,index,name:state.players[team][index],end:left?'left':'right',lane:rightCourt?'right':'left',top:left?!rightCourt:rightCourt,server:team===state.serving&&index===server,receiver:team===receiving&&index===receiver,ball:team===state.serving&&index===server});
+    }
+  }
+  return {scoreCall:scoreCall(state),serving:state.serving,receiving,serverNumber:state.serverNumber,serverIndex:server,receiverIndex:receiver,server:state.players[state.serving][server],receiver:state.players[receiving][receiver],courtLeft:state.courtLeft,courtRight:other(state.courtLeft),participants};
+}
+export function prepareNextGame(state){
+  const serving=other(state.initialServing||state.serving),courtLeft=other(state.courtLeft),right={A:0,B:0};
+  if(state.config.type==='double')for(const team of ['A','B'])right[team]=state.config.start[team]%2===0?state.anchor[team]:1-state.anchor[team];
+  return {serving,courtLeft,right,serverIndex:0,receiverIndex:0};
+}
+export function resolveFinal(config,final){
+  const f=copy(final);
+  f.serverIndex=config.type==='single'?0:(config.start[f.serving]%2===0?f.right[f.serving]:1-f.right[f.serving]);
+  f.receiverIndex=config.type==='single'?0:(config.start[f.serving]%2===0?f.right[other(f.serving)]:1-f.right[other(f.serving)]);
+  return f;
+}
 export function gameWinner(state) {
   const {points, rule, cap} = state.config;
   for (const team of ['A','B']) {

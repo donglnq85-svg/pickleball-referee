@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createMatch,rally,undo,redo,nextGame,scoreCall,serverIndex,receiverIndex,rightPlayer,startPause,endPause,correct} from '../src/match-engine.js';
+import {createMatch,rally,undo,redo,nextGame,scoreCall,serverIndex,receiverIndex,rightPlayer,matchView,prepareNextGame,resolveFinal,startPause,endPause,correct} from '../src/match-engine.js';
 const cfg=(type='double',sets=1,points=11,start={A:0,B:0})=>({type,sets,points,rule:'touch',cap:15,start,players:{A:type==='double'?['An','Bình']:['An'],B:type==='double'?['Chi','Dung']:['Chi']}});
 const final={serving:'A',serverIndex:0,courtLeft:'A',right:{A:0,B:0}};
 test('doubles starts with only second server, switches first/second then side out',()=>{
@@ -43,4 +43,27 @@ test('referee correction is auditable and reversible',()=>{
  assert.equal(s.events.at(-1).type,'correction');
  undo(s);assert.equal(scoreCall(s),'0 – 0 – 2');assert.equal(serverIndex(s),0);
  redo(s);assert.equal(scoreCall(s),'2 – 4 – 1');
+});
+test('court read model follows server, receiver, ball and ends through transitions',()=>{
+ const s=createMatch(cfg(),final);let v=matchView(s);
+ assert.equal(v.server,'An');assert.equal(v.receiver,'Chi');
+ assert.deepEqual(v.participants.filter(p=>p.ball).map(p=>[p.name,p.end,p.lane]),[['An','left','right']]);
+ rally(s,'A');v=matchView(s);assert.equal(v.scoreCall,'1 – 0 – 2');
+ assert.deepEqual(v.participants.filter(p=>p.ball).map(p=>[p.name,p.lane]),[['An','left']]);
+ rally(s,'B');rally(s,'B');v=matchView(s);assert.equal(v.serving,'B');assert.equal(v.serverNumber,1);
+ assert.equal(v.participants.find(p=>p.receiver).name,v.receiver);
+ const before=structuredClone(v.participants);s.courtLeft='B';v=matchView(s);
+ assert.notDeepEqual(v.participants,before);assert.equal(v.participants.find(p=>p.ball).end,'left');
+});
+test('singles court uses one participant per end and two-number score call',()=>{
+ const s=createMatch(cfg('single'),final);let v=matchView(s);
+ assert.equal(v.participants.length,2);assert.equal(v.serverNumber,null);assert.equal(v.participants.find(p=>p.ball).lane,'right');
+ rally(s,'A');v=matchView(s);assert.equal(v.participants.find(p=>p.ball).lane,'left');
+ rally(s,'B');v=matchView(s);assert.equal(v.scoreCall,'0 – 1');assert.equal(v.participants.find(p=>p.ball).team,'B');
+});
+test('next game setup carries serve and court predictions into engine',()=>{
+ const s=createMatch(cfg('double',3,1),final);rally(s,'A');
+ assert.equal(s.status,'gameEnd');const f=resolveFinal(s.config,prepareNextGame(s));
+ assert.equal(f.serving,'B');assert.equal(f.courtLeft,'B');
+ nextGame(s,f);assert.equal(scoreCall(s),'0 – 0 – 2');assert.equal(matchView(s).server,s.players.B[f.serverIndex]);
 });
