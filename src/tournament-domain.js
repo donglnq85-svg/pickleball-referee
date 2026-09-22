@@ -24,10 +24,10 @@ export function createTournament(name) {
 }
 
 export function addRulesVersion(t,{label,authority,scoring='unknown',format=null}) {
-  if (!['unknown','side-out'].includes(scoring)) throw Error('Match Engine hiện chỉ hỗ trợ side-out scoring.');
-  if (format!==null && (!Number.isInteger(format.sets)||![1,3,5].includes(format.sets)||!Number.isInteger(format.points)||format.points<1||format.points>99||
-      !['touch','unlimited','maximum'].includes(format.rule)||format.rule==='maximum'&&(!Number.isInteger(format.cap)||format.cap<format.points))) throw Error('Thể thức không hợp lệ.');
-  const version={id:id(),label:requireText(label,'Tên phiên bản luật'),authority:requireText(authority,'Nguồn luật'),scoring,format:clone(format),createdAt:now()};
+  const scoringId=requireText(scoring,'Phương thức tính điểm');
+  if (format!==null && (!Number.isInteger(format.sets)||format.sets<1||!Number.isInteger(format.points)||format.points<1||
+      typeof format.rule!=='string'||!format.rule.trim()||format.cap!==undefined&&(!Number.isInteger(format.cap)||format.cap<format.points))) throw Error('Thể thức không hợp lệ.');
+  const version={id:id(),label:requireText(label,'Tên phiên bản luật'),authority:requireText(authority,'Nguồn luật'),scoring:scoringId,format:clone(format),createdAt:now()};
   t.rulesVersions.push(version);t.activeRulesVersionId=version.id;touch(t,'rulesVersionAdded',{rulesVersionId:version.id});return version;
 }
 
@@ -58,7 +58,7 @@ export function createAssignment(t,{label,scopeKind,scopeIds}) {
 
 export function startWorkSession(t,assignmentId) {
   const assignment=find(t.assignments,assignmentId,'phân công');
-  if(assignment.status==='completed'||t.workSessions.some(s=>s.assignmentId===assignmentId&&s.status==='active'))throw Error('Phân công này không thể bắt đầu thêm nhiệm vụ.');
+  if(assignment.status==='completed'||t.workSessions.some(s=>s.status==='active'))throw Error('Đang có nhiệm vụ hoạt động. Kết thúc nhiệm vụ trước khi bắt đầu nhiệm vụ khác.');
   const session={id:id(),assignmentId,status:'active',startedAt:now(),endedAt:null};
   t.workSessions.push(session);assignment.status='active';t.status='active';touch(t,'workSessionStarted',{assignmentId,workSessionId:session.id});return session;
 }
@@ -119,5 +119,6 @@ export function validateTournament(t) {
   for(const m of t.schedule){if(m.groupId!==null)find(t.structure.groups,m.groupId,'bảng');if(m.courtId!==null)find(t.structure.courts,m.courtId,'sân');if(!['unknown','ready','blocked'].includes(m.readiness))throw Error('Readiness không hợp lệ.');}
   for(const a of t.assignments){const refs={court:t.structure.courts,group:t.structure.groups,match:t.schedule}[a.scope?.kind];if(!refs||!Array.isArray(a.scope.ids)||!a.scope.ids.length)throw Error('Phạm vi phân công không hợp lệ.');for(const ref of a.scope.ids)find(refs,ref,'đối tượng phân công');}
   for(const s of t.workSessions){find(t.assignments,s.assignmentId,'phân công');if(!['active','completed'].includes(s.status))throw Error('Nhiệm vụ không hợp lệ.');}
+  if(t.workSessions.filter(s=>s.status==='active').length>1)throw Error('Chỉ một nhiệm vụ được hoạt động trong một giải.');
   return true;
 }

@@ -24,6 +24,12 @@ export function createTournamentRepository(storage){
     const document=load();document.tournaments[tournament.id]=clone(tournament);
     if(activeWorkSession!==undefined){
       if(activeWorkSession!==null&&!tournament.workSessions.some(s=>s.id===activeWorkSession&&s.status==='active'))throw Error('Nhiệm vụ đang mở không hợp lệ.');
+      if(activeWorkSession&&document.activeWorkSession&&
+        (document.activeWorkSession.tournamentId!==tournament.id||document.activeWorkSession.workSessionId!==activeWorkSession))throw Error('Kết thúc nhiệm vụ đang mở trước khi bắt đầu nhiệm vụ khác.');
+      if(activeWorkSession===null&&document.activeWorkSession){
+        if(document.activeWorkSession.tournamentId!==tournament.id)throw Error('Không thể xóa nhiệm vụ của giải khác.');
+        if(tournament.workSessions.some(s=>s.id===document.activeWorkSession.workSessionId&&s.status==='active'))throw Error('Kết thúc nhiệm vụ trước khi xóa trạng thái tiếp tục.');
+      }
       document.activeWorkSession=activeWorkSession?{tournamentId:tournament.id,workSessionId:activeWorkSession}:null;
     }else if(document.activeWorkSession?.tournamentId===tournament.id){
       const sid=document.activeWorkSession.workSessionId;

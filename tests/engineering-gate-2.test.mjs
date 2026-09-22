@@ -48,7 +48,22 @@ test('Work Session transitions and Court Manager progress persist across reposit
   assert.equal(courtManagerView(createTournamentRepository(db).get(t.id),s.id).progress.ready,1);
   finishWorkSession(reopened,s.id);repo.save(reopened,{activeWorkSession:null});
   assert.equal(createTournamentRepository(db).load().activeWorkSession,null);
-  assert.throws(()=>startWorkSession(reopened,a.id),/không thể/);
+  assert.throws(()=>startWorkSession(reopened,a.id),/nhiệm vụ khác/);
+});
+
+test('only one active Work Session per referee; a second assignment cannot orphan resume',()=>{
+  const db=storage(),repo=createTournamentRepository(db),{t,c1,g1}=setup();
+  const court=createAssignment(t,{label:'Sân',scopeKind:'court',scopeIds:[c1.id]});
+  const group=createAssignment(t,{label:'Bảng',scopeKind:'group',scopeIds:[g1.id]});
+  const work=startWorkSession(t,court.id);repo.save(t,{activeWorkSession:work.id});
+  assert.throws(()=>startWorkSession(t,group.id),/Đang có nhiệm vụ/);
+  assert.throws(()=>repo.save(t,{activeWorkSession:null}),/Kết thúc nhiệm vụ/);
+  assert.equal(repo.load().activeWorkSession.workSessionId,work.id);
+  const other=createTournament('Giải khác'),otherMatch=addScheduledMatch(other,{label:'Trận'});
+  const a=createAssignment(other,{label:'Trận',scopeKind:'match',scopeIds:[otherMatch.id]});
+  const competing=startWorkSession(other,a.id);
+  assert.throws(()=>repo.save(other,{activeWorkSession:competing.id}),/Kết thúc nhiệm vụ/);
+  assert.equal(repo.load().activeWorkSession.workSessionId,work.id);
 });
 
 test('Rules Version is explicit and versioned; incomplete facts never launch a match',()=>{
@@ -61,6 +76,14 @@ test('Rules Version is explicit and versioned; incomplete facts never launch a m
   const v=addRulesVersion(t,{label:'Đang chờ xác định',authority:'Ban tổ chức',scoring:'unknown',format:null});
   assert.equal(t.activeRulesVersionId,v.id);assert.equal(t.rulesVersions.length,2);
   assert.equal(t.rulesVersions[0].scoring,'side-out');
+  const future=addRulesVersion(t,{label:'Phiên bản tương lai',authority:'Ban tổ chức',scoring:'future-scoring',format:{sets:7,points:25,rule:'future-format'}});
+  assert.equal(future.format.sets,7);
+  setMatchReadiness(t,m3.id,'ready');
+  assert.throws(()=>beginTournamentMatch(t,s.id,m3.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
+  const m1Assignment=createAssignment(t,{label:'Trận khác',scopeKind:'match',scopeIds:[m1.id]});
+  finishWorkSession(t,s.id);
+  const next=startWorkSession(t,m1Assignment.id);setMatchReadiness(t,m1.id,'ready');
+  assert.throws(()=>beginTournamentMatch(t,next.id,m1.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
   assert.equal(t.structure.courts.find(c=>c.id===c1.id).label,'Sân Trung tâm');
 });
 
