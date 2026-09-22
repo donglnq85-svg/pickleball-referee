@@ -38,7 +38,7 @@ export function matchView(state) {
       participants.push({team,index,name:state.players[team][index],end:left?'left':'right',lane:rightCourt?'right':'left',top:left?!rightCourt:rightCourt,server:team===state.serving&&index===server,receiver:team===receiving&&index===receiver,ball:team===state.serving&&index===server});
     }
   }
-  return {scoreCall:scoreCall(state),serving:state.serving,receiving,serverNumber:state.serverNumber,server:state.players[state.serving][server],receiver:state.players[receiving][receiver],courtLeft:state.courtLeft,courtRight:other(state.courtLeft),participants};
+  return {scoreCall:scoreCall(state),serving:state.serving,receiving,serverNumber:state.serverNumber,serverIndex:server,receiverIndex:receiver,server:state.players[state.serving][server],receiver:state.players[receiving][receiver],courtLeft:state.courtLeft,courtRight:other(state.courtLeft),participants};
 }
 export function prepareNextGame(state){
   const serving=other(state.initialServing||state.serving),courtLeft=other(state.courtLeft),right={A:0,B:0};

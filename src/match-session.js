@@ -15,7 +15,7 @@ function correctionSheet(s){
     <label>Điểm Đội A<input data-f="A" type="number" min="0" max="99" value="${s.score.A}"></label>
     <label>Điểm Đội B<input data-f="B" type="number" min="0" max="99" value="${s.score.B}"></label>
     <label>Đội giao<select data-f="serving"><option ${s.serving==='A'?'selected':''}>A</option><option ${s.serving==='B'?'selected':''}>B</option></select></label>
-    ${s.config.type==='double'?`<label>Lượt giao<select data-f="number"><option ${s.serverNumber===1?'selected':''}>1</option><option ${s.serverNumber===2?'selected':''}>2</option></select></label><label>Người giao<select data-f="player">${['A','B'].flatMap(t=>s.players[t].map((n,i)=>`<option value="${t}:${i}" ${t===s.serving&&n===view.server?'selected':''}>Đội ${t} · ${escape(n)}</option>`)).join('')}</select></label>`:''}
+    ${s.config.type==='double'?`<label>Lượt giao<select data-f="number"><option ${s.serverNumber===1?'selected':''}>1</option><option ${s.serverNumber===2?'selected':''}>2</option></select></label><label>Người giao<select data-f="player">${['A','B'].flatMap(t=>s.players[t].map((n,i)=>`<option value="${t}:${i}" ${t===s.serving&&i===view.serverIndex?'selected':''}>Đội ${t} · ${escape(n)}</option>`)).join('')}</select></label>`:''}
     ${button('Lưu sửa đổi','saveCorrection','primary')}</div>`;
 }
 function pauseSheet(s){
