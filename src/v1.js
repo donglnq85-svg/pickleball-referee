@@ -2,16 +2,16 @@ import {createMatch,rally,undo,redo,nextGame,scoreCall,matchView,prepareNextGame
 import {courtView} from './court-view.js';
 import {renderSession} from './match-session.js';
 import {historyList,historyDetail} from './match-history.js';
+import {createMatchRepository} from './match-persistence.js';
 import './v1.css';
 
 const app=document.getElementById('app');
-const ACTIVE='pickleball-referee:v1:active', DRAFT='pickleball-referee:v1:draft', HISTORY='pickleball-referee:v1:history';
-const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
-const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));return true}catch{alert('Không lưu được trận trên thiết bị này. Kiểm tra dung lượng trình duyệt.');return false}};
+const repository=createMatchRepository(localStorage);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=read(ACTIVE,null),draft=read(DRAFT,null),history=read(HISTORY,[]),screen='',warmInterval=null,medicalChoice=null;
-function save(){if(state)write(ACTIVE,state);if(draft)write(DRAFT,draft);else localStorage.removeItem(DRAFT)}
-function recordIfFinished(){if(state?.status!=='finished')return;history=read(HISTORY,[]);if(!history.some(m=>m.id===state.id)){history.unshift(structuredClone(state));write(HISTORY,history)}localStorage.removeItem(ACTIVE)}
+let state=repository.active(),draft=repository.load().draft,history=repository.history(),screen='',warmInterval=null,medicalChoice=null;
+function persist(){try{if(state)repository.saveSession(state,{draft,clearDraft:!draft});else repository.saveDraft(draft)}catch(error){alert('Không lưu được trận trên thiết bị này: '+error.message);window.location.reload();throw error}}
+function save(){persist()}
+function recordIfFinished(){if(state?.status==='finished')history=repository.history()}
 const names=team=>(state||draft)?.config?.players?.[team]||state?.players?.[team]||[];
 function base(title,body,footer='',overlay=''){
   window.v1Active=true;
@@ -20,7 +20,7 @@ function base(title,body,footer='',overlay=''){
 function button(text,act,cls='v1-main'){return `<button class="${cls}" data-v1="${act}">${text}</button>`}
 function mainHome(){
   const place=app.querySelector('#v1-home-actions');if(!place)return;
-  const active=read(ACTIVE,null),pending=read(DRAFT,null),count=read(HISTORY,[]).length;
+  const latest=repository.active(),active=latest?.status==='finished'?null:latest,pending=repository.load().draft,count=repository.history().length;
   place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
 }
 new MutationObserver(()=>{if(app.querySelector('#v1-home-actions')&&!app.querySelector('#v1-home-actions button'))mainHome()}).observe(app,{subtree:true,childList:true});
@@ -42,7 +42,7 @@ window.addEventListener('v1-config',event=>{
     input.setCustomValidity(input.value.trim()?'':'Vui lòng nhập tên vận động viên');
     if(!input.reportValidity()){input.focus();return}
   }
-  if(read(ACTIVE,null) && !window.confirm('Bắt đầu trận mới sẽ bỏ trận đang diễn ra trên thiết bị này. Tiếp tục?'))return;
+  if(repository.active()?.status!=='finished' && repository.active() && !window.confirm('Bắt đầu trận mới sẽ lưu trận hiện tại vào thiết bị. Tiếp tục?'))return;
   const config=parseConfig();if(!Object.values(config.players).flat().every(n=>n.trim()))return;
   draft={config,formHtml:event.detail.html,phase:'warmup',warmSeconds:0,warmDeadline:0,final:null};state=null;save();screen='warmup';renderWarm();
 });
@@ -96,13 +96,13 @@ function renderMatch(){if(!state)return;if(state.status!=='playing')return rende
 function renderResult(){if(!state)return;screen='result';const s=state,last=s.games.at(-1);
   base(s.status==='finished'?'Kết quả trận':`Game ${last.game} kết thúc`,`<h2>Đội ${last.winner} thắng ${s.status==='finished'?'trận':'game '+last.game}</h2><div class="v1-matchScore"><div><small>ĐỘI A</small><strong>${last.score.A}</strong></div><div><small>ĐỘI B</small><strong>${last.score.B}</strong></div></div><p>Tỷ số game: ${s.gamesWon.A} – ${s.gamesWon.B}</p><div class="v1-gameList">${s.games.map(g=>`<div>Game ${g.game} · ${g.score.A} – ${g.score.B} · Đội ${g.winner}</div>`).join('')}</div>${button('Hoàn tác rally cuối','undo','v1-secondary')}`,s.status==='finished'?`${button('Lịch sử trận đấu','history')}${button('Về trang chủ','home','v1-secondary')}`:button('Final Setup game tiếp theo','nextGame'));
 }
-function renderHistory(){screen='history';history=read(HISTORY,[]);base('Lịch sử trận đấu',historyList(history),button('Về trang chủ','home','v1-secondary'))}
+function renderHistory(){screen='history';history=repository.history();base('Lịch sử trận đấu',historyList(history),button('Về trang chủ','home','v1-secondary'))}
 function renderRecord(id){const m=history.find(item=>item.id===id);if(!m)return renderHistory();screen='record';base('Chi tiết trận',historyDetail(m),button('Lịch sử trận đấu','history'))}
 document.addEventListener('click',event=>{
   const b=event.target.closest('[data-v1]');if(!b)return;event.preventDefault();event.stopImmediatePropagation();const action=b.dataset.v1;
   if(action==='home'){clearInterval(warmInterval);screen='';window.location.reload();return}
-  if(action==='resume'){state=read(ACTIVE,null);if(state){medicalChoice=null;renderMatch()}return}
-  if(action==='resumeDraft'){draft=read(DRAFT,null);if(!draft)return;if(draft.phase==='warmup')renderWarm();else if(draft.final)renderReview();else startFinal();return}
+  if(action==='resume'){state=repository.active();if(state){medicalChoice=null;renderMatch()}return}
+  if(action==='resumeDraft'){draft=repository.load().draft;if(!draft)return;if(draft.phase==='warmup')renderWarm();else if(draft.final)renderReview();else startFinal();return}
   if(action==='history')return renderHistory();if(action.startsWith('record:'))return renderRecord(action.slice(7));
   if(action.startsWith('warm:')){draft.warmSeconds=Number(action.slice(5))*60;save();return renderWarm()}
   if(action==='skipWarm'||action==='finishWarm')return startFinal();
@@ -116,9 +116,9 @@ document.addEventListener('click',event=>{
   if(action.startsWith('nextSwap:')){const team=action.slice(9);draft.final.right[team]=1-draft.final.right[team];return renderNextFinal()}
   if(action==='begin'){if(state?.status==='gameEnd')nextGame(state,draft.final);else state=createMatch(draft.config,draft.final);state.formHtml=draft.formHtml;draft=null;save();medicalChoice=null;return renderMatch()}
   if(action==='nextGame'){draft={config:state.config,formHtml:state.formHtml||lastFormHtml,phase:'final',next:true,final:prepareNextGame(state)};save();return startFinal()}
-  if(action==='undo'){if(!state)return;const wasFinished=state.status==='finished';undo(state);if(wasFinished&&state.status!=='finished'){history=read(HISTORY,[]).filter(m=>m.id!==state.id);write(HISTORY,history)}if(state.status!=='finished')write(ACTIVE,state);else recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
-  if(action==='redo'){if(!state)return;redo(state);if(state.status!=='finished')write(ACTIVE,state);else recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
-  if(action.startsWith('rally:')){if(!state)return;rally(state,action.slice(6));write(ACTIVE,state);recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
+  if(action==='undo'){if(!state)return;undo(state);save();recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
+  if(action==='redo'){if(!state)return;redo(state);save();recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
+  if(action.startsWith('rally:')){if(!state)return;rally(state,action.slice(6));save();recordIfFinished();return state.status==='playing'?renderMatch():renderResult()}
   if(action==='swap'){setCourtLeft(state,other(state.courtLeft));save();return renderMatch()}
   if(action==='tools'||action==='correction'){medicalChoice=action;return renderMatch()}
   if(action==='closePanel'){medicalChoice=null;return renderMatch()}

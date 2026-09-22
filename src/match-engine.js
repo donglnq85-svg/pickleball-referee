@@ -1,11 +1,15 @@
 // Side-out scoring. USA Pickleball Official Rulebook 2026, sections 4.A, 5.A–B, 6.B.
+import {MATCH_SCHEMA_VERSION, RULES_VERSION, validateMatchSetup} from './match-domain.js';
 export const other = team => team === 'A' ? 'B' : 'A';
 const copy = value => structuredClone(value);
 export function rightPlayer(state, team) {
   if (state.config.type === 'single') return 0;
   return state.score[team] % 2 === 0 ? state.anchor[team] : 1 - state.anchor[team];
 }
-export function serverSide(state) { return state.score[state.serving] % 2 === 0 ? 'right' : 'left'; }
+export function serverSide(state) {
+  if (state.config.type === 'single') return state.score[state.serving] % 2 === 0 ? 'right' : 'left';
+  return serverIndex(state) === rightPlayer(state, state.serving) ? 'right' : 'left';
+}
 export function serverIndex(state) {
   if (state.config.type === 'single') return 0;
   const first = state.firstServer;
@@ -69,13 +73,14 @@ function settleGame(s) {
   if(s.status==='finished')s.finishedAt=new Date().toISOString();
 }
 export function createMatch(config, final) {
+  validateMatchSetup(config, final);
   const now=new Date().toISOString(), serving=final.serving;
   const score={A:config.start.A,B:config.start.B};
   const anchor=config.type === 'double' ? {
     A: score.A % 2 === 0 ? final.right.A : 1-final.right.A,
     B: score.B % 2 === 0 ? final.right.B : 1-final.right.B
   } : {A:0,B:0};
-  const state={version:1,id:globalThis.crypto?.randomUUID?.() || String(Date.now()),createdAt:now,updatedAt:now,status:'playing',phase:'match',config:copy(config),players:copy(config.players),score,game:1,gamesWon:{A:0,B:0},games:[],serving,initialServing:serving,serverNumber:config.type==='double'?2:null,firstServer:config.type==='double'?1-(final.serverIndex||0):0,anchor,courtLeft:final.courtLeft,notice:'',events:[],undo:[],redo:[],timeout:{A:0,B:0},timeoutTotal:{A:0,B:0},medical:{A:[0,0],B:[0,0]},pause:null};
+  const state={version:MATCH_SCHEMA_VERSION,rulesVersion:RULES_VERSION,id:globalThis.crypto?.randomUUID?.() || String(Date.now()),createdAt:now,updatedAt:now,status:'playing',phase:'match',config:copy(config),players:copy(config.players),score,game:1,gamesWon:{A:0,B:0},games:[],serving,initialServing:serving,initialService:true,serverNumber:config.type==='double'?2:null,firstServer:config.type==='double'?1-(final.serverIndex||0):0,anchor,courtLeft:final.courtLeft,notice:'',events:[],undo:[],redo:[],timeout:{A:0,B:0},timeoutTotal:{A:0,B:0},medical:{A:[0,0],B:[0,0]},pause:null};
   return state;
 }
 export function snapshot(s) {
@@ -97,6 +102,7 @@ export function transact(s, type, action, extra={}) {
   return s;
 }
 export function rally(s, winner) {
+  if(!['A','B'].includes(winner)) throw Error('Đội thắng rally không hợp lệ.');
   if(s.status!=='playing'||s.pause) return s;
   const serving=s.serving;
   return transact(s,'rally',()=>{
@@ -109,6 +115,7 @@ export function rally(s, winner) {
       s.notice='Đổi người giao · Đội '+serving+' giao lượt 2';
     } else {
       s.serving=winner;
+      s.initialService=false;
       if(s.config.type==='double') {
         s.serverNumber=1;
         s.firstServer=rightPlayer(s,winner);
@@ -120,25 +127,27 @@ export function rally(s, winner) {
 export function undo(s) {
   const transition=s.undo.pop(); if(!transition) return s;
   s.redo.push(transition); restore(s,transition.before);
-  s.events.push({at:new Date().toISOString(),type:'undo',reverses:transition.type});return s;
+  s.updatedAt=new Date().toISOString();s.events.push({at:s.updatedAt,type:'undo',reverses:transition.type});return s;
 }
 export function redo(s) {
   const transition=s.redo.pop();if(!transition)return s;
   s.undo.push(transition);restore(s,transition.after);
-  s.events.push({at:new Date().toISOString(),type:'redo',reapplies:transition.type});return s;
+  s.updatedAt=new Date().toISOString();s.events.push({at:s.updatedAt,type:'redo',reapplies:transition.type});return s;
 }
 export function nextGame(s, final) {
   if(s.status!=='gameEnd') return s;
+  validateMatchSetup(s.config, final);
   return transact(s,'nextGame',()=>{
     s.game++;s.score={A:s.config.start.A,B:s.config.start.B};
-    s.serving=final.serving;s.initialServing=final.serving;s.serverNumber=s.config.type==='double'?2:null;
+    s.serving=final.serving;s.initialServing=final.serving;s.initialService=true;s.serverNumber=s.config.type==='double'?2:null;
     s.firstServer=s.config.type==='double'?1-(final.serverIndex||0):0;s.courtLeft=final.courtLeft;
     if(s.config.type==='double') for(const team of ['A','B'])s.anchor[team]=s.score[team]%2===0?final.right[team]:1-final.right[team];
     s.status='playing';s.phase='match';s.pause=null;s.timeout={A:0,B:0};s.notice='Game '+s.game+' · xướng '+scoreCall(s);
   });
 }
-export function setCourtLeft(s, team) {return transact(s,'courtEnd',()=>{s.courtLeft=team;s.notice='Đổi bên sân';});}
+export function setCourtLeft(s, team) {if(!['A','B'].includes(team))throw Error('Bên sân không hợp lệ.');if(s.status!=='playing'||s.pause)return s;return transact(s,'courtEnd',()=>{s.courtLeft=team;s.notice='Đổi bên sân';});}
 export function startPause(s,type,team,playerIndex=0) {
+  if(!['timeout','medical'].includes(type)||!['A','B'].includes(team)||!Number.isInteger(playerIndex)||playerIndex<0||playerIndex>=s.players[team].length)throw Error('Sự kiện trận không hợp lệ.');
   if(s.status!=='playing'||s.pause) return s;
   return transact(s,type,()=>{if(type==='medical')s.medical[team][playerIndex]++;else{s.timeout[team]++;s.timeoutTotal[team]++}s.pause={type,team,playerIndex,startedAt:Date.now(),duration:type==='timeout'?60000:900000};s.notice=type==='timeout'?'Time-out Đội '+team:'Hỗ trợ y tế · '+s.players[team][playerIndex];});
 }
@@ -151,12 +160,18 @@ export function correct(s, input) {
   if(s.config.type==='double'&&![1,2].includes(Number(input.number)))throw Error('Chọn lượt giao.');
   const player=Number(input.player);
   if(s.config.type==='double'&&![0,1].includes(player))throw Error('Chọn người giao.');
+  // Legacy saved matches predate initialService. The applied transitions still
+  // identify whether a side-out has happened in this game (Undo removes it).
+  const opening=s.initialService??!s.undo.some(t=>t.before.game===s.game&&t.before.serving!==t.after.serving);
   return transact(s,'correction',()=>{
     s.score={A,B};s.serving=input.serving;
     if(s.config.type==='double'){
       s.serverNumber=Number(input.number);
       s.firstServer=s.serverNumber===1?player:1-player;
-      s.anchor[s.serving]=s.score[s.serving]%2===0?player:1-player;
+      s.initialService=opening&&s.serving===s.initialServing;
+      const initialSecond=s.initialService===true&&s.serverNumber===2;
+      const right= initialSecond ? (s.score[s.serving]%2===0?player:1-player) : s.serverNumber===1?player:1-player;
+      s.anchor[s.serving]=s.score[s.serving]%2===0?right:1-right;
     }
     s.notice='Đã sửa trạng thái · kiểm tra người giao, người đỡ và xướng '+scoreCall(s);
     settleGame(s);

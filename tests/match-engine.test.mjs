@@ -10,7 +10,7 @@ test('doubles starts with only second server, switches first/second then side ou
  rally(s,'B');assert.equal(scoreCall(s),'1 – 0 – 1');assert.equal(serverIndex(s),0);assert.equal(receiverIndex(s),1);assert.equal(rightPlayer(s,'B'),1);
  rally(s,'A');assert.equal(scoreCall(s),'1 – 0 – 2');assert.equal(serverIndex(s),1);
  rally(s,'A');assert.equal(scoreCall(s),'0 – 1 – 1');assert.equal(s.serving,'A');assert.equal(serverIndex(s),0);
- undo(s);assert.equal(scoreCall(s),'1 – 0 – 2');assert.equal(s.serving,'B');assert.equal(serverIndex(s),1);assert.equal(receiverIndex(s),1);
+ undo(s);assert.equal(scoreCall(s),'1 – 0 – 2');assert.equal(s.serving,'B');assert.equal(serverIndex(s),1);assert.equal(receiverIndex(s),0);
  redo(s);assert.equal(scoreCall(s),'0 – 1 – 1');assert.equal(s.serving,'A');
 });
 test('singles uses two-number call and immediate side out with parity',()=>{
