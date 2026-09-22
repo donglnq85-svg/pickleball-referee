@@ -21,11 +21,12 @@ export function createTournament(name) {
     rulesVersions:[],activeRulesVersionId:null,structure:{courts:[],groups:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
 }
 
-export function addRulesVersion(t,{label,authority,scoring='unknown',format=null}) {
+export function addRulesVersion(t,{label,authority,scoring='unknown',format=null,procedures={equipmentCheck:'unknown'}}) {
   const scoringId=requireText(scoring,'Phương thức tính điểm');
   if (format!==null && (!Number.isInteger(format.sets)||format.sets<1||!Number.isInteger(format.points)||format.points<1||
       typeof format.rule!=='string'||!format.rule.trim()||format.cap!==undefined&&(!Number.isInteger(format.cap)||format.cap<format.points))) throw Error('Thể thức không hợp lệ.');
-  const version={id:id(),label:requireText(label,'Tên phiên bản luật'),authority:requireText(authority,'Nguồn luật'),scoring:scoringId,format:clone(format),createdAt:now()};
+  if(!procedures||!['unknown','disabled','optional','required'].includes(procedures.equipmentCheck))throw Error('Quy định kiểm tra dụng cụ không hợp lệ.');
+  const version={id:id(),label:requireText(label,'Tên phiên bản luật'),authority:requireText(authority,'Nguồn luật'),scoring:scoringId,format:clone(format),procedures:clone(procedures),createdAt:now()};
   t.rulesVersions.push(version);t.activeRulesVersionId=version.id;touch(t,'rulesVersionAdded',{rulesVersionId:version.id});return version;
 }
 
@@ -42,7 +43,7 @@ export function addScheduledMatch(t,{label,groupId=null,courtId=null,type='unkno
   if(courtId!==null)find(t.structure.courts,courtId,'sân');
   if(!['unknown','single','double'].includes(type))throw Error('Loại trận không hợp lệ.');
   if(players!==null && (!['single','double'].includes(type)||!['A','B'].every(team=>Array.isArray(players[team])&&players[team].length===(type==='single'?1:2)&&players[team].every(name=>typeof name==='string'&&name.trim()))))throw Error('VĐV không hợp lệ.');
-  const match={id:id(),label:requireText(label,'Tên trận'),groupId,courtId,type,players:clone(players),readiness:'unknown',blockedReason:null,matchSessionId:null,createdAt:now()};
+  const match={id:id(),label:requireText(label,'Tên trận'),groupId,courtId,type,players:clone(players),readiness:'unknown',blockedReason:null,matchSessionId:null,operations:null,matchStartSnapshot:null,createdAt:now()};
   t.schedule.push(match);touch(t,'matchScheduled',{matchId:match.id});return match;
 }
 
@@ -97,7 +98,20 @@ export function validateTournament(t) {
     !Array.isArray(t.rulesVersions)||!Array.isArray(t.structure?.courts)||!Array.isArray(t.structure?.groups)||
     !Array.isArray(t.schedule)||!Array.isArray(t.assignments)||!Array.isArray(t.workSessions)||!Array.isArray(t.events))throw Error('Dữ liệu giải không hợp lệ.');
   if(t.activeRulesVersionId!==null)find(t.rulesVersions,t.activeRulesVersionId,'phiên bản luật');
-  for(const m of t.schedule){if(m.groupId!==null)find(t.structure.groups,m.groupId,'bảng');if(m.courtId!==null)find(t.structure.courts,m.courtId,'sân');if(!['unknown','ready','blocked'].includes(m.readiness))throw Error('Readiness không hợp lệ.');}
+  for(const v of t.rulesVersions)if(v.procedures!==undefined&&(!v.procedures||!['unknown','disabled','optional','required'].includes(v.procedures.equipmentCheck)))throw Error('Quy định kiểm tra dụng cụ không hợp lệ.');
+  for(const m of t.schedule){
+    if(m.groupId!==null)find(t.structure.groups,m.groupId,'bảng');if(m.courtId!==null)find(t.structure.courts,m.courtId,'sân');if(!['unknown','ready','blocked'].includes(m.readiness))throw Error('Readiness không hợp lệ.');
+    if(m.operations!==undefined&&m.operations!==null){
+      const o=m.operations;
+      if(!o.call||!Array.isArray(o.call.calls)||!Array.isArray(o.call.loudspeakerRequests)||!o.waiting||!o.preMatch||
+        !['idle','waiting','arrived','resolved_no_show'].includes(o.waiting.status)||!Array.isArray(o.waiting.extensions)||
+        !['pending','active','completed','skipped'].includes(o.preMatch.warmup?.status))throw Error('Trạng thái vận hành trận không hợp lệ.');
+    }
+    if(m.matchStartSnapshot!==undefined&&m.matchStartSnapshot!==null){
+      const s=m.matchStartSnapshot;
+      if(s.version!==1||s.scheduledMatchId!==m.id||!t.rulesVersions.some(v=>v.id===s.rulesVersionId)||!s.config||!s.final||!Array.isArray(s.participants))throw Error('Match Start Snapshot không hợp lệ.');
+    }
+  }
   if(t.launches!==undefined){
     if(!t.launches||typeof t.launches!=='object'||Array.isArray(t.launches))throw Error('Launch journal không hợp lệ.');
     for(const [matchId,intent] of Object.entries(t.launches)){

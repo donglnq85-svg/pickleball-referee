@@ -7,7 +7,7 @@ import {courtManagerView} from './tournament-domain.js';
 const clone=value=>structuredClone(value);
 const sessionId=(tournamentId,scheduledMatchId)=>`tournament:${tournamentId}:match:${scheduledMatchId}`;
 const fail=(stage,options)=>options?.afterStage?.(stage);
-const context=(t,m,rulesVersionId)=>({tournamentId:t.id,scheduledMatchId:m.id,rulesVersionId});
+const context=(t,m,rulesVersionId,matchStartSnapshotId=null)=>({tournamentId:t.id,scheduledMatchId:m.id,rulesVersionId,matchStartSnapshotId});
 function matchFor(repo,t,m){
   const matches=Object.values(repo.load().matches).filter(s=>s.tournamentContext?.tournamentId===t.id&&s.tournamentContext?.scheduledMatchId===m.id);
   if(matches.length>1)throw Error('Có nhiều Match Session cho cùng một trận. Dừng để bảo vệ lịch sử.');
@@ -15,7 +15,8 @@ function matchFor(repo,t,m){
 }
 function verifySession(session,t,m,intent){
   if(!session||session.id!==intent.sessionId||session.tournamentContext?.tournamentId!==t.id||
-    session.tournamentContext?.scheduledMatchId!==m.id||session.tournamentContext?.rulesVersionId!==intent.rulesVersionId)
+    session.tournamentContext?.scheduledMatchId!==m.id||session.tournamentContext?.rulesVersionId!==intent.rulesVersionId||
+    (intent.matchStartSnapshotId&&session.tournamentContext?.matchStartSnapshotId!==intent.matchStartSnapshotId))
     throw Error('Match Session không khớp launch journal. Không tạo trận thay thế.');
   return session;
 }
@@ -44,12 +45,15 @@ export function beginTournamentMatch(tournamentId,workSessionId,matchId,final,st
     m.matchSessionId=recovered.id;t.launches[matchId]=intent;tournaments.save(t);
     return recovered;
   }else{
-    const version=t.rulesVersions.find(v=>v.id===t.activeRulesVersionId);
+    const snapshot=m.matchStartSnapshot;
+    const version=t.rulesVersions.find(v=>v.id===(snapshot?.rulesVersionId||t.activeRulesVersionId));
     if(m.readiness!=='ready'||!m.players||version?.scoring!=='side-out'||!version.format)throw Error('Trận hoặc luật chưa đủ điều kiện bắt đầu.');
-    const config={...clone(version.format),type:m.type,players:clone(m.players),start:{A:0,B:0},scoring:'side-out'};
-    validateMatchSetup(config,final);
+    const config=snapshot?clone(snapshot.config):{...clone(version.format),type:m.type,players:clone(m.players),start:{A:0,B:0},scoring:'side-out'};
+    const launchFinal=snapshot?clone(snapshot.final):final;
+    if(snapshot&&(snapshot.scheduledMatchId!==m.id||snapshot.rulesVersionId!==version.id))throw Error('Match Start Snapshot không nhất quán.');
+    validateMatchSetup(config,launchFinal);
     fail('beforeIntent',options);
-    intent={phase:'prepared',sessionId:sessionId(t.id,m.id),rulesVersionId:version.id,config,final:clone(final),createdAt:new Date().toISOString()};
+    intent={phase:'prepared',sessionId:sessionId(t.id,m.id),rulesVersionId:version.id,matchStartSnapshotId:snapshot?.id||null,config,final:clone(launchFinal),createdAt:new Date().toISOString()};
     t.launches[matchId]=intent;tournaments.save(t);
     fail('afterIntent',options);
   }
@@ -62,7 +66,7 @@ export function beginTournamentMatch(tournamentId,workSessionId,matchId,final,st
   if(!session){
     session=createMatch(intent.config,intent.final);
     session.id=intent.sessionId;
-    session.tournamentContext=context(t,m,intent.rulesVersionId);
+    session.tournamentContext=context(t,m,intent.rulesVersionId,intent.matchStartSnapshotId);
     session=matches.insertSessionIfAbsent(session);
   }
   verifySession(session,t,m,intent);
@@ -95,7 +99,7 @@ export function recoverTournamentLaunches(storage,tournamentId=null){
     // session. A persisted intent itself is already an authorized launch.
     if(intent?.phase==='prepared'){
       let session=matches.get(intent.sessionId);
-      if(!session){session=createMatch(intent.config,intent.final);session.id=intent.sessionId;session.tournamentContext=context(t,m,intent.rulesVersionId);session=matches.insertSessionIfAbsent(session);}
+      if(!session){session=createMatch(intent.config,intent.final);session.id=intent.sessionId;session.tournamentContext=context(t,m,intent.rulesVersionId,intent.matchStartSnapshotId);session=matches.insertSessionIfAbsent(session);}
       verifySession(session,t,m,intent);
       const current=tournaments.get(t.id),entry=current.schedule.find(item=>item.id===m.id);
       if(entry.matchSessionId&&entry.matchSessionId!==session.id)throw Error('Linkage xung đột.');
@@ -105,7 +109,7 @@ export function recoverTournamentLaunches(storage,tournamentId=null){
     }
     if(!orphan||m.matchSessionId&&m.matchSessionId!==orphan.id||!orphan.tournamentContext?.rulesVersionId)throw Error('Linkage cũ không thể phục hồi an toàn.');
     const current=tournaments.get(t.id),entry=current.schedule.find(item=>item.id===m.id);
-    entry.matchSessionId=orphan.id;current.launches??={};current.launches[m.id]={phase:'linked',sessionId:orphan.id,rulesVersionId:orphan.tournamentContext.rulesVersionId,config:clone(orphan.config),final:null,createdAt:orphan.createdAt};
+    entry.matchSessionId=orphan.id;current.launches??={};current.launches[m.id]={phase:'linked',sessionId:orphan.id,rulesVersionId:orphan.tournamentContext.rulesVersionId,matchStartSnapshotId:orphan.tournamentContext.matchStartSnapshotId||null,config:clone(orphan.config),final:null,createdAt:orphan.createdAt};
     tournaments.save(current);recovered.push(orphan.id);
   }
   return recovered;
