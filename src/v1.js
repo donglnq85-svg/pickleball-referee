@@ -3,6 +3,7 @@ import {courtView} from './court-view.js';
 import {renderSession} from './match-session.js';
 import {historyList,historyDetail} from './match-history.js';
 import {createMatchRepository} from './match-persistence.js';
+import './tournament-ui.js';
 import './v1.css';
 
 const app=document.getElementById('app');
@@ -21,7 +22,7 @@ function button(text,act,cls='v1-main'){return `<button class="${cls}" data-v1="
 function mainHome(){
   const place=app.querySelector('#v1-home-actions');if(!place)return;
   const latest=repository.active(),active=latest?.status==='finished'?null:latest,pending=repository.load().draft,count=repository.history().length;
-  place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
+  place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button('Quản lý giải đấu','tournament','v1-home-button')}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
 }
 new MutationObserver(()=>{if(app.querySelector('#v1-home-actions')&&!app.querySelector('#v1-home-actions button'))mainHome()}).observe(app,{subtree:true,childList:true});
 function parseConfig(){
@@ -101,6 +102,7 @@ function renderRecord(id){const m=history.find(item=>item.id===id);if(!m)return 
 document.addEventListener('click',event=>{
   const b=event.target.closest('[data-v1]');if(!b)return;event.preventDefault();event.stopImmediatePropagation();const action=b.dataset.v1;
   if(action==='home'){clearInterval(warmInterval);screen='';window.location.reload();return}
+  if(action==='tournament'){window.dispatchEvent(new Event('tournament-open'));return}
   if(action==='resume'){state=repository.active();if(state){medicalChoice=null;renderMatch()}return}
   if(action==='resumeDraft'){draft=repository.load().draft;if(!draft)return;if(draft.phase==='warmup')renderWarm();else if(draft.final)renderReview();else startFinal();return}
   if(action==='history')return renderHistory();if(action.startsWith('record:'))return renderRecord(action.slice(7));
