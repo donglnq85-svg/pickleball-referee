@@ -1,5 +1,3 @@
-import {createMatch} from './match-engine.js';
-import {createMatchRepository} from './match-persistence.js';
 
 export const TOURNAMENT_SCHEMA_VERSION = 1;
 const clone = value => structuredClone(value);
@@ -20,7 +18,7 @@ const touch = (t, type, detail={}) => {
 
 export function createTournament(name) {
   const at=now();return {schemaVersion:TOURNAMENT_SCHEMA_VERSION,id:id(),name:requireText(name,'Tên giải'),status:'draft',createdAt:at,updatedAt:at,
-    rulesVersions:[],activeRulesVersionId:null,structure:{courts:[],groups:[]},schedule:[],assignments:[],workSessions:[],events:[]};
+    rulesVersions:[],activeRulesVersionId:null,structure:{courts:[],groups:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
 }
 
 export function addRulesVersion(t,{label,authority,scoring='unknown',format=null}) {
@@ -94,29 +92,23 @@ export function courtManagerView(t,workSessionId,matchRepository=null) {
     progress:{total:matches.length,unknown:matches.filter(m=>m.readiness==='unknown').length,ready:matches.filter(m=>m.readiness==='ready').length,blocked:matches.filter(m=>m.readiness==='blocked').length,finished:matches.filter(m=>m.progress==='finished').length}};
 }
 
-// Tournament has no scoring reducer. The only route into play instantiates the
-// Gate #1 Match Engine and stores it in the existing Match Repository.
-export function beginTournamentMatch(t,workSessionId,matchId,final,storage) {
-  const view=courtManagerView(t,workSessionId);
-  if(view.workSession.status!=='active'||!view.matches.some(m=>m.id===matchId))throw Error('Trận ngoài phạm vi nhiệm vụ đang hoạt động.');
-  const scheduled=find(t.schedule,matchId,'trận');
-  const version=find(t.rulesVersions,t.activeRulesVersionId,'phiên bản luật');
-  if(scheduled.readiness!=='ready'||scheduled.matchSessionId||!scheduled.players||version.scoring!=='side-out'||!version.format)throw Error('Trận hoặc luật chưa đủ điều kiện bắt đầu.');
-  const config={...clone(version.format),type:scheduled.type,players:clone(scheduled.players),start:{A:0,B:0},scoring:'side-out'};
-  const session=createMatch(config,final);
-  session.tournamentContext={tournamentId:t.id,scheduledMatchId:matchId,rulesVersionId:version.id};
-  const repo=createMatchRepository(storage);
-  repo.saveSession(session);
-  scheduled.matchSessionId=session.id;touch(t,'matchSessionLinked',{matchId,matchSessionId:session.id});
-  return session;
-}
-
 export function validateTournament(t) {
   if(t?.schemaVersion!==TOURNAMENT_SCHEMA_VERSION||!t.id||!t.name||!['draft','active'].includes(t.status)||
     !Array.isArray(t.rulesVersions)||!Array.isArray(t.structure?.courts)||!Array.isArray(t.structure?.groups)||
     !Array.isArray(t.schedule)||!Array.isArray(t.assignments)||!Array.isArray(t.workSessions)||!Array.isArray(t.events))throw Error('Dữ liệu giải không hợp lệ.');
   if(t.activeRulesVersionId!==null)find(t.rulesVersions,t.activeRulesVersionId,'phiên bản luật');
   for(const m of t.schedule){if(m.groupId!==null)find(t.structure.groups,m.groupId,'bảng');if(m.courtId!==null)find(t.structure.courts,m.courtId,'sân');if(!['unknown','ready','blocked'].includes(m.readiness))throw Error('Readiness không hợp lệ.');}
+  if(t.launches!==undefined){
+    if(!t.launches||typeof t.launches!=='object'||Array.isArray(t.launches))throw Error('Launch journal không hợp lệ.');
+    for(const [matchId,intent] of Object.entries(t.launches)){
+      const scheduled=find(t.schedule,matchId,'trận trong journal');
+      if(!intent||!['prepared','linked'].includes(intent.phase)||typeof intent.sessionId!=='string'||!intent.sessionId||
+        !t.rulesVersions.some(v=>v.id===intent.rulesVersionId)||!intent.config||
+        (intent.phase==='prepared'&&!intent.final)||
+        (scheduled.matchSessionId&&scheduled.matchSessionId!==intent.sessionId)||
+        (intent.phase==='linked'&&scheduled.matchSessionId!==intent.sessionId))throw Error('Launch journal không nhất quán.');
+    }
+  }
   for(const a of t.assignments){const refs={court:t.structure.courts,group:t.structure.groups,match:t.schedule}[a.scope?.kind];if(!refs||!Array.isArray(a.scope.ids)||!a.scope.ids.length)throw Error('Phạm vi phân công không hợp lệ.');for(const ref of a.scope.ids)find(refs,ref,'đối tượng phân công');}
   for(const s of t.workSessions){find(t.assignments,s.assignmentId,'phân công');if(!['active','completed'].includes(s.status))throw Error('Nhiệm vụ không hợp lệ.');}
   if(t.workSessions.filter(s=>s.status==='active').length>1)throw Error('Chỉ một nhiệm vụ được hoạt động trong một giải.');

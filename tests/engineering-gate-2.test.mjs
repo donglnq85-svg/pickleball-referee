@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createTournament,addRulesVersion,addResource,addScheduledMatch,createAssignment,startWorkSession,finishWorkSession,setMatchReadiness,assignmentMatches,courtManagerView,beginTournamentMatch} from '../src/tournament-domain.js';
+import {createTournament,addRulesVersion,addResource,addScheduledMatch,createAssignment,startWorkSession,finishWorkSession,setMatchReadiness,assignmentMatches,courtManagerView} from '../src/tournament-domain.js';
+import {beginTournamentMatch,recoverTournamentLaunches} from '../src/tournament-launch.js';
 import {createTournamentRepository,TOURNAMENT_STORE_KEY} from '../src/tournament-persistence.js';
 import {createMatchRepository} from '../src/match-persistence.js';
 import {matchView,rally} from '../src/match-engine.js';
@@ -69,7 +70,8 @@ test('only one active Work Session per referee; a second assignment cannot orpha
 test('Rules Version is explicit and versioned; incomplete facts never launch a match',()=>{
   const db=storage(),{t,c1,m1,m3}=setup();
   const a=createAssignment(t,{label:'Trận',scopeKind:'match',scopeIds:[m3.id]});const s=startWorkSession(t,a.id);
-  assert.throws(()=>beginTournamentMatch(t,s.id,m3.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
+  const tournamentRepo=createTournamentRepository(db);tournamentRepo.save(t,{activeWorkSession:s.id});
+  assert.throws(()=>beginTournamentMatch(t.id,s.id,m3.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
   assert.throws(()=>createAssignment(t,{label:'Sai',scopeKind:'court',scopeIds:[m1.id]}),/Không tìm thấy/);
   assert.throws(()=>addScheduledMatch(t,{label:'Sai sân',courtId:'missing'}),/Không tìm thấy/);
   assert.throws(()=>setMatchReadiness(t,m3.id,'blocked',''),/không được để trống/);
@@ -79,25 +81,29 @@ test('Rules Version is explicit and versioned; incomplete facts never launch a m
   const future=addRulesVersion(t,{label:'Phiên bản tương lai',authority:'Ban tổ chức',scoring:'future-scoring',format:{sets:7,points:25,rule:'future-format'}});
   assert.equal(future.format.sets,7);
   setMatchReadiness(t,m3.id,'ready');
-  assert.throws(()=>beginTournamentMatch(t,s.id,m3.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
+  tournamentRepo.save(t);
+  assert.throws(()=>beginTournamentMatch(t.id,s.id,m3.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
   const m1Assignment=createAssignment(t,{label:'Trận khác',scopeKind:'match',scopeIds:[m1.id]});
   finishWorkSession(t,s.id);
   const next=startWorkSession(t,m1Assignment.id);setMatchReadiness(t,m1.id,'ready');
-  assert.throws(()=>beginTournamentMatch(t,next.id,m1.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
+  tournamentRepo.save(t,{activeWorkSession:null});tournamentRepo.save(t,{activeWorkSession:next.id});
+  assert.throws(()=>beginTournamentMatch(t.id,next.id,m1.id,{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0},db),/chưa đủ/);
   assert.equal(t.structure.courts.find(c=>c.id===c1.id).label,'Sân Trung tâm');
 });
 
 test('Tournament match delegates to the one Gate #1 engine and projects progress from its repository',()=>{
   const db=storage(),{t,m1}=setup(),a=createAssignment(t,{label:'Trọng tài trận',scopeKind:'match',scopeIds:[m1.id]}),w=startWorkSession(t,a.id);
   setMatchReadiness(t,m1.id,'ready');
+  const tournamentRepo=createTournamentRepository(db);tournamentRepo.save(t,{activeWorkSession:w.id});
   const final={serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0};
-  const session=beginTournamentMatch(t,w.id,m1.id,final,db);
+  const session=beginTournamentMatch(t.id,w.id,m1.id,final,db);
   assert.equal(session.tournamentContext.scheduledMatchId,m1.id);
   assert.equal(matchView(session).scoreCall,'0 – 0 – 2');
   rally(session,'B');createMatchRepository(db).saveSession(session);
   assert.equal(matchView(createMatchRepository(db).get(session.id)).scoreCall,'0 – 0 – 1');
-  assert.equal(courtManagerView(t,w.id,createMatchRepository(db)).matches[0].progress,'playing');
-  assert.throws(()=>beginTournamentMatch(t,w.id,m1.id,final,db),/chưa đủ/);
+  assert.equal(courtManagerView(tournamentRepo.get(t.id),w.id,createMatchRepository(db)).matches[0].progress,'playing');
+  assert.equal(beginTournamentMatch(t.id,w.id,m1.id,final,db).id,session.id);
+  assert.equal(recoverTournamentLaunches(db,t.id).length,1);
 });
 
 test('corrupt or unsupported Tournament document is refused without overwriting stored bytes',()=>{
