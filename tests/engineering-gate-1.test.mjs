@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createMatch, rally, undo, redo, nextGame, prepareNextGame, resolveFinal, matchView, scoreCall} from '../src/match-engine.js';
+import {createMatch, rally, undo, redo, nextGame, prepareNextGame, resolveFinal, matchView, scoreCall, startPause, endPause} from '../src/match-engine.js';
 import {createMatchRepository, STORE_KEY} from '../src/match-persistence.js';
 import {RULES_VERSION} from '../src/match-domain.js';
 
@@ -68,6 +68,18 @@ test('atomic persistence preserves old sessions and draft, migrates legacy witho
   assert.equal(repo.get(legacy.id).id,legacy.id);assert.equal(repo.load().draft,null);
   assert.ok(device.getItem('pickleball-referee:v1:active'));
   assert.equal(JSON.parse(device.getItem(STORE_KEY)).version,2);
+});
+
+test('timeout and medical recover the exact pending rally across reload',()=>{
+  const device=storage(),repo=reopen(device),s=createMatch(config('double',1),final);
+  rally(s,'A');const pending=matchView(s);
+  startPause(s,'timeout','B');repo.saveSession(s);
+  let recovered=reopen(device).active();assert.equal(recovered.pause.type,'timeout');
+  assert.equal(recovered.timeout.B,1);assert.equal(scoreCall(recovered),pending.scoreCall);
+  endPause(recovered);startPause(recovered,'medical','A',1);repo.saveSession(recovered);
+  recovered=reopen(device).active();assert.equal(recovered.pause.type,'medical');
+  assert.deepEqual(recovered.medical.A,[0,1]);endPause(recovered);
+  assert.deepEqual(matchView(recovered).participants,pending.participants);
 });
 
 test('invalid setup and rally never create a transition; corrupt durable store is not overwritten',()=>{
