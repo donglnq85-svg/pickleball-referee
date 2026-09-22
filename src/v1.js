@@ -3,6 +3,7 @@ import {courtView} from './court-view.js';
 import {renderSession} from './match-session.js';
 import {historyList,historyDetail} from './match-history.js';
 import {createMatchRepository} from './match-persistence.js';
+import {resolveApplicationResume} from './application-resume.js';
 import './tournament-ui.js';
 import './v1.css';
 
@@ -139,3 +140,13 @@ document.addEventListener('click',event=>{
 },true);
 let lastFormHtml='';window.addEventListener('v1-config',event=>{lastFormHtml=event.detail.html});
 window.addEventListener('tournament-match-open',event=>{if(!event.detail)return;state=event.detail;draft=null;medicalChoice=null;renderMatch()});
+
+const resumeTarget=resolveApplicationResume(localStorage);
+if(resumeTarget.kind==='match'){
+  window.v1Active=true;state=repository.get(resumeTarget.matchId);medicalChoice=null;renderMatch();
+}else if(resumeTarget.kind==='tournament'){
+  window.v1Active=true;window.dispatchEvent(new CustomEvent('application-resume',{detail:resumeTarget}));
+}else if(resumeTarget.kind==='draft'){
+  window.v1Active=true;draft=repository.load().draft;
+  if(draft?.phase==='warmup')renderWarm();else if(draft?.final)renderReview();else startFinal();
+}

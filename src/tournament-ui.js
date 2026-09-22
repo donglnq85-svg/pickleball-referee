@@ -45,6 +45,12 @@ function renderPreMatch(){screen='prematch';const t=selected(),match=selectedMat
 function render(){if(screen==='list')renderList();else if(screen==='tournament')renderTournament();else if(screen==='court')renderCourt();else if(screen==='operations')renderOperations();else if(screen==='prematch')renderPreMatch()}
 export function openTournament(){screen='list';render()}
 window.addEventListener('tournament-open',openTournament);
+window.addEventListener('application-resume',event=>{
+  const target=event.detail;if(target?.kind!=='tournament')return;
+  tournamentId=target.tournamentId;workSessionId=target.workSessionId;matchId=target.matchId;
+  try{recoverTournamentLaunches(localStorage,tournamentId)}catch(error){alert(error.message);return}
+  screen=target.screen;render();
+});
 window.addEventListener('tournament-return',event=>{const context=event.detail;if(!context)return;tournamentId=context.tournamentId;const loaded=repo.get(tournamentId),active=loaded?.workSessions.find(s=>s.status==='active');if(!active)return openTournament();workSessionId=active.id;screen='court';render()});
 document.addEventListener('change',event=>{
   if(!screen)return;
