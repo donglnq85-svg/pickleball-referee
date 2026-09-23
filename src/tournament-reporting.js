@@ -85,7 +85,8 @@ export function reportingAttention(t){
       if(required&&(!report||report.source.id!==result.id||report.status==='OUTDATED'))items.push({kind:'MATCH_REPORT_REQUIRED',severity:'medium',matchId:match.id});
     }
   }
-  for(const completion of t.groupCompletions||[]){
+  const latestCompletions=new Map();for(const completion of t.groupCompletions||[])latestCompletions.set(completion.groupId,completion);
+  for(const completion of latestCompletions.values()){
     if(completion.status!=='READY'||!completion.groupSnapshotId)continue;const report=current(reporting(t).group[completion.groupId]),rules=t.rulesVersions.find(item=>item.id===t.activeRulesVersionId),required=reportPolicy(rules||{procedures:{}}).group==='required';
     if(required&&(!report||report.source.id!==completion.groupSnapshotId||report.status==='OUTDATED'))items.push({kind:'GROUP_REPORT_REQUIRED',severity:'medium',groupId:completion.groupId});
   }
