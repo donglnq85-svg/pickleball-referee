@@ -43,6 +43,22 @@ Court Manager and Tournament Home project required reports, shared-but-unconfirm
 - Browser E2E found and closed two attention-state defects: generated-but-unsent reports now remain actionable, and the first Group Report no longer shows a false qualification-change warning.
 - Final candidate source loads without application-origin console errors; browser-extension metadata errors are isolated to the test harness.
 
+## Score Semantics Closure
+
+Root cause: Gate #1 used the generic field `score` for live points and completed-game points, while Gate #4 reused `gamesWon` beside those point scores without carrying the frozen Match Format into Canonical Result. Normal engine completion happened to derive the winner from games, but the correction API could accept an incomplete best-of-three result. Standings also named point totals `pointsWon/pointsLost`, which obscured the boundary between games won and points scored.
+
+The closure establishes three explicit layers:
+
+- `currentGamePoints` is mutable only for the game being played.
+- `completedGames[].points` is the immutable per-game ledger.
+- `gamesWon` in Match State and `matchGamesWon` in Canonical Result are derived from completed games; a best-of-N result is valid only when `requiredWins = floor(sets / 2) + 1`.
+
+Canonical Result now freezes `{sets, requiredWins}`, corrections must provide exact `completedGames`, and result validation recalculates winner/game wins. Standings expose separate `matchWins`, `gameWins`, `gameLosses`, `gameDifferential`, `pointsFor`, `pointsAgainst`, and `pointDifferential`. Match/Group Reports and History label match game-wins separately from per-game points. Match Store v2 records migrate deterministically to Match schema v3, including Undo/Redo/event snapshots; Tournament candidate data migrates result and standings fields without changing Result Version or Group Snapshot source IDs.
+
+Regression coverage adds best-of-three 2–0 and 2–1, the 1–0 and 1–1 game boundaries, deciding Game 3, game-boundary Undo/Redo, reload/migration, exact Canonical Result, one-game correction, and separate game/point differential plus Match/Group report assertions. Full Gate #1–#5 suite: **66/66 pass**; production build: **pass**.
+
+Browser E2E on candidate commit `0ac22298baba1e82d3ad89d7e36e09408951b884` completed a real best-of-three Singles match: Game 1 `11–4`, Game 2 `8–11`, Game 3 `11–6`. Match Session showed `1–0`, then `1–1`, then Match `2–1`; Canonical Result, History and Match Report retained all exact game points; Standings showed game `2-1 (HS 1)` separately from points `30-21 (HS 9)`. A Doubles smoke from `10–0–2` confirmed Server 2/Court View and ended `11–0`. No application-origin console error was observed.
+
 ## Known limitations for Product Control audit
 
 - Share-ready artifact is a deterministic plain-text preview; PDF/template designer is outside Gate #5.
