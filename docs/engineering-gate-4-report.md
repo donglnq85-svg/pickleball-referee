@@ -37,6 +37,19 @@ Court Manager shows Match progress separately from result confirmation, the most
 - Reload priority for pending result confirmation without duplicate Match creation.
 - Full Gate #1–#3 regression remains part of the same test command.
 
+## Candidate browser verification
+
+Verified on Vercel candidate source `d9f70cacc64a9fab5754e4e5e430b7a6b19fe066`:
+
+- Created a Tournament with frozen Match Rules and Ranking Rules, one group, court, scheduled Singles match and group-scoped Work Session.
+- Completed Call/Waiting → reload/resume → arrival → Pre-Match → immutable Match Start Snapshot → Gate #1 Match Session.
+- Finished the match and verified `MATCH_ENDED` first rendered the Gate #1 result.
+- Full reload before confirmation resumed directly at the mandatory pending Canonical Result review, without onboarding, duplicate Match or duplicate Result version.
+- Confirmed Canonical Result v1 and verified Court Manager projected one completed match and one confirmed result.
+- Verified Group Snapshot `RANKED`, Alpha `QUALIFIED`, Beta `NOT_QUALIFIED`, and Group Completion `READY`.
+- Reloaded Court Manager and reopened the result; confirmation state and separate Match End / Result Confirmation timestamps persisted.
+- No application-origin console errors were observed. Browser-extension metadata errors were isolated to the test harness extension.
+
 ## Known limitations for Product Control audit
 
 - **P2:** Tournament entrants do not yet have first-class roster IDs in the locked scheduling UI. Standings uses an explicit `entrantIds` value when supplied, otherwise a deterministic normalized player-name key.
