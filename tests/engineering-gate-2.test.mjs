@@ -110,6 +110,6 @@ test('corrupt or unsupported Tournament document is refused without overwriting 
   const db=storage(),repo=createTournamentRepository(db),t=createTournament('Không mất dữ liệu');repo.save(t);
   const old=db.getItem(TOURNAMENT_STORE_KEY);db.setItem(TOURNAMENT_STORE_KEY,'{broken');
   assert.throws(()=>repo.save(t),/bị hỏng/);assert.equal(db.getItem(TOURNAMENT_STORE_KEY),'{broken');
-  db.setItem(TOURNAMENT_STORE_KEY,JSON.stringify({...JSON.parse(old),version:2}));
+  db.setItem(TOURNAMENT_STORE_KEY,JSON.stringify({...JSON.parse(old),version:999}));
   assert.throws(()=>repo.load(),/chưa được hỗ trợ/);
 });
