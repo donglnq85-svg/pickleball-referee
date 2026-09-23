@@ -3,6 +3,9 @@ import {validateResultOperations,currentResult} from './tournament-results.js';
 import {validateReportingOperations,reportingAttention} from './tournament-reporting.js';
 
 export const TOURNAMENT_SCHEMA_VERSION = 2;
+export const DEFAULT_SHIFT_COMPLETION_POLICY={
+  activeMatch:'blocker',unconfirmedResult:'blocker',unresolvedWaiting:'blocker',incompleteGroup:'reminder',requiredReport:'blocker',unresolvedIssue:'blocker',handoverObligation:'reminder',allowHandover:true,requireGroupCompletion:false
+};
 const clone = value => structuredClone(value);
 const id = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
 const now = () => new Date().toISOString();
@@ -21,7 +24,7 @@ const touch = (t, type, detail={}) => {
 
 export function createTournament(name) {
   const at=now();return {schemaVersion:TOURNAMENT_SCHEMA_VERSION,id:id(),name:requireText(name,'Tên giải'),status:'draft',createdAt:at,updatedAt:at,
-    rulesVersions:[],activeRulesVersionId:null,rankingRulesVersions:[],activeRankingRulesVersionId:null,resultLedger:{byMatch:{}},groupSnapshots:[],groupCompletions:[],reporting:{match:{},group:{},events:[]},structure:{courts:[],groups:[],players:[],entries:[],teams:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
+    rulesVersions:[],activeRulesVersionId:null,rankingRulesVersions:[],activeRankingRulesVersionId:null,resultLedger:{byMatch:{}},groupSnapshots:[],groupCompletions:[],reporting:{match:{},group:{},events:[]},structure:{courts:[],groups:[],players:[],entries:[],teams:[]},schedule:[],assignments:[],workSessions:[],launches:{},operationalIssues:[],handovers:[],shiftCompletions:[],events:[]};
 }
 
 export function addPlayer(t,{displayName}) {
@@ -69,7 +72,9 @@ export function addRulesVersion(t,{label,authority,scoring='unknown',format=null
   if(!procedures||!['unknown','disabled','optional','required'].includes(procedures.equipmentCheck))throw Error('Quy định kiểm tra dụng cụ không hợp lệ.');
   const reporting=procedures.reporting||{match:'optional',group:'optional'};
   if(!['disabled','optional','required'].includes(reporting.match)||!['disabled','optional','required'].includes(reporting.group))throw Error('Reporting Policy không hợp lệ.');
-  procedures={...procedures,reporting:clone(reporting)};
+  const shiftCompletion={...DEFAULT_SHIFT_COMPLETION_POLICY,...(procedures.shiftCompletion||{})},levels=['blocker','reminder'];
+  if(!['activeMatch','unconfirmedResult','unresolvedWaiting','incompleteGroup','requiredReport','unresolvedIssue','handoverObligation'].every(key=>levels.includes(shiftCompletion[key]))||typeof shiftCompletion.allowHandover!=='boolean'||typeof shiftCompletion.requireGroupCompletion!=='boolean')throw Error('Shift Completion Policy không hợp lệ.');
+  procedures={...procedures,reporting:clone(reporting),shiftCompletion:clone(shiftCompletion)};
   const version={id:id(),label:requireText(label,'Tên phiên bản luật'),authority:requireText(authority,'Nguồn luật'),scoring:scoringId,format:clone(format),procedures:clone(procedures),createdAt:now()};
   t.rulesVersions.push(version);t.activeRulesVersionId=version.id;touch(t,'rulesVersionAdded',{rulesVersionId:version.id});return version;
 }
@@ -108,7 +113,7 @@ export function createAssignment(t,{label,scopeKind,scopeIds}) {
   const collection={court:t.structure.courts,group:t.structure.groups,match:t.schedule}[scopeKind];
   if(!collection||!Array.isArray(scopeIds)||!scopeIds.length||new Set(scopeIds).size!==scopeIds.length)throw Error('Phạm vi phân công không hợp lệ.');
   for(const scopeId of scopeIds)find(collection,scopeId,'đối tượng phân công');
-  const assignment={id:id(),label:requireText(label,'Tên phân công'),scope:{kind:scopeKind,ids:[...scopeIds]},status:'assigned',createdAt:now()};
+  const assignment={id:id(),version:1,label:requireText(label,'Tên phân công'),scope:{kind:scopeKind,ids:[...scopeIds]},status:'assigned',createdAt:now()};
   t.assignments.push(assignment);touch(t,'assignmentCreated',{assignmentId:assignment.id});return assignment;
 }
 
@@ -161,6 +166,7 @@ export function validateTournament(t) {
   const teamIds=new Set();for(const team of t.structure.teams){if(!team.id||teamIds.has(team.id)||!team.displayName?.trim()||!Array.isArray(team.rosterPlayerIds))throw Error('Team identity không hợp lệ.');teamIds.add(team.id);team.rosterPlayerIds.forEach(playerId=>find(t.structure.players,playerId,'VĐV'))}
   for(const v of t.rulesVersions)if(v.procedures!==undefined&&(!v.procedures||!['unknown','disabled','optional','required'].includes(v.procedures.equipmentCheck)))throw Error('Quy định kiểm tra dụng cụ không hợp lệ.');
   for(const v of t.rulesVersions)if(v.procedures?.reporting&&(!['disabled','optional','required'].includes(v.procedures.reporting.match)||!['disabled','optional','required'].includes(v.procedures.reporting.group)))throw Error('Reporting Policy không hợp lệ.');
+  for(const v of t.rulesVersions)if(v.procedures?.shiftCompletion){const p=v.procedures.shiftCompletion;if(!['activeMatch','unconfirmedResult','unresolvedWaiting','incompleteGroup','requiredReport','unresolvedIssue','handoverObligation'].every(key=>['blocker','reminder'].includes(p[key]))||typeof p.allowHandover!=='boolean'||typeof p.requireGroupCompletion!=='boolean')throw Error('Shift Completion Policy không hợp lệ.');}
   for(const m of t.schedule){
     if(m.groupId!==null)find(t.structure.groups,m.groupId,'bảng');if(m.courtId!==null)find(t.structure.courts,m.courtId,'sân');if(!['unknown','ready','blocked'].includes(m.readiness))throw Error('Readiness không hợp lệ.');
     if(!m.entrantIds||!['A','B'].every(team=>m.entrantIds[team]===null||typeof m.entrantIds[team]==='string'))throw Error('Scheduled Match thiếu trạng thái Entry rõ ràng.');
@@ -190,6 +196,9 @@ export function validateTournament(t) {
   for(const a of t.assignments){const refs={court:t.structure.courts,group:t.structure.groups,match:t.schedule}[a.scope?.kind];if(!refs||!Array.isArray(a.scope.ids)||!a.scope.ids.length)throw Error('Phạm vi phân công không hợp lệ.');for(const ref of a.scope.ids)find(refs,ref,'đối tượng phân công');}
   for(const s of t.workSessions){find(t.assignments,s.assignmentId,'phân công');if(!['active','completed'].includes(s.status))throw Error('Nhiệm vụ không hợp lệ.');}
   if(t.workSessions.filter(s=>s.status==='active').length>1)throw Error('Chỉ một nhiệm vụ được hoạt động trong một giải.');
+  if(t.operationalIssues!==undefined&&(!Array.isArray(t.operationalIssues)||t.operationalIssues.some(issue=>!issue.id||!['open','resolved'].includes(issue.status))))throw Error('Operational Issue không hợp lệ.');
+  if(t.handovers!==undefined&&(!Array.isArray(t.handovers)||t.handovers.some(item=>!item.id||!item.workSessionId||item.status!=='HANDED_OVER'||!Array.isArray(item.capturedItemKeys))))throw Error('Handover Snapshot không hợp lệ.');
+  if(t.shiftCompletions!==undefined&&(!Array.isArray(t.shiftCompletions)||new Set(t.shiftCompletions.map(item=>item.workSessionId)).size!==t.shiftCompletions.length||t.shiftCompletions.some(item=>!item.id||!item.workSessionId||item.status!=='COMPLETED')))throw Error('Shift Completion Snapshot không hợp lệ.');
   validateResultOperations(t);
   validateReportingOperations(t);
   return true;
