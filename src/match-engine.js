@@ -4,10 +4,10 @@ export const other = team => team === 'A' ? 'B' : 'A';
 const copy = value => structuredClone(value);
 export function rightPlayer(state, team) {
   if (state.config.type === 'single') return 0;
-  return state.score[team] % 2 === 0 ? state.anchor[team] : 1 - state.anchor[team];
+  return state.currentGamePoints[team] % 2 === 0 ? state.anchor[team] : 1 - state.anchor[team];
 }
 export function serverSide(state) {
-  if (state.config.type === 'single') return state.score[state.serving] % 2 === 0 ? 'right' : 'left';
+  if (state.config.type === 'single') return state.currentGamePoints[state.serving] % 2 === 0 ? 'right' : 'left';
   return serverIndex(state) === rightPlayer(state, state.serving) ? 'right' : 'left';
 }
 export function serverIndex(state) {
@@ -21,7 +21,7 @@ export function receiverIndex(state) {
   return serverSide(state) === 'right' ? rightPlayer(state, receiving) : 1 - rightPlayer(state, receiving);
 }
 export function scoreCall(state) {
-  const points = [state.score[state.serving], state.score[other(state.serving)]];
+  const points = [state.currentGamePoints[state.serving], state.currentGamePoints[other(state.serving)]];
   if (state.config.type === 'double') points.push(state.serverNumber);
   return points.join(' – ');
 }
@@ -35,7 +35,7 @@ export function matchView(state) {
     const left=team===state.courtLeft;
     const right=rightPlayer(state,team);
     if(state.config.type==='single'){
-      const rightCourt=state.score[state.serving]%2===0;
+      const rightCourt=state.currentGamePoints[state.serving]%2===0;
       participants.push({team,index:0,name:state.players[team][0],end:left?'left':'right',lane:rightCourt?'right':'left',top:left?!rightCourt:rightCourt,server:team===state.serving,receiver:team===receiving,ball:team===state.serving});
     }else for(let index=0;index<2;index++){
       const rightCourt=index===right;
@@ -58,7 +58,7 @@ export function resolveFinal(config,final){
 export function gameWinner(state) {
   const {points, rule, cap} = state.config;
   for (const team of ['A','B']) {
-    const own=state.score[team], opposition=state.score[other(team)];
+    const own=state.currentGamePoints[team], opposition=state.currentGamePoints[other(team)];
     if (rule === 'touch' && own >= points) return team;
     if (rule !== 'touch' && ((own >= points && own-opposition >= 2) || (rule === 'maximum' && own >= cap))) return team;
   }
@@ -66,7 +66,7 @@ export function gameWinner(state) {
 }
 function settleGame(s) {
   const won=gameWinner(s);if(!won)return;
-  s.games.push({game:s.game,score:copy(s.score),winner:won});
+  s.completedGames.push({gameNumber:s.game,points:copy(s.currentGamePoints),winner:won});
   s.gamesWon[won]++;
   s.status=s.gamesWon[won]>=Math.floor(s.config.sets/2)+1?'finished':'gameEnd';
   s.notice='Đội '+won+' thắng game '+s.game;
@@ -75,12 +75,12 @@ function settleGame(s) {
 export function createMatch(config, final) {
   validateMatchSetup(config, final);
   const now=new Date().toISOString(), serving=final.serving;
-  const score={A:config.start.A,B:config.start.B};
+  const currentGamePoints={A:config.start.A,B:config.start.B};
   const anchor=config.type === 'double' ? {
-    A: score.A % 2 === 0 ? final.right.A : 1-final.right.A,
-    B: score.B % 2 === 0 ? final.right.B : 1-final.right.B
+    A: currentGamePoints.A % 2 === 0 ? final.right.A : 1-final.right.A,
+    B: currentGamePoints.B % 2 === 0 ? final.right.B : 1-final.right.B
   } : {A:0,B:0};
-  const state={version:MATCH_SCHEMA_VERSION,rulesVersion:RULES_VERSION,id:globalThis.crypto?.randomUUID?.() || String(Date.now()),createdAt:now,updatedAt:now,status:'playing',phase:'match',config:copy(config),players:copy(config.players),score,game:1,gamesWon:{A:0,B:0},games:[],serving,initialServing:serving,initialService:true,serverNumber:config.type==='double'?2:null,firstServer:config.type==='double'?1-(final.serverIndex||0):0,anchor,courtLeft:final.courtLeft,notice:'',events:[],undo:[],redo:[],timeout:{A:0,B:0},timeoutTotal:{A:0,B:0},medical:{A:[0,0],B:[0,0]},pause:null};
+  const state={version:MATCH_SCHEMA_VERSION,rulesVersion:RULES_VERSION,id:globalThis.crypto?.randomUUID?.() || String(Date.now()),createdAt:now,updatedAt:now,status:'playing',phase:'match',config:copy(config),players:copy(config.players),currentGamePoints,game:1,gamesWon:{A:0,B:0},completedGames:[],serving,initialServing:serving,initialService:true,serverNumber:config.type==='double'?2:null,firstServer:config.type==='double'?1-(final.serverIndex||0):0,anchor,courtLeft:final.courtLeft,notice:'',events:[],undo:[],redo:[],timeout:{A:0,B:0},timeoutTotal:{A:0,B:0},medical:{A:[0,0],B:[0,0]},pause:null};
   return state;
 }
 export function snapshot(s) {
@@ -107,7 +107,7 @@ export function rally(s, winner) {
   const serving=s.serving;
   return transact(s,'rally',()=>{
     if(winner===serving) {
-      s.score[winner]++;
+      s.currentGamePoints[winner]++;
       s.notice='';
       settleGame(s);
     } else if(s.config.type==='double' && s.serverNumber===1) {
@@ -138,10 +138,10 @@ export function nextGame(s, final) {
   if(s.status!=='gameEnd') return s;
   validateMatchSetup(s.config, final);
   return transact(s,'nextGame',()=>{
-    s.game++;s.score={A:s.config.start.A,B:s.config.start.B};
+    s.game++;s.currentGamePoints={A:s.config.start.A,B:s.config.start.B};
     s.serving=final.serving;s.initialServing=final.serving;s.initialService=true;s.serverNumber=s.config.type==='double'?2:null;
     s.firstServer=s.config.type==='double'?1-(final.serverIndex||0):0;s.courtLeft=final.courtLeft;
-    if(s.config.type==='double') for(const team of ['A','B'])s.anchor[team]=s.score[team]%2===0?final.right[team]:1-final.right[team];
+    if(s.config.type==='double') for(const team of ['A','B'])s.anchor[team]=s.currentGamePoints[team]%2===0?final.right[team]:1-final.right[team];
     s.status='playing';s.phase='match';s.pause=null;s.timeout={A:0,B:0};s.notice='Game '+s.game+' · xướng '+scoreCall(s);
   });
 }
@@ -164,14 +164,14 @@ export function correct(s, input) {
   // identify whether a side-out has happened in this game (Undo removes it).
   const opening=s.initialService??!s.undo.some(t=>t.before.game===s.game&&t.before.serving!==t.after.serving);
   return transact(s,'correction',()=>{
-    s.score={A,B};s.serving=input.serving;
+    s.currentGamePoints={A,B};s.serving=input.serving;
     if(s.config.type==='double'){
       s.serverNumber=Number(input.number);
       s.firstServer=s.serverNumber===1?player:1-player;
       s.initialService=opening&&s.serving===s.initialServing;
       const initialSecond=s.initialService===true&&s.serverNumber===2;
-      const right= initialSecond ? (s.score[s.serving]%2===0?player:1-player) : s.serverNumber===1?player:1-player;
-      s.anchor[s.serving]=s.score[s.serving]%2===0?right:1-right;
+      const right= initialSecond ? (s.currentGamePoints[s.serving]%2===0?player:1-player) : s.serverNumber===1?player:1-player;
+      s.anchor[s.serving]=s.currentGamePoints[s.serving]%2===0?right:1-right;
     }
     s.notice='Đã sửa trạng thái · kiểm tra người giao, người đỡ và xướng '+scoreCall(s);
     settleGame(s);

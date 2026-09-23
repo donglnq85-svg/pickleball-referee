@@ -1,5 +1,6 @@
 
 import {validateResultOperations,currentResult} from './tournament-results.js';
+import {validateReportingOperations,reportingAttention} from './tournament-reporting.js';
 
 export const TOURNAMENT_SCHEMA_VERSION = 2;
 const clone = value => structuredClone(value);
@@ -20,7 +21,7 @@ const touch = (t, type, detail={}) => {
 
 export function createTournament(name) {
   const at=now();return {schemaVersion:TOURNAMENT_SCHEMA_VERSION,id:id(),name:requireText(name,'Tên giải'),status:'draft',createdAt:at,updatedAt:at,
-    rulesVersions:[],activeRulesVersionId:null,rankingRulesVersions:[],activeRankingRulesVersionId:null,resultLedger:{byMatch:{}},groupSnapshots:[],groupCompletions:[],structure:{courts:[],groups:[],players:[],entries:[],teams:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
+    rulesVersions:[],activeRulesVersionId:null,rankingRulesVersions:[],activeRankingRulesVersionId:null,resultLedger:{byMatch:{}},groupSnapshots:[],groupCompletions:[],reporting:{match:{},group:{},events:[]},structure:{courts:[],groups:[],players:[],entries:[],teams:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
 }
 
 export function addPlayer(t,{displayName}) {
@@ -66,6 +67,9 @@ export function addRulesVersion(t,{label,authority,scoring='unknown',format=null
   if (format!==null && (!Number.isInteger(format.sets)||format.sets<1||!Number.isInteger(format.points)||format.points<1||
       typeof format.rule!=='string'||!format.rule.trim()||format.cap!==undefined&&(!Number.isInteger(format.cap)||format.cap<format.points))) throw Error('Thể thức không hợp lệ.');
   if(!procedures||!['unknown','disabled','optional','required'].includes(procedures.equipmentCheck))throw Error('Quy định kiểm tra dụng cụ không hợp lệ.');
+  const reporting=procedures.reporting||{match:'optional',group:'optional'};
+  if(!['disabled','optional','required'].includes(reporting.match)||!['disabled','optional','required'].includes(reporting.group))throw Error('Reporting Policy không hợp lệ.');
+  procedures={...procedures,reporting:clone(reporting)};
   const version={id:id(),label:requireText(label,'Tên phiên bản luật'),authority:requireText(authority,'Nguồn luật'),scoring:scoringId,format:clone(format),procedures:clone(procedures),createdAt:now()};
   t.rulesVersions.push(version);t.activeRulesVersionId=version.id;touch(t,'rulesVersionAdded',{rulesVersionId:version.id});return version;
 }
@@ -143,7 +147,7 @@ export function courtManagerView(t,workSessionId,matchRepository=null) {
     const result=currentResult(t,entry.id);
     return {...clone(entry),progress:session?.status||'not_started',resultStatus:result?.status||'NOT_DERIVED',resultVersionId:result?.id||null};
   });
-  return {tournamentId:t.id,workSession:clone(workSession),assignment:clone(assignment),matches,
+  return {tournamentId:t.id,workSession:clone(workSession),assignment:clone(assignment),matches,reportingAttention:reportingAttention(t),
     progress:{total:matches.length,unknown:matches.filter(m=>m.readiness==='unknown').length,ready:matches.filter(m=>m.readiness==='ready').length,blocked:matches.filter(m=>m.readiness==='blocked').length,finished:matches.filter(m=>m.progress==='finished').length,resultsConfirmed:matches.filter(m=>m.resultStatus==='CONFIRMED').length}};
 }
 
@@ -156,6 +160,7 @@ export function validateTournament(t) {
   const entryIds=new Set();for(const entry of t.structure.entries){if(!entry.id||entryIds.has(entry.id)||!['single','double','team'].includes(entry.type)||!Array.isArray(entry.playerIds)||new Set(entry.playerIds).size!==entry.playerIds.length)throw Error('Entry identity không hợp lệ.');entryIds.add(entry.id);entry.playerIds.forEach(playerId=>find(t.structure.players,playerId,'VĐV'));if(entry.type==='single'&&entry.playerIds.length!==1||entry.type==='double'&&entry.playerIds.length!==2)throw Error('Entry identity không hợp lệ.');if(entry.teamId!==null&&entry.teamId!==undefined)find(t.structure.teams,entry.teamId,'đội')}
   const teamIds=new Set();for(const team of t.structure.teams){if(!team.id||teamIds.has(team.id)||!team.displayName?.trim()||!Array.isArray(team.rosterPlayerIds))throw Error('Team identity không hợp lệ.');teamIds.add(team.id);team.rosterPlayerIds.forEach(playerId=>find(t.structure.players,playerId,'VĐV'))}
   for(const v of t.rulesVersions)if(v.procedures!==undefined&&(!v.procedures||!['unknown','disabled','optional','required'].includes(v.procedures.equipmentCheck)))throw Error('Quy định kiểm tra dụng cụ không hợp lệ.');
+  for(const v of t.rulesVersions)if(v.procedures?.reporting&&(!['disabled','optional','required'].includes(v.procedures.reporting.match)||!['disabled','optional','required'].includes(v.procedures.reporting.group)))throw Error('Reporting Policy không hợp lệ.');
   for(const m of t.schedule){
     if(m.groupId!==null)find(t.structure.groups,m.groupId,'bảng');if(m.courtId!==null)find(t.structure.courts,m.courtId,'sân');if(!['unknown','ready','blocked'].includes(m.readiness))throw Error('Readiness không hợp lệ.');
     if(!m.entrantIds||!['A','B'].every(team=>m.entrantIds[team]===null||typeof m.entrantIds[team]==='string'))throw Error('Scheduled Match thiếu trạng thái Entry rõ ràng.');
@@ -186,5 +191,6 @@ export function validateTournament(t) {
   for(const s of t.workSessions){find(t.assignments,s.assignmentId,'phân công');if(!['active','completed'].includes(s.status))throw Error('Nhiệm vụ không hợp lệ.');}
   if(t.workSessions.filter(s=>s.status==='active').length>1)throw Error('Chỉ một nhiệm vụ được hoạt động trong một giải.');
   validateResultOperations(t);
+  validateReportingOperations(t);
   return true;
 }

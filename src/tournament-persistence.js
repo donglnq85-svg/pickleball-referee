@@ -1,5 +1,5 @@
 import {validateTournament} from './tournament-domain.js';
-import {migrateTournamentIdentity} from './tournament-identity-migration.js';
+import {migrateTournamentIdentity,migrateTournamentScoreSemantics} from './tournament-identity-migration.js';
 
 export const TOURNAMENT_STORE_KEY='pickleball-referee:tournaments:v1';
 const clone=value=>structuredClone(value);
@@ -14,7 +14,7 @@ export function createTournamentRepository(storage){
     if(![1,2].includes(document?.version)||!document.tournaments||typeof document.tournaments!=='object'||Array.isArray(document.tournaments))throw Error('Phiên bản dữ liệu giải chưa được hỗ trợ.');
     let migrated=document.version===1;
     for(const [tournamentId,tournament] of Object.entries(document.tournaments)){
-      const result=migrateTournamentIdentity(tournament);document.tournaments[tournamentId]=result.tournament;migrated||=result.migrated;
+      const identity=migrateTournamentIdentity(tournament),semantics=migrateTournamentScoreSemantics(identity.tournament);document.tournaments[tournamentId]=semantics.tournament;migrated||=identity.migrated||semantics.migrated;
     }
     document.version=2;
     for(const [id,tournament] of Object.entries(document.tournaments)){

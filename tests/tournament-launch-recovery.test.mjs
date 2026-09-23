@@ -64,7 +64,8 @@ test('storage write failure at intent, Match Store and linkage boundaries recove
 test('linked session missing or corrupt intent fails closed and never rewrites completed history',()=>{
   const args=setup(),{db,t,m,w}=args,session=beginTournamentMatch(t.id,w.id,m.id,final,db);
   const matchDoc=JSON.parse(db.getItem(STORE_KEY));matchDoc.matches[session.id].status='finished';
-  matchDoc.matches[session.id].games=[{game:1,score:{A:11,B:0},winner:'A'}];
+  matchDoc.matches[session.id].completedGames=[{gameNumber:1,points:{A:11,B:0},winner:'A'}];
+  matchDoc.matches[session.id].gamesWon={A:1,B:0};
   db.setItem(STORE_KEY,JSON.stringify(matchDoc));
   assert.equal(beginTournamentMatch(t.id,w.id,m.id,final,db).status,'finished');
   const preserved=db.getItem(STORE_KEY);

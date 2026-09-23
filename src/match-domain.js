@@ -1,5 +1,5 @@
 export const RULES_VERSION = 'USA-Pickleball-2026-side-out';
-export const MATCH_SCHEMA_VERSION = 2;
+export const MATCH_SCHEMA_VERSION = 3;
 const teams = ['A', 'B'];
 const integer = (value, min, max) => Number.isInteger(value) && value >= min && value <= max;
 
@@ -25,9 +25,16 @@ export function validateMatchState(state) {
   if (!state || !state.id || !['playing', 'gameEnd', 'finished'].includes(state.status)) throw Error('Trạng thái trận không hợp lệ.');
   validateMatchSetup(state.config, {serving: state.serving, courtLeft: state.courtLeft,
     right: {A: 0, B: 0}, serverIndex: 0});
-  if (![state.score?.A, state.score?.B].every(value => integer(value, 0, 99)) ||
+  if (![state.currentGamePoints?.A, state.currentGamePoints?.B].every(value => integer(value, 0, 99)) ||
     !integer(state.game, 1, state.config.sets) ||
     (state.config.type === 'double' && ![1, 2].includes(state.serverNumber))) throw Error('Trạng thái điểm hoặc lượt giao không hợp lệ.');
+  if(!Array.isArray(state.completedGames)||!state.gamesWon||!teams.every(team=>integer(state.gamesWon[team],0,state.config.sets)))throw Error('Lịch sử game không hợp lệ.');
+  const derived={A:0,B:0};
+  for(const [index,game] of state.completedGames.entries()){
+    if(game.gameNumber!==index+1||![game.points?.A,game.points?.B].every(value=>integer(value,0,99))||game.points.A===game.points.B||!teams.includes(game.winner)||game.winner!==(game.points.A>game.points.B?'A':'B'))throw Error('Kết quả game đã hoàn tất không hợp lệ.');
+    derived[game.winner]++;
+  }
+  if(derived.A!==state.gamesWon.A||derived.B!==state.gamesWon.B)throw Error('Số game thắng không khớp lịch sử game.');
   if (!Array.isArray(state.events) || !Array.isArray(state.undo) || !Array.isArray(state.redo)) throw Error('Thiếu lịch sử transition.');
   return true;
 }

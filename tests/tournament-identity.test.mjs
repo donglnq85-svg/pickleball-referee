@@ -44,7 +44,7 @@ test('Pair identity is stable across matches and correction keeps entrant mappin
   const {t,group,ranking}=base(),pair=playerEntry(t,'A1','double','A2'),pairB=playerEntry(t,'B1','double','B2'),pairC=playerEntry(t,'C1','double','C2');
   const team=addTeam(t,{displayName:'CLB A',rosterPlayerIds:pair.entry.playerIds});pair.entry.teamId=team.id;
   const first=addScheduledMatch(t,{label:'D1',groupId:group.id,type:'double',entrantIds:{A:pair.entry.id,B:pairB.entry.id}}),second=addScheduledMatch(t,{label:'D2',groupId:group.id,type:'double',entrantIds:{A:pair.entry.id,B:pairC.entry.id}});
-  finish(t,first,'A');finish(t,second,'A');const v1=currentResult(t,first.id),v2=correctCanonicalResult(t,first.id,{games:[{score:{A:0,B:1}}],reason:'official'});confirmCanonicalResult(t,first.id,v2.id);
+  finish(t,first,'A');finish(t,second,'A');const v1=currentResult(t,first.id),v2=correctCanonicalResult(t,first.id,{completedGames:[{points:{A:0,B:1}}],reason:'official'});confirmCanonicalResult(t,first.id,v2.id);
   const snapshot=calculateGroupSnapshot(t,group.id,ranking.id);
   assert.equal(v1.entrants.A.id,pair.entry.id);assert.equal(v2.entrants.A.id,pair.entry.id);assert.equal(currentResult(t,second.id).entrants.A.id,pair.entry.id);assert.equal(snapshot.rows.filter(row=>row.entrantId===pair.entry.id).length,1);validateTournament(t);
 });
