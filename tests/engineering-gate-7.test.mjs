@@ -46,7 +46,7 @@ test('Handover freezes exact active Match state, keeps issues unresolved and End
   assert.equal(frozen.serving,session.serving);assert.equal(frozen.serverNumber,session.serverNumber);assert.equal(frozen.server.name,view.server);assert.equal(frozen.receiver.name,view.receiver);
   assert.deepEqual(frozen.participantPositions,view.participants);assert.equal(frozen.courtLeft,view.courtLeft);assert.equal(frozen.courtRight,view.courtRight);assert.equal(frozen.tournamentRulesVersionId,rules.id);
   assert.equal(frozen.eventHistoryBoundary.eventCount,eventCount);assert.equal(matches.get(session.id).events.length,eventCount);
-  assert.equal(saved.operationalIssues.find(item=>item.id===issue.id).status,'open');assert.equal(projectShiftCompletion(saved,work.id,matches).blockers.length,0);
+  assert.equal(saved.operationalIssues.find(item=>item.id===issue.id).status,'open');const handedOver=projectShiftCompletion(saved,work.id,matches);assert.equal(handedOver.blockers.length,0);assert.equal(handedOver.handover.status,'CURRENT');assert.ok(handedOver.outstanding.every(item=>item.handedOver));
   const completion=completeWorkSession(saved,work.id,matches,{at:20_000}),again=completeWorkSession(saved,work.id,matches,{at:30_000});
   assert.deepEqual(again,completion);assert.equal(saved.shiftCompletions.length,1);assert.equal(saved.events.filter(item=>item.type==='shiftCompleted').length,1);
   assert.equal(saved.status,'active');assert.equal(saved.operationalIssues.find(item=>item.id===issue.id).status,'open');assert.equal(mandatoryUnfinishedWork(saved,work.id,matches).critical.length,2);

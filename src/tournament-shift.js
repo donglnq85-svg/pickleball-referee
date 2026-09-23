@@ -58,9 +58,10 @@ function sourceItems(t,work,matchRepository,p){
 
 export function projectShiftCompletion(t,workSessionId,matchRepository,{ignoreHandover=false}={}){
   const work=findWork(t,workSessionId),p=policy(t),source=sourceItems(t,work,matchRepository,p),handover=[...(t.handovers||[])].reverse().find(item=>item.workSessionId===workSessionId)||null,captured=new Set(handover?.capturedItemKeys||[]);
-  const outstanding=source.items.map(entry=>{const originalSeverity=severity(p,entry.policyKey),handedOver=!ignoreHandover&&p.allowHandover&&originalSeverity==='BLOCKER'&&captured.has(entry.key);return {...entry,originalSeverity,severity:handedOver?'REMINDER':originalSeverity,handedOver}});
+  const outstanding=source.items.map(entry=>{const originalSeverity=severity(p,entry.policyKey),handedOver=!ignoreHandover&&p.allowHandover&&captured.has(entry.key);return {...entry,originalSeverity,severity:handedOver&&originalSeverity==='BLOCKER'?'REMINDER':originalSeverity,handedOver}});
   const blockers=outstanding.filter(entry=>entry.severity==='BLOCKER'),reminders=outstanding.filter(entry=>entry.severity==='REMINDER');
-  return {version:1,workSessionId,assignmentId:source.assignment.id,rulesVersionId:activeRules(t)?.id||null,status:blockers.length?'BLOCKED':reminders.length?'READY_WITH_REMINDERS':'READY',blockers:clone(blockers),reminders:clone(reminders),outstanding:clone(outstanding),handover:{status:handover?(blockers.length?'OUTDATED':'CURRENT'):(blockers.length&&p.allowHandover?'REQUIRED':'NOT_REQUIRED'),snapshotId:handover?.id||null},policy:clone(p)};
+  const handoverCurrent=Boolean(handover)&&outstanding.every(entry=>entry.handedOver);
+  return {version:1,workSessionId,assignmentId:source.assignment.id,rulesVersionId:activeRules(t)?.id||null,status:blockers.length?'BLOCKED':reminders.length?'READY_WITH_REMINDERS':'READY',blockers:clone(blockers),reminders:clone(reminders),outstanding:clone(outstanding),handover:{status:handover?(handoverCurrent?'CURRENT':'OUTDATED'):(blockers.length&&p.allowHandover?'REQUIRED':'NOT_REQUIRED'),snapshotId:handover?.id||null},policy:clone(p)};
 }
 
 function matchHandoverState(match,session){
