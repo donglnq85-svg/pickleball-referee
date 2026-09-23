@@ -36,6 +36,13 @@ Court Manager and Tournament Home project required reports, shared-but-unconfirm
 - Required/optional/disabled Reporting Policy without hard-coded per-match sending.
 - Full Gate #1–#4 regression remains in the same automated command.
 
+## Candidate browser verification
+
+- Exact source candidate completed Tournament setup with required Match/Group Reporting Policy, group assignment, Call/Waiting, Pre-Match, Gate #1 Match Session and Canonical Result confirmation.
+- Required Match Report and Group Report were generated from their exact source IDs, previewed read-only, explicitly marked sent, reopened from Court Manager and preserved after full reload.
+- Browser E2E found and closed two attention-state defects: generated-but-unsent reports now remain actionable, and the first Group Report no longer shows a false qualification-change warning.
+- Final candidate source loads without application-origin console errors; browser-extension metadata errors are isolated to the test harness.
+
 ## Known limitations for Product Control audit
 
 - Share-ready artifact is a deterministic plain-text preview; PDF/template designer is outside Gate #5.
