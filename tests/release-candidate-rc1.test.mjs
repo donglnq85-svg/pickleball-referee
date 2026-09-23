@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createTournament,addRulesVersion,addResource,addPlayer,addEntry,addScheduledMatch,createAssignment,startWorkSession,setMatchReadiness} from '../src/tournament-domain.js';
 import {callPlayers,requestLoudspeaker,startWaiting,extendWaiting,markPlayersArrived,initializePreMatch,confirmAthlete,skipWarmup,setPreMatchFinalSetup,createMatchStartSnapshot} from '../src/tournament-operations.js';
 import {beginTournamentMatch,recoverTournamentLaunches} from '../src/tournament-launch.js';
@@ -135,4 +136,11 @@ test('RC1 corrupt and partial persisted state fails closed without rewriting byt
   ]){
     const db=faultStorage();db.setItem(key,value);assert.throws(()=>operation(db));assert.equal(db.raw(key),value);
   }
+});
+
+test('RC1 mobile close target and completed-shift History escape remain wired',()=>{
+  const css=readFileSync(new URL('../src/v1.css',import.meta.url),'utf8');
+  const tournamentUi=readFileSync(new URL('../src/tournament-ui.js',import.meta.url),'utf8');
+  assert.match(css,/\.ref-sheet \.ref-button-quiet\{[^}]*min-width:44px;min-height:44px/);
+  assert.match(tournamentUi,/data-v1="history">Lịch sử<\/button>/);
 });

@@ -17,7 +17,7 @@
 
 ## Automated verification
 
-- Full Gate #1–#8 plus RC1 suite: **78/78 PASS**.
+- Full Gate #1–#8 plus RC1 suite: **79/79 PASS**.
 - Production Vite build: **PASS**.
 - RC1 additions cover:
   - failure-boundary retry from launch journal through rally save, game transition, Match End, Result derivation/confirmation, Group Snapshot/Completion, report generated/shared/sent and Shift Completion;
