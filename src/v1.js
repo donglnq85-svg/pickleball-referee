@@ -1,19 +1,21 @@
 import {createMatch,rally,undo,redo,nextGame,scoreCall,matchView,prepareNextGame,resolveFinal,other,setCourtLeft,startPause,endPause,correct} from './match-engine.js';
 import {courtView} from './court-view.js';
 import {renderSession} from './match-session.js';
-import {historyList,historyDetail} from './match-history.js';
+import {historyOverview,matchRecordDetail,tournamentRecordDetail,workRecordDetail,groupRecordDetail} from './match-history.js';
+import {projectHistory,searchHistory} from './history-read-model.js';
 import {createMatchRepository} from './match-persistence.js';
+import {createTournamentRepository} from './tournament-persistence.js';
 import {resolveApplicationResume} from './application-resume.js';
 import './tournament-ui.js';
 import './v1.css';
 
 const app=document.getElementById('app');
-const repository=createMatchRepository(localStorage);
+const repository=createMatchRepository(localStorage),tournamentRepository=createTournamentRepository(localStorage);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=repository.active(),draft=repository.load().draft,history=repository.history(),screen='',warmInterval=null,medicalChoice=null;
+let state=repository.active(),draft=repository.load().draft,historyProjection=null,historyRecordId=null,historyFullTimeline=false,screen='',warmInterval=null,medicalChoice=null;
 function persist(){try{if(state)repository.saveSession(state,{draft,clearDraft:!draft});else repository.saveDraft(draft)}catch(error){alert('Không lưu được trận trên thiết bị này: '+error.message);window.location.reload();throw error}}
 function save(){persist()}
-function recordIfFinished(){if(state?.status==='finished')history=repository.history()}
+function recordIfFinished(){if(state?.status==='finished')historyProjection=null}
 const names=team=>(state||draft)?.config?.players?.[team]||state?.players?.[team]||[];
 function base(title,body,footer='',overlay=''){
   window.v1Active=true;
@@ -22,7 +24,7 @@ function base(title,body,footer='',overlay=''){
 function button(text,act,cls='v1-main'){return `<button class="${cls}" data-v1="${act}">${text}</button>`}
 function mainHome(){
   const place=app.querySelector('#v1-home-actions');if(!place)return;
-  const latest=repository.active(),active=latest?.status==='finished'?null:latest,pending=repository.load().draft,count=repository.history().length;
+  const latest=repository.active(),active=latest?.status==='finished'?null:latest,pending=repository.load().draft,count=Object.values(repository.load().matches).filter(match=>match.status==='finished').length;
   place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button('Quản lý giải đấu','tournament','v1-home-button')}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
 }
 new MutationObserver(()=>{if(app.querySelector('#v1-home-actions')&&!app.querySelector('#v1-home-actions button'))mainHome()}).observe(app,{subtree:true,childList:true});
@@ -98,8 +100,13 @@ function renderMatch(){if(!state)return;if(state.status!=='playing')return rende
 function renderResult(){if(!state)return;screen='result';const s=state,last=s.completedGames.at(-1);
   base(s.status==='finished'?'Kết quả trận':`Game ${last.gameNumber} kết thúc`,`<h2>Đội ${last.winner} thắng ${s.status==='finished'?'trận':'game '+last.gameNumber}</h2><div class="v1-matchScore"><div><small>ĐỘI A · ĐIỂM GAME</small><strong>${last.points.A}</strong></div><div><small>ĐỘI B · ĐIỂM GAME</small><strong>${last.points.B}</strong></div></div><p><b>Kết quả trận (game thắng): ${s.gamesWon.A} – ${s.gamesWon.B}</b></p><div class="v1-gameList">${s.completedGames.map(g=>`<div>Game ${g.gameNumber} · ${g.points.A} – ${g.points.B} · Đội ${g.winner}</div>`).join('')}</div>${button('Hoàn tác rally cuối','undo','v1-secondary')}`,s.status==='finished'?`${s.tournamentContext?button('Xem và xác nhận kết quả','reviewTournamentResult'):''}${button('Lịch sử trận đấu','history')}${button('Về trang chủ','home','v1-secondary')}`:button('Final Setup game tiếp theo','nextGame'));
 }
-function renderHistory(){screen='history';history=repository.history();base('Lịch sử trận đấu',historyList(history),button('Về trang chủ','home','v1-secondary'))}
-function renderRecord(id){const m=history.find(item=>item.id===id);if(!m)return renderHistory();screen='record';base('Chi tiết trận',historyDetail(m),button('Lịch sử trận đấu','history'))}
+function refreshHistory(){historyProjection=projectHistory(repository,tournamentRepository);return historyProjection}
+function renderHistory(filters={}){screen='history';const projection=refreshHistory(),results=searchHistory(projection,filters);base('Lịch sử',historyOverview(projection,results,filters),button('Về trang chủ','home','v1-secondary'))}
+function renderHistoryMatch(id){const projection=refreshHistory(),record=projection.matches.find(item=>item.id===id);if(!record)return renderHistory();screen='historyMatch';historyRecordId=id;base('Match Record',matchRecordDetail(record,{fullTimeline:historyFullTimeline}),button('Lịch sử','history'))}
+function renderHistoryTournament(id){const projection=refreshHistory(),record=projection.tournaments.find(item=>item.id===id);if(!record)return renderHistory();screen='historyTournament';base('Tournament History',tournamentRecordDetail(record,projection),button('Lịch sử','history'))}
+function renderHistoryWork(id){const projection=refreshHistory(),record=projection.workSessions.find(item=>item.id===id);if(!record)return renderHistory();screen='historyWork';base('Work Session History',workRecordDetail(record,projection),button('Lịch sử','history'))}
+function renderHistoryGroup(id){const projection=refreshHistory(),record=projection.groups.find(item=>item.id===id);if(!record)return renderHistory();screen='historyGroup';base('Group History',groupRecordDetail(record),button('Lịch sử','history'))}
+document.addEventListener('submit',event=>{const form=event.target.closest('[data-history-search]');if(!form)return;event.preventDefault();event.stopImmediatePropagation();const data=new FormData(form);renderHistory({query:data.get('query'),scope:data.get('scope')})},true);
 document.addEventListener('click',event=>{
   const b=event.target.closest('[data-v1]');if(!b)return;event.preventDefault();event.stopImmediatePropagation();const action=b.dataset.v1;
   if(action==='home'){clearInterval(warmInterval);screen='';window.location.reload();return}
@@ -108,7 +115,12 @@ document.addEventListener('click',event=>{
   if(action==='reviewTournamentResult'&&state?.tournamentContext){window.dispatchEvent(new CustomEvent('tournament-result-review',{detail:state.tournamentContext}));return}
   if(action==='resume'){state=repository.active();if(state){medicalChoice=null;renderMatch()}return}
   if(action==='resumeDraft'){draft=repository.load().draft;if(!draft)return;if(draft.phase==='warmup')renderWarm();else if(draft.final)renderReview();else startFinal();return}
-  if(action==='history')return renderHistory();if(action.startsWith('record:'))return renderRecord(action.slice(7));
+  if(action==='history')return renderHistory();
+  if(action.startsWith('historyMatch:')){historyFullTimeline=false;return renderHistoryMatch(action.slice(13))}
+  if(action.startsWith('historyTournament:'))return renderHistoryTournament(action.slice(18));
+  if(action.startsWith('historyWork:'))return renderHistoryWork(action.slice(12));
+  if(action.startsWith('historyGroup:'))return renderHistoryGroup(action.slice(13));
+  if(action==='toggleFullTimeline'){historyFullTimeline=!historyFullTimeline;return renderHistoryMatch(historyRecordId)}
   if(action.startsWith('warm:')){draft.warmSeconds=Number(action.slice(5))*60;save();return renderWarm()}
   if(action==='skipWarm'||action==='finishWarm')return startFinal();
   if(action==='startWarm'){const input=app.querySelector('[data-v1-custom]');const mins=Number(input?.value);if(Number.isFinite(mins)&&mins>0&&mins<=60)draft.warmSeconds=Math.round(mins*60);if(!draft.warmSeconds)return alert('Chọn thời lượng hoặc bỏ qua khởi động.');draft.warmDeadline=Date.now()+draft.warmSeconds*1000;save();return renderWarm()}
