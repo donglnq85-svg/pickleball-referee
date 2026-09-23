@@ -42,8 +42,8 @@ export function deriveMatchReport(t,matchId,resultVersionId=null,rulesVersionId=
   if(!selected||selected.status!=='CONFIRMED'||selected.scheduledMatchId!==matchId||selected.id!==resultEntry?.currentVersionId)throw Error('Cần Canonical Result hiện hành đã xác nhận để tạo biên bản.');
   const effectiveRulesId=rulesVersionId||selected.rulesVersionId||t.activeRulesVersionId,rules=rulesById(t,effectiveRulesId),policy=reportPolicy(rules);
   if(policy.match==='disabled')throw Error('Reporting Policy không cho tạo biên bản từng trận.');
-  const games=selected.games.map(game=>`Game ${game.game}: ${game.score.A}–${game.score.B}`).join('\n');
-  const title=`Biên bản trận · ${match.label}`,body=`${selected.players.A.join(' / ')} ${selected.gamesWon.A}–${selected.gamesWon.B} ${selected.players.B.join(' / ')}\n${games}\nKết thúc: ${selected.matchEndedAt}\nXác nhận: ${selected.confirmedAt}`;
+  const games=selected.completedGames.map(game=>`Game ${game.gameNumber}: ${game.points.A}–${game.points.B}`).join('\n');
+  const title=`Biên bản trận · ${match.label}`,body=`Kết quả trận (game thắng): ${selected.players.A.join(' / ')} ${selected.matchGamesWon.A}–${selected.matchGamesWon.B} ${selected.players.B.join(' / ')}\n${games}\nKết thúc: ${selected.matchEndedAt}\nXác nhận: ${selected.confirmedAt}`;
   return appendReport(t,'match',matchId,{kind:'RESULT_VERSION',id:selected.id,scheduledMatchId:matchId},effectiveRulesId,{format:'text/plain',title,body,share:{title,text:body}},selected.version>1?{kind:'RESULT_CHANGED',severity:'medium'}:{kind:'NONE',severity:'normal'},at);
 }
 
@@ -51,7 +51,7 @@ export function deriveGroupReport(t,groupId,groupSnapshotId=null,rulesVersionId=
   const group=groupById(t,groupId),latest=[...(t.groupSnapshots||[])].reverse().find(item=>item.groupId===groupId),snapshot=groupSnapshot(t,groupSnapshotId)||latest;
   if(!snapshot||snapshot.groupId!==groupId||snapshot.id!==latest?.id)throw Error('Cần Group Snapshot hiện hành để tạo biên bản bảng.');
   const rules=rulesById(t,rulesVersionId),policy=reportPolicy(rules);if(policy.group==='disabled')throw Error('Reporting Policy không cho tạo biên bản cuối bảng.');
-  const rows=snapshot.rows.map(row=>`${row.rank??'?'}. ${row.players.join(' / ')} · ${row.matchWins} thắng · ${row.qualification}`).join('\n');
+  const rows=snapshot.rows.map(row=>`${row.rank??'?'}. ${row.players.join(' / ')} · trận thắng ${row.matchWins} · game ${row.gameWins}-${row.gameLosses} (HS ${row.gameDifferential}) · điểm ${row.pointsFor}-${row.pointsAgainst} (HS ${row.pointDifferential}) · ${row.qualification}`).join('\n');
   const title=`Biên bản bảng · ${group.label}`,body=`${title}\nSnapshot: ${snapshot.id}\n${rows}\nTrạng thái: ${snapshot.status}`;
   const previous=current(reporting(t).group[groupId]),impact=previous?snapshot.impact||[]:[],attention=impact.includes('QUALIFICATION_CHANGED')?{kind:'QUALIFICATION_CHANGED',severity:'high'}:impact.includes('RANKING_CHANGED')?{kind:'RANKING_CHANGED',severity:'medium'}:impact.includes('RESULT_CHANGED')?{kind:'RESULT_CHANGED',severity:'medium'}:{kind:'NONE',severity:'normal'};
   return appendReport(t,'group',groupId,{kind:'GROUP_SNAPSHOT',id:snapshot.id,groupId},rulesVersionId,{format:'text/plain',title,body,share:{title,text:body}},attention,at);

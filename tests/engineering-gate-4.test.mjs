@@ -47,7 +47,7 @@ test('Result v1 correction creates v2, preserves old snapshot and classifies pro
   const snapshot1=calculateGroupSnapshot(t,group.id,ranking.id,14_000);assert.equal(snapshot1.status,'RANKED');assert.equal(snapshot1.rows[0].players[0],'Alpha');assert.deepEqual(snapshot1.qualification.qualified,[snapshot1.rows[0].entrantId]);
   const futureRules=addRankingRulesVersion(t,{label:'Future ranking',authority:'Not applied retroactively',criteria:[{metric:'gameWins',direction:'desc'}],qualification:{kind:'top',count:2}});
   assert.equal(t.activeRankingRulesVersionId,futureRules.id);assert.equal(snapshot1.rankingRulesVersionId,ranking.id);
-  const oldFrozen=structuredClone(snapshot1),v2=correctCanonicalResult(t,first.id,{games:[{score:{A:5,B:11}}],reason:'Biên bản chính thức',actor:'chief referee'},20_000);
+  const oldFrozen=structuredClone(snapshot1),v2=correctCanonicalResult(t,first.id,{completedGames:[{points:{A:5,B:11}}],reason:'Biên bản chính thức',actor:'chief referee'},20_000);
   assert.equal(v2.version,2);assert.equal(v2.status,'PENDING_CONFIRMATION');assert.equal(t.resultLedger.byMatch[first.id].versions.length,2);assert.equal(t.resultLedger.byMatch[first.id].versions[0].isCurrent,false);
   confirmCanonicalResult(t,first.id,v2.id,21_000);const snapshot2=calculateGroupSnapshot(t,group.id,ranking.id,22_000);
   assert.equal(snapshot2.rows[0].players[0],'Beta');assert.ok(snapshot2.impact.includes('RESULT_CHANGED'));assert.ok(snapshot2.impact.includes('RANKING_CHANGED'));assert.ok(snapshot2.impact.includes('QUALIFICATION_CHANGED'));

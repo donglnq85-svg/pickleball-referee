@@ -25,8 +25,8 @@ test('handicap, cap, game transition and match completion',()=>{
  assert.equal(scoreCall(s),'0 – 1 – 2');assert.equal(serverIndex(s),1);
  rally(s,'A');assert.equal(s.serving,'A');assert.equal(scoreCall(s),'1 – 0 – 1');
  rally(s,'A');assert.equal(s.status,'playing');rally(s,'A');assert.equal(s.status,'gameEnd');assert.equal(s.gamesWon.A,1);
- nextGame(s,final);assert.equal(s.game,2);assert.equal(s.score.A,1);assert.equal(scoreCall(s),'1 – 0 – 2');
- rally(s,'A');rally(s,'A');assert.equal(s.status,'finished');assert.equal(s.games.length,2);assert.equal(s.gamesWon.A,2);
+ nextGame(s,final);assert.equal(s.game,2);assert.equal(s.currentGamePoints.A,1);assert.equal(scoreCall(s),'1 – 0 – 2');
+ rally(s,'A');rally(s,'A');assert.equal(s.status,'finished');assert.equal(s.completedGames.length,2);assert.equal(s.gamesWon.A,2);
  undo(s);assert.equal(s.status,'playing');assert.equal(s.gamesWon.A,1);redo(s);assert.equal(s.status,'finished');
 });
 test('timeout and medical preserve score, server, and receiver',()=>{

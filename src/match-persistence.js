@@ -5,6 +5,24 @@ const OLD = {active:'pickleball-referee:v1:active', draft:'pickleball-referee:v1
 const clone = value => structuredClone(value);
 const empty = () => ({version:2, activeId:null, draft:null, matches:{}});
 
+function upgradeSnapshot(input){
+  if(!input||typeof input!=='object')return input;
+  const state=clone(input);
+  if(state.currentGamePoints===undefined&&state.score!==undefined){state.currentGamePoints=clone(state.score);delete state.score}
+  if(state.completedGames===undefined&&Array.isArray(state.games)){
+    state.completedGames=state.games.map((game,index)=>({gameNumber:game.game??index+1,points:clone(game.points??game.score),winner:game.winner}));delete state.games;
+  }
+  state.version=MATCH_SCHEMA_VERSION;state.rulesVersion=state.rulesVersion||RULES_VERSION;
+  return state;
+}
+function upgradeMatch(input){
+  const match=upgradeSnapshot(input);
+  match.undo=(match.undo||[]).map(transition=>({...transition,before:upgradeSnapshot(transition.before),after:upgradeSnapshot(transition.after)}));
+  match.redo=(match.redo||[]).map(transition=>({...transition,before:upgradeSnapshot(transition.before),after:upgradeSnapshot(transition.after)}));
+  match.events=(match.events||[]).map(event=>({...event,before:upgradeSnapshot(event.before),after:upgradeSnapshot(event.after)}));
+  return match;
+}
+
 // One atomic localStorage write contains the active match, Undo/Redo stacks,
 // draft, completed sessions and their event ledgers. Legacy keys remain untouched.
 export function createMatchRepository(storage) {
@@ -17,10 +35,10 @@ export function createMatchRepository(storage) {
     const parse=key=>{try{return JSON.parse(storage.getItem(key))}catch{return null}};
     const oldActive=parse(OLD.active), oldHistory=parse(OLD.history);
     if(Array.isArray(oldHistory))for(const match of oldHistory) {
-      try {validateMatchState(match);doc.matches[match.id]=upgrade(match)} catch { /* malformed legacy record */ }
+      try {const upgraded=upgradeMatch(match);validateMatchState(upgraded);doc.matches[upgraded.id]=upgraded} catch { /* malformed legacy record */ }
     }
     if(oldActive) {
-      try {validateMatchState(oldActive);doc.matches[oldActive.id]=upgrade(oldActive);doc.activeId=oldActive.id} catch { /* malformed legacy active */ }
+      try {const upgraded=upgradeMatch(oldActive);validateMatchState(upgraded);doc.matches[upgraded.id]=upgraded;doc.activeId=upgraded.id} catch { /* malformed legacy active */ }
     }
     doc.draft=parse(OLD.draft);
     return commit(doc);
@@ -32,10 +50,14 @@ export function createMatchRepository(storage) {
     try {doc=JSON.parse(serialized)} catch {throw Error('Dữ liệu trận đã lưu bị hỏng. Không ghi đè để có thể khôi phục.');}
     if(doc?.version!==2||!doc.matches||typeof doc.matches!=='object'||Array.isArray(doc.matches))throw Error('Phiên bản dữ liệu trận chưa được hỗ trợ.');
     if(doc.activeId && !doc.matches[doc.activeId])throw Error('Không tìm thấy trận đang diễn ra trong dữ liệu đã lưu.');
-    for(const match of Object.values(doc.matches))validateMatchState(match);
+    let migrated=false;
+    for(const [matchId,match] of Object.entries(doc.matches)){
+      const upgraded=upgradeMatch(match);validateMatchState(upgraded);doc.matches[matchId]=upgraded;
+      migrated||=match.version!==MATCH_SCHEMA_VERSION||match.score!==undefined||match.games!==undefined;
+    }
+    if(migrated)commit(doc);
     return clone(doc);
   }
-  function upgrade(match) {return {...clone(match),version:MATCH_SCHEMA_VERSION,rulesVersion:match.rulesVersion||RULES_VERSION}}
   function saveSession(match,{draft,clearDraft=false}={}) {
     validateMatchState(match);
     const doc=load();

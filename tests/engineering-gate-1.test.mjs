@@ -19,7 +19,7 @@ test('Quick Match singles: handicap, immediate side-out, Undo/Redo, autosave, tw
   rally(s,'B');repo.saveSession(s);
   assert.equal(scoreCall(reopen(device).active()),'1 – 1');
   undo(s);repo.saveSession(s);
-  assert.deepEqual(s.score,before.score);assert.equal(s.serving,before.serving);
+  assert.deepEqual(s.currentGamePoints,before.currentGamePoints);assert.equal(s.serving,before.serving);
   assert.deepEqual(matchView(s).participants,matchView(before).participants);
   redo(s);repo.saveSession(s);assert.equal(scoreCall(reopen(device).active()),'1 – 1');
   rally(s,'B');rally(s,'B');repo.saveSession(s);assert.equal(s.status,'gameEnd');
@@ -40,7 +40,7 @@ test('Quick Match doubles: first service, server 1 to 2, side-out, court and ful
   assert.equal(scoreCall(reopen(device).active()),'0 – 0 – 1');
   undo(s);repo.saveSession(s);
   assert.deepEqual(matchView(reopen(device).active()),beforeCourt);
-  assert.deepEqual(s.score,before.score);
+  assert.deepEqual(s.currentGamePoints,before.currentGamePoints);
   const afterReload=reopen(device).active();redo(afterReload);reopen(device).saveSession(afterReload);
   assert.equal(scoreCall(reopen(device).active()),'0 – 0 – 1');
   for(let i=0;i<3;i++)rally(afterReload,'A');

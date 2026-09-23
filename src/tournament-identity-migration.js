@@ -2,22 +2,24 @@ const clone=value=>structuredClone(value);
 const legacyId=(kind,...parts)=>`legacy-${kind}:${parts.map(value=>encodeURIComponent(String(value))).join(':')}`;
 const metrics={
   matchWins:row=>row.matchWins,matchLosses:row=>row.matchLosses,gameWins:row=>row.gameWins,gameLosses:row=>row.gameLosses,
-  pointsWon:row=>row.pointsWon,pointsLost:row=>row.pointsLost,gameDifferential:row=>row.gameWins-row.gameLosses,pointDifferential:row=>row.pointsWon-row.pointsLost
+  pointsFor:row=>row.pointsFor,pointsAgainst:row=>row.pointsAgainst,gameDifferential:row=>row.gameWins-row.gameLosses,pointDifferential:row=>row.pointsFor-row.pointsAgainst
 };
 
 function rebuildSnapshot(t,snapshot,resultsById){
   const rules=t.rankingRulesVersions?.find(item=>item.id===snapshot.rankingRulesVersionId)||null;
   const table=new Map(),row=entrant=>{
-    if(!table.has(entrant.id))table.set(entrant.id,{entrantId:entrant.id,players:clone(entrant.players),played:0,matchWins:0,matchLosses:0,gameWins:0,gameLosses:0,pointsWon:0,pointsLost:0,rank:null,qualification:'UNKNOWN'});
+    if(!table.has(entrant.id))table.set(entrant.id,{entrantId:entrant.id,players:clone(entrant.players),played:0,matchWins:0,matchLosses:0,gameWins:0,gameLosses:0,gameDifferential:0,pointsFor:0,pointsAgainst:0,pointDifferential:0,rank:null,qualification:'UNKNOWN'});
     return table.get(entrant.id);
   };
   for(const resultId of snapshot.resultVersionIds||[]){
     const result=resultsById.get(resultId);if(!result)continue;
     for(const team of ['A','B']){
       const own=row(result.entrants[team]),opponent=team==='A'?'B':'A';own.played++;own.matchWins+=result.winner===team?1:0;own.matchLosses+=result.winner===team?0:1;
-      own.gameWins+=result.gamesWon[team];own.gameLosses+=result.gamesWon[opponent];for(const game of result.games){own.pointsWon+=game.score[team];own.pointsLost+=game.score[opponent]}
+      const matchGamesWon=result.matchGamesWon??result.gamesWon,completedGames=result.completedGames??result.games;
+      own.gameWins+=matchGamesWon[team];own.gameLosses+=matchGamesWon[opponent];for(const game of completedGames){const points=game.points??game.score;own.pointsFor+=points[team];own.pointsAgainst+=points[opponent]}
     }
   }
+  for(const item of table.values()){item.gameDifferential=item.gameWins-item.gameLosses;item.pointDifferential=item.pointsFor-item.pointsAgainst}
   let status='RANKED',reason=null,ordered=[...table.values()];
   if(!rules||!rules.criteria?.length){status='NEEDS_CONFIRMATION';reason='RANKING_RULES_INCOMPLETE'}
   else if(rules.criteria.some(rule=>!metrics[rule.metric])){status='NEEDS_CONFIRMATION';reason='RANKING_METRIC_UNSUPPORTED'}
@@ -72,4 +74,28 @@ export function migrateTournamentIdentity(input){
   t.schemaVersion=2;
   if(!(t.events||[]).some(event=>event.type==='identitySchemaMigrated'))(t.events??=[]).push({id:legacyId('event',t.id,'identity-v2'),at:t.updatedAt||t.createdAt,type:'identitySchemaMigrated',fromSchemaVersion:1,toSchemaVersion:2});
   return {tournament:t,migrated:true};
+}
+
+export function migrateTournamentScoreSemantics(input){
+  const t=clone(input);let migrated=false;
+  for(const rules of t.rankingRulesVersions||[])for(const criterion of rules.criteria||[]){
+    if(criterion.metric==='pointsWon'){criterion.metric='pointsFor';migrated=true}
+    if(criterion.metric==='pointsLost'){criterion.metric='pointsAgainst';migrated=true}
+  }
+  for(const entry of Object.values(t.resultLedger?.byMatch||{}))for(const result of entry.versions||[]){
+    if(!result.completedGames&&Array.isArray(result.games)){
+      result.completedGames=result.games.map((game,index)=>({gameNumber:game.game??index+1,points:clone(game.points??game.score),winner:game.winner}));delete result.games;migrated=true;
+    }
+    if(!result.matchGamesWon&&result.gamesWon){result.matchGamesWon=clone(result.gamesWon);delete result.gamesWon;migrated=true}
+    if(!result.format){
+      const rules=t.rulesVersions?.find(item=>item.id===result.rulesVersionId),sets=rules?.format?.sets??Math.max(result.completedGames?.length||1,(result.matchGamesWon?.A||0)+(result.matchGamesWon?.B||0));
+      result.format={sets,requiredWins:Math.floor(sets/2)+1};migrated=true;
+    }
+  }
+  if(migrated){
+    const resultsById=new Map(Object.values(t.resultLedger?.byMatch||{}).flatMap(entry=>entry.versions||[]).map(result=>[result.id,result]));
+    for(const snapshot of t.groupSnapshots||[])rebuildSnapshot(t,snapshot,resultsById);
+    if(!(t.events||[]).some(event=>event.type==='scoreSemanticsMigrated'))(t.events??=[]).push({id:legacyId('event',t.id,'score-semantics-v1'),at:t.updatedAt||t.createdAt,type:'scoreSemanticsMigrated'});
+  }
+  return {tournament:t,migrated};
 }
