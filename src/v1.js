@@ -24,8 +24,13 @@ function base(title,body,footer='',overlay=''){
 function button(text,act,cls='v1-main'){return `<button class="${cls}" data-v1="${act}">${text}</button>`}
 function mainHome(){
   const place=app.querySelector('#v1-home-actions');if(!place)return;
+  const tournamentMode=[...app.querySelectorAll('.mode')].find(item=>item.querySelector('strong')?.textContent.trim()==='Giải đấu');
+  if(tournamentMode){
+    tournamentMode.classList.remove('off');tournamentMode.dataset.v1='tournament';
+    const description=tournamentMode.querySelector('small');if(description)description.textContent='Điều hành giải đấu';
+  }
   const latest=repository.active(),active=latest?.status==='finished'?null:latest,pending=repository.load().draft,count=Object.values(repository.load().matches).filter(match=>match.status==='finished').length;
-  place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button('Quản lý giải đấu','tournament','v1-home-button')}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
+  place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
 }
 new MutationObserver(()=>{if(app.querySelector('#v1-home-actions')&&!app.querySelector('#v1-home-actions button'))mainHome()}).observe(app,{subtree:true,childList:true});
 function parseConfig(){

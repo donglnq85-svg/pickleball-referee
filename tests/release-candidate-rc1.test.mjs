@@ -144,3 +144,15 @@ test('RC1 mobile close target and completed-shift History escape remain wired',(
   assert.match(css,/\.ref-sheet \.ref-button-quiet\{[^}]*min-width:44px;min-height:44px/);
   assert.match(tournamentUi,/data-v1="history">Lịch sử<\/button>/);
 });
+
+test('RC1.1 normal Home exposes the implemented Tournament workspace',()=>{
+  const shell=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  const app=readFileSync(new URL('../src/v1.js',import.meta.url),'utf8');
+  const tournamentUi=readFileSync(new URL('../src/tournament-ui.js',import.meta.url),'utf8');
+  assert.match(shell,/<strong>Giải đấu<\/strong><small>Sắp ra mắt<\/small>/,'regression fixture must cover the legacy locked card');
+  assert.match(app,/tournamentMode\.classList\.remove\('off'\);tournamentMode\.dataset\.v1='tournament'/);
+  assert.match(app,/description\.textContent='Điều hành giải đấu'/);
+  assert.doesNotMatch(app,/button\('Quản lý giải đấu','tournament'/,'do not depend on a secondary injected CTA');
+  assert.match(app,/if\(action==='tournament'\)\{window\.dispatchEvent\(new Event\('tournament-open'\)\);return\}/);
+  assert.match(tournamentUi,/window\.addEventListener\('tournament-open',openTournament\)/);
+});
