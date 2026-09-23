@@ -17,6 +17,15 @@
 - Standings statistics are calculated independently from ranking. Missing criteria, unsupported metrics and unresolved ties return `NEEDS_CONFIRMATION`/`UNKNOWN`; the engine does not invent an order or qualification decision.
 - Application resume now treats an ended Tournament Match with an unconfirmed result as mandatory unfinished work before returning to Court Manager.
 
+## Identity Closure
+
+- Removed normalized display-name fallback identity from Canonical Result and standings.
+- Added first-class `Player`, `Entry` (Singles/Pair/Team entry), and `Team` roster identities. Scheduled Matches reference stable Entry IDs; names are render data only.
+- Added deterministic schema v1 → v2 migration. Legacy match-side occurrences receive stable IDs without merging equal names; Canonical Result and Group Snapshot references are rewritten/recalculated from exact result versions.
+- Unknown participants remain explicit `null` Entry references and never create blank/fake Players.
+- Added regressions for duplicate display names, rename stability, Pair reuse, correction mapping, migration/reload, exact Group Snapshot inputs, and explicit unknown participants.
+- Closure verification: 54/54 automated tests pass; production build passes.
+
 ## Vertical slice
 
 `Match End → read-only Canonical Result review → explicit confirmation → Court Manager progress → Group Snapshot → Group Completion assessment`
@@ -52,7 +61,6 @@ Verified on Vercel candidate source `d9f70cacc64a9fab5754e4e5e430b7a6b19fe066`:
 
 ## Known limitations for Product Control audit
 
-- **P2:** Tournament entrants do not yet have first-class roster IDs in the locked scheduling UI. Standings uses an explicit `entrantIds` value when supplied, otherwise a deterministic normalized player-name key.
 - **P2:** The minimal UI configures one aggregate ranking criterion. The domain supports ordered criteria, but advanced head-to-head policy remains `NEEDS_CONFIRMATION` until a verified rule specification is supplied.
 - **P3:** Result correction is domain/persistence complete and regression-tested; this candidate does not add a correction-entry UI.
 - **P3:** Group Completion is an operational state foundation only; reporting, signatures, PDF and messaging integrations remain outside Gate #4.

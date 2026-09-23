@@ -2,7 +2,7 @@ import {createMatch} from './match-engine.js';
 import {validateMatchSetup} from './match-domain.js';
 import {createMatchRepository} from './match-persistence.js';
 import {createTournamentRepository} from './tournament-persistence.js';
-import {courtManagerView} from './tournament-domain.js';
+import {courtManagerView,matchPlayers} from './tournament-domain.js';
 
 const clone=value=>structuredClone(value);
 const sessionId=(tournamentId,scheduledMatchId)=>`tournament:${tournamentId}:match:${scheduledMatchId}`;
@@ -47,8 +47,9 @@ export function beginTournamentMatch(tournamentId,workSessionId,matchId,final,st
   }else{
     const snapshot=m.matchStartSnapshot;
     const version=t.rulesVersions.find(v=>v.id===(snapshot?.rulesVersionId||t.activeRulesVersionId));
-    if(m.readiness!=='ready'||!m.players||version?.scoring!=='side-out'||!version.format)throw Error('Trận hoặc luật chưa đủ điều kiện bắt đầu.');
-    const config=snapshot?clone(snapshot.config):{...clone(version.format),type:m.type,players:clone(m.players),start:{A:0,B:0},scoring:'side-out'};
+    const players=matchPlayers(t,m);
+    if(m.readiness!=='ready'||!players||version?.scoring!=='side-out'||!version.format)throw Error('Trận hoặc luật chưa đủ điều kiện bắt đầu.');
+    const config=snapshot?clone(snapshot.config):{...clone(version.format),type:m.type,players,start:{A:0,B:0},scoring:'side-out'};
     const launchFinal=snapshot?clone(snapshot.final):final;
     if(snapshot&&(snapshot.scheduledMatchId!==m.id||snapshot.rulesVersionId!==version.id))throw Error('Match Start Snapshot không nhất quán.');
     validateMatchSetup(config,launchFinal);

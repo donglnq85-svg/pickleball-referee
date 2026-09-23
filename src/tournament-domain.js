@@ -1,7 +1,7 @@
 
 import {validateResultOperations,currentResult} from './tournament-results.js';
 
-export const TOURNAMENT_SCHEMA_VERSION = 1;
+export const TOURNAMENT_SCHEMA_VERSION = 2;
 const clone = value => structuredClone(value);
 const id = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
 const now = () => new Date().toISOString();
@@ -20,7 +20,45 @@ const touch = (t, type, detail={}) => {
 
 export function createTournament(name) {
   const at=now();return {schemaVersion:TOURNAMENT_SCHEMA_VERSION,id:id(),name:requireText(name,'Tên giải'),status:'draft',createdAt:at,updatedAt:at,
-    rulesVersions:[],activeRulesVersionId:null,rankingRulesVersions:[],activeRankingRulesVersionId:null,resultLedger:{byMatch:{}},groupSnapshots:[],groupCompletions:[],structure:{courts:[],groups:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
+    rulesVersions:[],activeRulesVersionId:null,rankingRulesVersions:[],activeRankingRulesVersionId:null,resultLedger:{byMatch:{}},groupSnapshots:[],groupCompletions:[],structure:{courts:[],groups:[],players:[],entries:[],teams:[]},schedule:[],assignments:[],workSessions:[],launches:{},events:[]};
+}
+
+export function addPlayer(t,{displayName}) {
+  const player={id:id(),displayName:requireText(displayName,'Tên VĐV'),createdAt:now()};
+  t.structure.players.push(player);touch(t,'playerCreated',{playerId:player.id});return player;
+}
+
+export function renamePlayer(t,playerId,displayName) {
+  const player=find(t.structure.players,playerId,'VĐV');
+  player.displayName=requireText(displayName,'Tên VĐV');touch(t,'playerDisplayNameChanged',{playerId});return player;
+}
+
+export function addTeam(t,{displayName,rosterPlayerIds=[]}) {
+  if(!Array.isArray(rosterPlayerIds)||new Set(rosterPlayerIds).size!==rosterPlayerIds.length)throw Error('Danh sách đội không hợp lệ.');
+  rosterPlayerIds.forEach(playerId=>find(t.structure.players,playerId,'VĐV'));
+  const team={id:id(),displayName:requireText(displayName,'Tên đội'),rosterPlayerIds:[...rosterPlayerIds],createdAt:now()};
+  t.structure.teams.push(team);touch(t,'teamCreated',{teamId:team.id});return team;
+}
+
+export function addEntry(t,{type,playerIds,teamId=null,label=null}) {
+  if(!['single','double','team'].includes(type))throw Error('Loại Entry không hợp lệ.');
+  const expected=type==='single'?1:type==='double'?2:null;
+  if(!Array.isArray(playerIds)||(expected!==null&&playerIds.length!==expected)||new Set(playerIds).size!==playerIds.length)throw Error('Thành phần Entry không hợp lệ.');
+  playerIds.forEach(playerId=>find(t.structure.players,playerId,'VĐV'));
+  if(teamId!==null)find(t.structure.teams,teamId,'đội');
+  const entry={id:id(),type,playerIds:[...playerIds],teamId,label:label===null?null:requireText(label,'Tên Entry'),createdAt:now()};
+  t.structure.entries.push(entry);touch(t,'entryCreated',{entryId:entry.id,type});return entry;
+}
+
+export function entryPlayers(t,entryId) {
+  if(entryId===null)return null;
+  const entry=find(t.structure.entries,entryId,'Entry');
+  return entry.playerIds.map(playerId=>find(t.structure.players,playerId,'VĐV').displayName);
+}
+
+export function matchPlayers(t,match) {
+  if(!['single','double'].includes(match.type)||!match.entrantIds?.A||!match.entrantIds?.B)return null;
+  return {A:entryPlayers(t,match.entrantIds.A),B:entryPlayers(t,match.entrantIds.B)};
 }
 
 export function addRulesVersion(t,{label,authority,scoring='unknown',format=null,procedures={equipmentCheck:'unknown'}}) {
@@ -40,12 +78,25 @@ export function addResource(t,kind,label) {
 
 // A schedule entry is not a referee assignment. Court/group and participants
 // may remain unknown until the event operator supplies authoritative facts.
-export function addScheduledMatch(t,{label,groupId=null,courtId=null,type='unknown',players=null}) {
+export function addScheduledMatch(t,{label,groupId=null,courtId=null,type='unknown',players=null,entrantIds=null}) {
   if(groupId!==null)find(t.structure.groups,groupId,'bảng');
   if(courtId!==null)find(t.structure.courts,courtId,'sân');
   if(!['unknown','single','double'].includes(type))throw Error('Loại trận không hợp lệ.');
+  if(players!==null&&entrantIds!==null)throw Error('Chỉ dùng Entry IDs hoặc dữ liệu tạo VĐV mới.');
   if(players!==null && (!['single','double'].includes(type)||!['A','B'].every(team=>Array.isArray(players[team])&&players[team].length===(type==='single'?1:2)&&players[team].every(name=>typeof name==='string'&&name.trim()))))throw Error('VĐV không hợp lệ.');
-  const match={id:id(),label:requireText(label,'Tên trận'),groupId,courtId,type,players:clone(players),readiness:'unknown',blockedReason:null,matchSessionId:null,operations:null,matchStartSnapshot:null,createdAt:now()};
+  let refs={A:null,B:null};
+  if(entrantIds!==null){
+    if(!['single','double'].includes(type)||!['A','B'].every(team=>typeof entrantIds[team]==='string'))throw Error('Entry IDs không hợp lệ.');
+    refs={A:entrantIds.A,B:entrantIds.B};
+    for(const team of ['A','B'])if(find(t.structure.entries,refs[team],'Entry').type!==type)throw Error('Entry không khớp nội dung thi đấu.');
+  }else if(players!==null){
+    for(const team of ['A','B']){
+      const playerIds=players[team].map(displayName=>addPlayer(t,{displayName}).id);
+      refs[team]=addEntry(t,{type,playerIds}).id;
+    }
+  }
+  const rendered=refs.A&&refs.B?{A:entryPlayers(t,refs.A),B:entryPlayers(t,refs.B)}:null;
+  const match={id:id(),label:requireText(label,'Tên trận'),groupId,courtId,type,entrantIds:refs,players:rendered,readiness:'unknown',blockedReason:null,matchSessionId:null,operations:null,matchStartSnapshot:null,createdAt:now()};
   t.schedule.push(match);touch(t,'matchScheduled',{matchId:match.id});return match;
 }
 
@@ -98,12 +149,17 @@ export function courtManagerView(t,workSessionId,matchRepository=null) {
 
 export function validateTournament(t) {
   if(t?.schemaVersion!==TOURNAMENT_SCHEMA_VERSION||!t.id||!t.name||!['draft','active'].includes(t.status)||
-    !Array.isArray(t.rulesVersions)||!Array.isArray(t.structure?.courts)||!Array.isArray(t.structure?.groups)||
+    !Array.isArray(t.rulesVersions)||!Array.isArray(t.structure?.courts)||!Array.isArray(t.structure?.groups)||!Array.isArray(t.structure?.players)||!Array.isArray(t.structure?.entries)||!Array.isArray(t.structure?.teams)||
     !Array.isArray(t.schedule)||!Array.isArray(t.assignments)||!Array.isArray(t.workSessions)||!Array.isArray(t.events))throw Error('Dữ liệu giải không hợp lệ.');
   if(t.activeRulesVersionId!==null)find(t.rulesVersions,t.activeRulesVersionId,'phiên bản luật');
+  const playerIds=new Set();for(const player of t.structure.players){if(!player.id||playerIds.has(player.id)||!player.displayName?.trim())throw Error('Player identity không hợp lệ.');playerIds.add(player.id)}
+  const entryIds=new Set();for(const entry of t.structure.entries){if(!entry.id||entryIds.has(entry.id)||!['single','double','team'].includes(entry.type)||!Array.isArray(entry.playerIds)||new Set(entry.playerIds).size!==entry.playerIds.length)throw Error('Entry identity không hợp lệ.');entryIds.add(entry.id);entry.playerIds.forEach(playerId=>find(t.structure.players,playerId,'VĐV'));if(entry.type==='single'&&entry.playerIds.length!==1||entry.type==='double'&&entry.playerIds.length!==2)throw Error('Entry identity không hợp lệ.');if(entry.teamId!==null&&entry.teamId!==undefined)find(t.structure.teams,entry.teamId,'đội')}
+  const teamIds=new Set();for(const team of t.structure.teams){if(!team.id||teamIds.has(team.id)||!team.displayName?.trim()||!Array.isArray(team.rosterPlayerIds))throw Error('Team identity không hợp lệ.');teamIds.add(team.id);team.rosterPlayerIds.forEach(playerId=>find(t.structure.players,playerId,'VĐV'))}
   for(const v of t.rulesVersions)if(v.procedures!==undefined&&(!v.procedures||!['unknown','disabled','optional','required'].includes(v.procedures.equipmentCheck)))throw Error('Quy định kiểm tra dụng cụ không hợp lệ.');
   for(const m of t.schedule){
     if(m.groupId!==null)find(t.structure.groups,m.groupId,'bảng');if(m.courtId!==null)find(t.structure.courts,m.courtId,'sân');if(!['unknown','ready','blocked'].includes(m.readiness))throw Error('Readiness không hợp lệ.');
+    if(!m.entrantIds||!['A','B'].every(team=>m.entrantIds[team]===null||typeof m.entrantIds[team]==='string'))throw Error('Scheduled Match thiếu trạng thái Entry rõ ràng.');
+    if(['single','double'].includes(m.type)){for(const team of ['A','B'])if(m.entrantIds[team]&&find(t.structure.entries,m.entrantIds[team],'Entry').type!==m.type)throw Error('Entry không khớp nội dung thi đấu.')}
     if(m.operations!==undefined&&m.operations!==null){
       const o=m.operations;
       if(!o.call||!Array.isArray(o.call.calls)||!Array.isArray(o.call.loudspeakerRequests)||!o.waiting||!o.preMatch||

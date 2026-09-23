@@ -1,4 +1,5 @@
 import {validateMatchSetup} from './match-domain.js';
+import {entryPlayers} from './tournament-domain.js';
 
 const clone=value=>structuredClone(value);
 const id=()=>globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;
@@ -17,17 +18,18 @@ const record=(t,type,detail={},at=Date.now())=>{
   const timestamp=iso(at);t.updatedAt=timestamp;t.events.push({id:id(),at:timestamp,type,...detail});
 };
 
-export function stableParticipants(match){
-  if(!['single','double'].includes(match.type)||!match.players)throw Error('Chưa đủ danh tính VĐV cho trận.');
+export function stableParticipants(t,match){
+  if(match===undefined){match=t;t=null}
+  if(!['single','double'].includes(match.type)||!match.entrantIds?.A||!match.entrantIds?.B)throw Error('Chưa đủ danh tính VĐV cho trận.');
   const count=match.type==='single'?1:2;
-  return ['A','B'].flatMap(team=>Array.from({length:count},(_,index)=>({id:`${team}${index+1}`,team,index,name:match.players[team]?.[index]?.trim()})))
+  return ['A','B'].flatMap(team=>{const entry=t?.structure.entries.find(item=>item.id===match.entrantIds[team]),names=t?entryPlayers(t,entry?.id):match.players?.[team];return Array.from({length:count},(_,index)=>({id:`${team}${index+1}`,playerId:entry?.playerIds[index]||null,entryId:match.entrantIds[team],team,index,name:names?.[index]?.trim()}))})
     .map(participant=>{if(!participant.name)throw Error('Chưa đủ danh tính VĐV cho trận.');return participant});
 }
 
 export function ensureMatchOperations(t,matchId){
   const match=findMatch(t,matchId);
   if(match.operations)return match.operations;
-  const participants=stableParticipants(match);
+  const participants=stableParticipants(t,match);
   match.operations={
     version:1,
     call:{calls:[],loudspeakerRequests:[]},
@@ -137,7 +139,7 @@ export function skipWarmup(t,matchId,at=Date.now()){
 
 export function setPreMatchFinalSetup(t,matchId,setup){
   const match=findMatch(t,matchId),pre=initializePreMatch(t,matchId),version=findVersion(t,pre.rulesVersionId);
-  const config={...clone(version.format),type:match.type,players:clone(match.players),start:clone(setup.start),scoring:version.scoring};
+  const config={...clone(version.format),type:match.type,players:{A:entryPlayers(t,match.entrantIds.A),B:entryPlayers(t,match.entrantIds.B)},start:clone(setup.start),scoring:version.scoring};
   const final=clone(setup.final);validateMatchSetup(config,final);pre.finalSetup={config,final};record(t,'finalSetupRecorded',{matchId});return pre.finalSetup;
 }
 

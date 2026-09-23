@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createMatch,rally} from '../src/match-engine.js';
-import {createTournament,addRulesVersion,addResource,addScheduledMatch,createAssignment,startWorkSession,setMatchReadiness,courtManagerView,validateTournament} from '../src/tournament-domain.js';
+import {createTournament,addRulesVersion,addResource,addPlayer,addEntry,addScheduledMatch,createAssignment,startWorkSession,setMatchReadiness,courtManagerView,validateTournament,matchPlayers} from '../src/tournament-domain.js';
 import {createTournamentRepository} from '../src/tournament-persistence.js';
 import {createMatchRepository} from '../src/match-persistence.js';
 import {addRankingRulesVersion,deriveCanonicalResult,confirmCanonicalResult,correctCanonicalResult,currentResult,calculateGroupSnapshot,assessGroupCompletion} from '../src/tournament-results.js';
@@ -11,14 +11,15 @@ const storage=()=>{const values=new Map();return {getItem:key=>values.get(key)??
 const setup=()=>{
   const t=createTournament('Gate 4'),rules=addRulesVersion(t,{label:'Match Rules',authority:'Product Control',scoring:'side-out',format:{sets:1,points:1,rule:'touch'},procedures:{equipmentCheck:'disabled'}});
   const group=addResource(t,'groups','Bảng A'),court=addResource(t,'courts','Sân 1');
-  const first=addScheduledMatch(t,{label:'Alpha – Beta',groupId:group.id,courtId:court.id,type:'single',players:{A:['Alpha'],B:['Beta']}});
-  const second=addScheduledMatch(t,{label:'Beta – Gamma',groupId:group.id,courtId:court.id,type:'single',players:{A:['Beta'],B:['Gamma']}});
+  const playerEntries=Object.fromEntries(['Alpha','Beta','Gamma'].map(displayName=>{const player=addPlayer(t,{displayName});return [displayName,addEntry(t,{type:'single',playerIds:[player.id]})]}));
+  const first=addScheduledMatch(t,{label:'Alpha – Beta',groupId:group.id,courtId:court.id,type:'single',entrantIds:{A:playerEntries.Alpha.id,B:playerEntries.Beta.id}});
+  const second=addScheduledMatch(t,{label:'Beta – Gamma',groupId:group.id,courtId:court.id,type:'single',entrantIds:{A:playerEntries.Beta.id,B:playerEntries.Gamma.id}});
   const assignment=createAssignment(t,{label:'Bảng A',scopeKind:'group',scopeIds:[group.id]}),work=startWorkSession(t,assignment.id);
   setMatchReadiness(t,first.id,'ready');setMatchReadiness(t,second.id,'ready');
   return {t,rules,group,court,first,second,work};
 };
 function finish(t,scheduled,winner='A'){
-  const session=createMatch({type:'single',sets:1,points:1,rule:'touch',scoring:'side-out',players:structuredClone(scheduled.players),start:{A:0,B:0}},{serving:winner,courtLeft:'A'});
+  const session=createMatch({type:'single',sets:1,points:1,rule:'touch',scoring:'side-out',players:matchPlayers(t,scheduled),start:{A:0,B:0}},{serving:winner,courtLeft:'A'});
   session.tournamentContext={tournamentId:t.id,scheduledMatchId:scheduled.id,rulesVersionId:t.activeRulesVersionId,matchStartSnapshotId:null};scheduled.matchSessionId=session.id;rally(session,winner);return session;
 }
 

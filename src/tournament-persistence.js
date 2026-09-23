@@ -1,8 +1,9 @@
 import {validateTournament} from './tournament-domain.js';
+import {migrateTournamentIdentity} from './tournament-identity-migration.js';
 
 export const TOURNAMENT_STORE_KEY='pickleball-referee:tournaments:v1';
 const clone=value=>structuredClone(value);
-const empty=()=>({version:1,tournaments:{},activeWorkSession:null});
+const empty=()=>({version:2,tournaments:{},activeWorkSession:null});
 
 export function createTournamentRepository(storage){
   function load(){
@@ -10,13 +11,19 @@ export function createTournamentRepository(storage){
     if(raw===null)return empty();
     let document;
     try{document=JSON.parse(raw)}catch{throw Error('Dữ liệu giải bị hỏng. Không ghi đè dữ liệu đã lưu.');}
-    if(document?.version!==1||!document.tournaments||typeof document.tournaments!=='object'||Array.isArray(document.tournaments))throw Error('Phiên bản dữ liệu giải chưa được hỗ trợ.');
+    if(![1,2].includes(document?.version)||!document.tournaments||typeof document.tournaments!=='object'||Array.isArray(document.tournaments))throw Error('Phiên bản dữ liệu giải chưa được hỗ trợ.');
+    let migrated=document.version===1;
+    for(const [tournamentId,tournament] of Object.entries(document.tournaments)){
+      const result=migrateTournamentIdentity(tournament);document.tournaments[tournamentId]=result.tournament;migrated||=result.migrated;
+    }
+    document.version=2;
     for(const [id,tournament] of Object.entries(document.tournaments)){
       validateTournament(tournament);if(id!==tournament.id)throw Error('Định danh giải không khớp.');
     }
     if(document.activeWorkSession){const {tournamentId,workSessionId}=document.activeWorkSession;
       const t=document.tournaments[tournamentId];if(!t||!t.workSessions.some(s=>s.id===workSessionId&&s.status==='active'))throw Error('Nhiệm vụ đang mở không hợp lệ.');
     }
+    if(migrated)storage.setItem(TOURNAMENT_STORE_KEY,JSON.stringify(document));
     return clone(document);
   }
   function save(tournament,{activeWorkSession}={}){

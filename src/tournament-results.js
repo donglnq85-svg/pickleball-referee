@@ -10,7 +10,6 @@ const snapshots=t=>(t.groupSnapshots??=[]);
 const completions=t=>(t.groupCompletions??=[]);
 const rankingVersions=t=>(t.rankingRulesVersions??=[]);
 
-const teamKey=(match,team)=>match.entrantIds?.[team]||`${match.type}:${match.players[team].map(name=>name.trim().toLocaleLowerCase('vi')).join('|')}`;
 const resultEntry=(t,matchId)=>ledger(t).byMatch[matchId]||null;
 export const currentResult=(t,matchId)=>{
   const entry=resultEntry(t,matchId);return entry?.versions.find(version=>version.id===entry.currentVersionId)||null;
@@ -26,10 +25,11 @@ function normalizeGames(games){
   });
 }
 function resultBody(match,session,games){
+  if(!match.entrantIds?.A||!match.entrantIds?.B)throw Error('Scheduled Match thiếu stable Entry identity.');
   const normalized=normalizeGames(games),gamesWon={A:0,B:0};for(const game of normalized)gamesWon[game.winner]++;
   if(gamesWon.A===gamesWon.B)throw Error('Kết quả trận chưa xác định đội thắng.');
   return {matchSessionId:session.id,matchEndedAt:session.finishedAt,type:session.config.type,players:clone(session.players),games:normalized,gamesWon,winner:gamesWon.A>gamesWon.B?'A':'B',
-    entrants:{A:{id:teamKey(match,'A'),players:clone(match.players.A)},B:{id:teamKey(match,'B'),players:clone(match.players.B)}}};
+    entrants:{A:{id:match.entrantIds.A,players:clone(session.players.A)},B:{id:match.entrantIds.B,players:clone(session.players.B)}}};
 }
 function appendResult(t,match,body,source,at=Date.now()){
   const store=ledger(t),entry=store.byMatch[match.id]??={currentVersionId:null,versions:[]};
@@ -131,10 +131,11 @@ export function validateResultOperations(t){
   for(const [matchId,entry] of Object.entries(byMatch)){
     matchById(t,matchId);if(!entry||!Array.isArray(entry.versions)||!entry.versions.some(item=>item.id===entry.currentVersionId))throw Error('Canonical Result ledger không hợp lệ.');
     if(entry.versions.filter(item=>item.isCurrent).length!==1||entry.versions.find(item=>item.isCurrent)?.id!==entry.currentVersionId||new Set(entry.versions.map(item=>item.version)).size!==entry.versions.length)throw Error('Canonical Result phải có đúng một phiên bản hiện tại.');
-    for(const result of entry.versions)if(!['PENDING_CONFIRMATION','CONFIRMED'].includes(result.status)||result.scheduledMatchId!==matchId||!result.matchEndedAt||!result.source)throw Error('Canonical Result không hợp lệ.');
+    for(const result of entry.versions)if(!['PENDING_CONFIRMATION','CONFIRMED'].includes(result.status)||result.scheduledMatchId!==matchId||!result.matchEndedAt||!result.source||result.entrants?.A?.id!==matchById(t,matchId).entrantIds?.A||result.entrants?.B?.id!==matchById(t,matchId).entrantIds?.B)throw Error('Canonical Result không hợp lệ.');
   }
   const allResultIds=new Set(Object.values(byMatch).flatMap(entry=>entry.versions.map(item=>item.id)));
-  for(const snapshot of t.groupSnapshots||[]){groupById(t,snapshot.groupId);if(!Array.isArray(snapshot.resultVersionIds)||snapshot.resultVersionIds.some(resultId=>!allResultIds.has(resultId))||
+  const allEntryIds=new Set(t.structure?.entries?.map(item=>item.id)||[]);
+  for(const snapshot of t.groupSnapshots||[]){groupById(t,snapshot.groupId);if(!Array.isArray(snapshot.resultVersionIds)||snapshot.resultVersionIds.some(resultId=>!allResultIds.has(resultId))||snapshot.rows?.some(row=>!allEntryIds.has(row.entrantId))||
     snapshot.rankingRulesVersionId&&!versions.some(item=>item.id===snapshot.rankingRulesVersionId)||!['RANKED','NEEDS_CONFIRMATION'].includes(snapshot.status))throw Error('Group Snapshot không hợp lệ.');}
   for(const completion of t.groupCompletions||[]){groupById(t,completion.groupId);if(!['IN_PROGRESS','READY','NEEDS_CONFIRMATION'].includes(completion.status)||!Array.isArray(completion.resultVersionIds)||completion.resultVersionIds.some(resultId=>!allResultIds.has(resultId))||completion.groupSnapshotId&&!t.groupSnapshots.some(item=>item.id===completion.groupSnapshotId))throw Error('Group Completion không hợp lệ.');}
   return true;
