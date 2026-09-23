@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Acceptance Fixture · THE AUTUMN – BIDV TỪ LIÊM OPEN 2026</title>
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,sans-serif;color:#101828;background:#f2f4f7}*{box-sizing:border-box}body{margin:0;padding:24px 16px}main{max-width:680px;margin:auto;background:#fff;border:1px solid #d0d5dd;border-radius:16px;padding:20px;box-shadow:0 8px 24px #10182812}h1{font-size:24px;line-height:1.2;margin:0 0 8px}p{color:#475467;line-height:1.5}.meta{padding:12px;border-radius:10px;background:#f9fafb;font:12px/1.55 ui-monospace,monospace;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}.card{padding:12px;border:1px solid #e4e7ec;border-radius:10px}.card b{display:block;font-size:22px;color:#1849a9}.notice{padding:12px;border-left:4px solid #f79009;background:#fffaeb;border-radius:6px}button{width:100%;min-height:52px;border:0;border-radius:10px;background:#155eef;color:#fff;font-size:16px;font-weight:800;padding:12px;margin-top:18px}button:disabled{background:#98a2b3}.status{min-height:24px;font-weight:700;margin-top:12px}.ok{color:#067647}.bad{color:#b42318}@media(max-width:430px){body{padding:12px 10px}main{padding:16px}.grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>REAL TOURNAMENT ACCEPTANCE FIXTURE</h1>
+  <p><b>THE AUTUMN – BIDV TỪ LIÊM OPEN 2026</b><br />Ngày thi đấu 27/09/2026</p>
+  <div class="meta">Application source: af0c9c5d6169e240a1e401ffe9406066accc681f<br />Fixture: autumn-bidv-2026-v1.0.0<br />Target: Preview / test-dev only</div>
+  <div class="grid">
+    <div class="card"><b>64</b>Player IDs</div><div class="card"><b>32</b>Entry IDs</div>
+    <div class="card"><b>8</b>Bảng</div><div class="card"><b>48</b>Trận vòng bảng</div>
+  </div>
+  <p class="notice"><b>Dữ liệu giữ nguyên UNKNOWN/NEEDS_CONFIRMATION:</b> sân Đôi Nam bảng C/D, mapping bán kết mâu thuẫn, và đối chiếu lịch match-level chưa có trong hai ảnh nguồn.</p>
+  <button id="seed" type="button">NẠP FIXTURE VÀ MỞ ỨNG DỤNG</button>
+  <div id="status" class="status" role="status" aria-live="polite"></div>
+</main>
+<script type="module">
+const button=document.querySelector('#seed'),status=document.querySelector('#status');
+button.addEventListener('click',async()=>{
+  button.disabled=true;status.className='status';status.textContent='Đang kiểm tra fixture…';
+  try{
+    const response=await fetch('./fixture.json',{cache:'no-store'});if(!response.ok)throw Error(`Không tải được fixture (${response.status})`);
+    const fixture=await response.json();
+    if(fixture.applicationSourceSha!=='af0c9c5d6169e240a1e401ffe9406066accc681f'||fixture.fixtureVersion!=='autumn-bidv-2026-v1.0.0')throw Error('Fixture provenance không hợp lệ.');
+    const existing=localStorage.getItem(fixture.storage.tournamentKey)||localStorage.getItem(fixture.storage.matchKey);
+    if(existing&&!confirm('Preview này đang có dữ liệu acceptance cục bộ. Nạp lại fixture sẽ thay thế dữ liệu trên riêng trình duyệt này. Tiếp tục?')){button.disabled=false;status.textContent='Đã giữ nguyên dữ liệu hiện tại.';return}
+    localStorage.setItem(fixture.storage.tournamentKey,JSON.stringify(fixture.tournamentDocument));
+    localStorage.setItem(fixture.storage.matchKey,JSON.stringify(fixture.matchDocument));
+    localStorage.setItem(fixture.storage.manifestKey,JSON.stringify({fixtureVersion:fixture.fixtureVersion,applicationSourceSha:fixture.applicationSourceSha,seededAt:new Date().toISOString()}));
+    status.className='status ok';status.textContent='Đã nạp 64 Player · 32 Entry · 8 bảng · 48 trận. Đang mở app…';
+    setTimeout(()=>location.assign('/?acceptanceFixture=autumn-bidv-2026-v1.0.0'),350);
+  }catch(error){button.disabled=false;status.className='status bad';status.textContent=error.message}
+});
+</script>
+</body>
+</html>

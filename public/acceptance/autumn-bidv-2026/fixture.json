@@ -1,0 +1,3755 @@
+{
+  "fixtureVersion": "autumn-bidv-2026-v1.0.0",
+  "applicationSourceSha": "af0c9c5d6169e240a1e401ffe9406066accc681f",
+  "generatedAt": "2026-09-23T12:00:00.000Z",
+  "storage": {
+    "tournamentKey": "pickleball-referee:tournaments:v1",
+    "matchKey": "pickleball-referee:matches:v2",
+    "manifestKey": "pickleball-referee:acceptance-fixture:v1"
+  },
+  "tournamentDocument": {
+    "version": 2,
+    "tournaments": {
+      "tournament:autumn-bidv-tu-liem-open-2026": {
+        "schemaVersion": 2,
+        "id": "tournament:autumn-bidv-tu-liem-open-2026",
+        "name": "THE AUTUMN – BIDV TỪ LIÊM OPEN 2026",
+        "status": "draft",
+        "createdAt": "2026-09-23T12:00:00.000Z",
+        "updatedAt": "2026-09-23T12:00:00.000Z",
+        "rulesVersions": [
+          {
+            "id": "rules:group-stage:v1",
+            "label": "Vòng bảng · 1 game chạm 11",
+            "authority": "Điều lệ BTC cung cấp cho Product Owner Acceptance",
+            "scoring": "side-out",
+            "format": {
+              "sets": 1,
+              "points": 11,
+              "rule": "touch"
+            },
+            "procedures": {
+              "equipmentCheck": "unknown",
+              "reporting": {
+                "match": "optional",
+                "group": "optional"
+              },
+              "shiftCompletion": {
+                "activeMatch": "blocker",
+                "unconfirmedResult": "blocker",
+                "unresolvedWaiting": "blocker",
+                "incompleteGroup": "reminder",
+                "requiredReport": "blocker",
+                "unresolvedIssue": "blocker",
+                "handoverObligation": "reminder",
+                "allowHandover": true,
+                "requireGroupCompletion": false
+              },
+              "timeout": {
+                "perGame": 1,
+                "durationSeconds": 60
+              },
+              "medical": {
+                "durationSeconds": 300
+              },
+              "noShow": {
+                "lateAfterSeconds": 900,
+                "resolution": "REFEREE_OR_BTC_CONFIRMATION_REQUIRED",
+                "autoAdjudicate": false
+              },
+              "sideChange": {
+                "atPoints": [
+                  6
+                ]
+              }
+            },
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "rules:final:v1",
+            "label": "Chung kết · 1 game chạm 15, cách 2, cap 21",
+            "authority": "Điều lệ BTC cung cấp cho Product Owner Acceptance",
+            "scoring": "side-out",
+            "format": {
+              "sets": 1,
+              "points": 15,
+              "rule": "maximum",
+              "cap": 21
+            },
+            "procedures": {
+              "equipmentCheck": "unknown",
+              "reporting": {
+                "match": "optional",
+                "group": "optional"
+              },
+              "shiftCompletion": {
+                "activeMatch": "blocker",
+                "unconfirmedResult": "blocker",
+                "unresolvedWaiting": "blocker",
+                "incompleteGroup": "reminder",
+                "requiredReport": "blocker",
+                "unresolvedIssue": "blocker",
+                "handoverObligation": "reminder",
+                "allowHandover": true,
+                "requireGroupCompletion": false
+              },
+              "timeout": {
+                "perGame": 1,
+                "durationSeconds": 60
+              },
+              "medical": {
+                "durationSeconds": 300
+              },
+              "noShow": {
+                "lateAfterSeconds": 900,
+                "resolution": "REFEREE_OR_BTC_CONFIRMATION_REQUIRED",
+                "autoAdjudicate": false
+              },
+              "sideChange": {
+                "atPoints": [
+                  8
+                ]
+              }
+            },
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          }
+        ],
+        "activeRulesVersionId": "rules:group-stage:v1",
+        "rankingRulesVersions": [
+          {
+            "id": "ranking:group-stage:v1",
+            "label": "Vòng bảng · thắng, đối kháng, hiệu số điểm",
+            "authority": "Điều lệ BTC cung cấp cho Product Owner Acceptance",
+            "criteria": [
+              {
+                "metric": "matchWins",
+                "direction": "desc"
+              },
+              {
+                "metric": "headToHead",
+                "direction": "desc"
+              },
+              {
+                "metric": "pointDifferential",
+                "direction": "desc"
+              }
+            ],
+            "qualification": {
+              "kind": "top",
+              "count": 2
+            },
+            "points": {
+              "win": 1,
+              "loss": 0
+            },
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          }
+        ],
+        "activeRankingRulesVersionId": "ranking:group-stage:v1",
+        "resultLedger": {
+          "byMatch": {}
+        },
+        "groupSnapshots": [],
+        "groupCompletions": [],
+        "reporting": {
+          "match": {},
+          "group": {},
+          "events": []
+        },
+        "structure": {
+          "courts": [
+            {
+              "id": "court:1",
+              "label": "Sân 1"
+            },
+            {
+              "id": "court:2",
+              "label": "Sân 2"
+            },
+            {
+              "id": "court:3",
+              "label": "Sân 3"
+            },
+            {
+              "id": "court:4",
+              "label": "Sân 4"
+            },
+            {
+              "id": "court:5",
+              "label": "Sân 5"
+            },
+            {
+              "id": "court:6",
+              "label": "Sân 6"
+            }
+          ],
+          "groups": [
+            {
+              "id": "group:mens:A",
+              "label": "Đôi Nam · Bảng A",
+              "categoryId": "category:mens",
+              "poolCode": "A"
+            },
+            {
+              "id": "group:mens:B",
+              "label": "Đôi Nam · Bảng B",
+              "categoryId": "category:mens",
+              "poolCode": "B"
+            },
+            {
+              "id": "group:mens:C",
+              "label": "Đôi Nam · Bảng C",
+              "categoryId": "category:mens",
+              "poolCode": "C"
+            },
+            {
+              "id": "group:mens:D",
+              "label": "Đôi Nam · Bảng D",
+              "categoryId": "category:mens",
+              "poolCode": "D"
+            },
+            {
+              "id": "group:mixed:A",
+              "label": "Đôi Nam Nữ · Bảng A",
+              "categoryId": "category:mixed",
+              "poolCode": "A"
+            },
+            {
+              "id": "group:mixed:B",
+              "label": "Đôi Nam Nữ · Bảng B",
+              "categoryId": "category:mixed",
+              "poolCode": "B"
+            },
+            {
+              "id": "group:mixed:C",
+              "label": "Đôi Nam Nữ · Bảng C",
+              "categoryId": "category:mixed",
+              "poolCode": "C"
+            },
+            {
+              "id": "group:mixed:D",
+              "label": "Đôi Nam Nữ · Bảng D",
+              "categoryId": "category:mixed",
+              "poolCode": "D"
+            }
+          ],
+          "players": [
+            {
+              "id": "player:mens:a1:1",
+              "displayName": "Nguyễn Hải Nam",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:a1:2",
+              "displayName": "Bùi Thái Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:a2:1",
+              "displayName": "Trần Lê Huy",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:a2:2",
+              "displayName": "Trần Đức Khoa",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:a3:1",
+              "displayName": "Phạm Quang Hòa",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:a3:2",
+              "displayName": "Nguyễn Anh Quân",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:a4:1",
+              "displayName": "Lục Thế Vinh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:a4:2",
+              "displayName": "Lê Tuấn Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "A",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:b1:1",
+              "displayName": "Nguyễn Quang Huy",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:b1:2",
+              "displayName": "Nguyễn Tiến Đạt",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:b2:1",
+              "displayName": "Nguyễn Bình Quý",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:b2:2",
+              "displayName": "Nguyễn Văn Toàn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:b3:1",
+              "displayName": "Mr Hùng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:b3:2",
+              "displayName": "Mr Hải",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:b4:1",
+              "displayName": "Mr Tuấn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:b4:2",
+              "displayName": "Mr Kiều Sơn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "B",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:c1:1",
+              "displayName": "Nguyễn Quang Long",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:c1:2",
+              "displayName": "Phạm Ngọc Hưng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:c2:1",
+              "displayName": "Vũ Văn Khoa",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:c2:2",
+              "displayName": "Nguyễn Hoàng Tùng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:c3:1",
+              "displayName": "Nguyễn Hữu Bài",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:c3:2",
+              "displayName": "Lương Trường Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:c4:1",
+              "displayName": "Mr Bình",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:c4:2",
+              "displayName": "Mr Tuấn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "C",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:d1:1",
+              "displayName": "Hoàng Văn Sơn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:d1:2",
+              "displayName": "Nguyễn Ngọc Lâm",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:d2:1",
+              "displayName": "Nguyễn Đức Kiên",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:d2:2",
+              "displayName": "Nguyễn Đình Thi",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:d3:1",
+              "displayName": "Mr Nguyễn Sơn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:d3:2",
+              "displayName": "Mr Hạnh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mens:d4:1",
+              "displayName": "Vũ Xuân Tùng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mens:d4:2",
+              "displayName": "Nguyễn Văn Lương",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam",
+                "group": "D",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:a1:1",
+              "displayName": "Nguyễn Văn Song",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:a1:2",
+              "displayName": "Nguyễn Thị Thu Hằng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:a2:1",
+              "displayName": "Nguyễn Công Sơn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:a2:2",
+              "displayName": "Nguyễn Thị Thanh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:a3:1",
+              "displayName": "Nguyễn Sơn Dương",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:a3:2",
+              "displayName": "Nguyễn Yến Vy",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:a4:1",
+              "displayName": "Mr Đại",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:a4:2",
+              "displayName": "Ms Yến",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "A",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:b1:1",
+              "displayName": "Lê Quang Hiếu",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:b1:2",
+              "displayName": "Nguyễn Thị Hoài Phương",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:b2:1",
+              "displayName": "Ngô Minh Thắng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:b2:2",
+              "displayName": "Bùi Thị Thu Hương",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:b3:1",
+              "displayName": "Tống Thanh Lê",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:b3:2",
+              "displayName": "Nguyễn Thị Thu Nga",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:b4:1",
+              "displayName": "Lê Duy Chính",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:b4:2",
+              "displayName": "Trương Thị Thanh Huyền",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "B",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:c1:1",
+              "displayName": "Trần Quang Tuấn Đan",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:c1:2",
+              "displayName": "Cao Thu Trang",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:c2:1",
+              "displayName": "Nguyễn Trung Định",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:c2:2",
+              "displayName": "Lê Thị Hoàng Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:c3:1",
+              "displayName": "Phạm Ngọc Minh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:c3:2",
+              "displayName": "Nguyễn Thị Băng An",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:c4:1",
+              "displayName": "Mr Việt",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:c4:2",
+              "displayName": "Ms Mai",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "C",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:d1:1",
+              "displayName": "Nguyễn Sỹ Trung Kiên",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 1,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:d1:2",
+              "displayName": "Nguyễn Thị Bảo Dung",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 1,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:d2:1",
+              "displayName": "Trần Vương Nguyên",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 2,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:d2:2",
+              "displayName": "Nguyễn Thị Huyền",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 2,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:d3:1",
+              "displayName": "Nguyễn Khắc Việt",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 3,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:d3:2",
+              "displayName": "Nguyễn Thị Thu Huyền",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 3,
+                "playerOrder": 2
+              }
+            },
+            {
+              "id": "player:mixed:d4:1",
+              "displayName": "Mr Đức",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 4,
+                "playerOrder": 1
+              }
+            },
+            {
+              "id": "player:mixed:d4:2",
+              "displayName": "Ms Chi",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "source": {
+                "document": "IMG_1433.jpeg",
+                "category": "Đôi Nam Nữ",
+                "group": "D",
+                "slot": 4,
+                "playerOrder": 2
+              }
+            }
+          ],
+          "entries": [
+            {
+              "id": "entry:mens:a1",
+              "type": "double",
+              "playerIds": [
+                "player:mens:a1:1",
+                "player:mens:a1:2"
+              ],
+              "teamId": null,
+              "label": "A1 · Nguyễn Hải Nam / Bùi Thái Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:A",
+              "sourceSlot": "A1"
+            },
+            {
+              "id": "entry:mens:a2",
+              "type": "double",
+              "playerIds": [
+                "player:mens:a2:1",
+                "player:mens:a2:2"
+              ],
+              "teamId": null,
+              "label": "A2 · Trần Lê Huy / Trần Đức Khoa",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:A",
+              "sourceSlot": "A2"
+            },
+            {
+              "id": "entry:mens:a3",
+              "type": "double",
+              "playerIds": [
+                "player:mens:a3:1",
+                "player:mens:a3:2"
+              ],
+              "teamId": null,
+              "label": "A3 · Phạm Quang Hòa / Nguyễn Anh Quân",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:A",
+              "sourceSlot": "A3"
+            },
+            {
+              "id": "entry:mens:a4",
+              "type": "double",
+              "playerIds": [
+                "player:mens:a4:1",
+                "player:mens:a4:2"
+              ],
+              "teamId": null,
+              "label": "A4 · Lục Thế Vinh / Lê Tuấn Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:A",
+              "sourceSlot": "A4"
+            },
+            {
+              "id": "entry:mens:b1",
+              "type": "double",
+              "playerIds": [
+                "player:mens:b1:1",
+                "player:mens:b1:2"
+              ],
+              "teamId": null,
+              "label": "B1 · Nguyễn Quang Huy / Nguyễn Tiến Đạt",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:B",
+              "sourceSlot": "B1"
+            },
+            {
+              "id": "entry:mens:b2",
+              "type": "double",
+              "playerIds": [
+                "player:mens:b2:1",
+                "player:mens:b2:2"
+              ],
+              "teamId": null,
+              "label": "B2 · Nguyễn Bình Quý / Nguyễn Văn Toàn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:B",
+              "sourceSlot": "B2"
+            },
+            {
+              "id": "entry:mens:b3",
+              "type": "double",
+              "playerIds": [
+                "player:mens:b3:1",
+                "player:mens:b3:2"
+              ],
+              "teamId": null,
+              "label": "B3 · Mr Hùng / Mr Hải",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:B",
+              "sourceSlot": "B3"
+            },
+            {
+              "id": "entry:mens:b4",
+              "type": "double",
+              "playerIds": [
+                "player:mens:b4:1",
+                "player:mens:b4:2"
+              ],
+              "teamId": null,
+              "label": "B4 · Mr Tuấn / Mr Kiều Sơn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:B",
+              "sourceSlot": "B4"
+            },
+            {
+              "id": "entry:mens:c1",
+              "type": "double",
+              "playerIds": [
+                "player:mens:c1:1",
+                "player:mens:c1:2"
+              ],
+              "teamId": null,
+              "label": "C1 · Nguyễn Quang Long / Phạm Ngọc Hưng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:C",
+              "sourceSlot": "C1"
+            },
+            {
+              "id": "entry:mens:c2",
+              "type": "double",
+              "playerIds": [
+                "player:mens:c2:1",
+                "player:mens:c2:2"
+              ],
+              "teamId": null,
+              "label": "C2 · Vũ Văn Khoa / Nguyễn Hoàng Tùng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:C",
+              "sourceSlot": "C2"
+            },
+            {
+              "id": "entry:mens:c3",
+              "type": "double",
+              "playerIds": [
+                "player:mens:c3:1",
+                "player:mens:c3:2"
+              ],
+              "teamId": null,
+              "label": "C3 · Nguyễn Hữu Bài / Lương Trường Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:C",
+              "sourceSlot": "C3"
+            },
+            {
+              "id": "entry:mens:c4",
+              "type": "double",
+              "playerIds": [
+                "player:mens:c4:1",
+                "player:mens:c4:2"
+              ],
+              "teamId": null,
+              "label": "C4 · Mr Bình / Mr Tuấn",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:C",
+              "sourceSlot": "C4"
+            },
+            {
+              "id": "entry:mens:d1",
+              "type": "double",
+              "playerIds": [
+                "player:mens:d1:1",
+                "player:mens:d1:2"
+              ],
+              "teamId": null,
+              "label": "D1 · Hoàng Văn Sơn / Nguyễn Ngọc Lâm",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:D",
+              "sourceSlot": "D1"
+            },
+            {
+              "id": "entry:mens:d2",
+              "type": "double",
+              "playerIds": [
+                "player:mens:d2:1",
+                "player:mens:d2:2"
+              ],
+              "teamId": null,
+              "label": "D2 · Nguyễn Đức Kiên / Nguyễn Đình Thi",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:D",
+              "sourceSlot": "D2"
+            },
+            {
+              "id": "entry:mens:d3",
+              "type": "double",
+              "playerIds": [
+                "player:mens:d3:1",
+                "player:mens:d3:2"
+              ],
+              "teamId": null,
+              "label": "D3 · Mr Nguyễn Sơn / Mr Hạnh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:D",
+              "sourceSlot": "D3"
+            },
+            {
+              "id": "entry:mens:d4",
+              "type": "double",
+              "playerIds": [
+                "player:mens:d4:1",
+                "player:mens:d4:2"
+              ],
+              "teamId": null,
+              "label": "D4 · Vũ Xuân Tùng / Nguyễn Văn Lương",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mens",
+              "groupId": "group:mens:D",
+              "sourceSlot": "D4"
+            },
+            {
+              "id": "entry:mixed:a1",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:a1:1",
+                "player:mixed:a1:2"
+              ],
+              "teamId": null,
+              "label": "A1 · Nguyễn Văn Song / Nguyễn Thị Thu Hằng",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:A",
+              "sourceSlot": "A1"
+            },
+            {
+              "id": "entry:mixed:a2",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:a2:1",
+                "player:mixed:a2:2"
+              ],
+              "teamId": null,
+              "label": "A2 · Nguyễn Công Sơn / Nguyễn Thị Thanh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:A",
+              "sourceSlot": "A2"
+            },
+            {
+              "id": "entry:mixed:a3",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:a3:1",
+                "player:mixed:a3:2"
+              ],
+              "teamId": null,
+              "label": "A3 · Nguyễn Sơn Dương / Nguyễn Yến Vy",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:A",
+              "sourceSlot": "A3"
+            },
+            {
+              "id": "entry:mixed:a4",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:a4:1",
+                "player:mixed:a4:2"
+              ],
+              "teamId": null,
+              "label": "A4 · Mr Đại / Ms Yến",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:A",
+              "sourceSlot": "A4"
+            },
+            {
+              "id": "entry:mixed:b1",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:b1:1",
+                "player:mixed:b1:2"
+              ],
+              "teamId": null,
+              "label": "B1 · Lê Quang Hiếu / Nguyễn Thị Hoài Phương",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:B",
+              "sourceSlot": "B1"
+            },
+            {
+              "id": "entry:mixed:b2",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:b2:1",
+                "player:mixed:b2:2"
+              ],
+              "teamId": null,
+              "label": "B2 · Ngô Minh Thắng / Bùi Thị Thu Hương",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:B",
+              "sourceSlot": "B2"
+            },
+            {
+              "id": "entry:mixed:b3",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:b3:1",
+                "player:mixed:b3:2"
+              ],
+              "teamId": null,
+              "label": "B3 · Tống Thanh Lê / Nguyễn Thị Thu Nga",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:B",
+              "sourceSlot": "B3"
+            },
+            {
+              "id": "entry:mixed:b4",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:b4:1",
+                "player:mixed:b4:2"
+              ],
+              "teamId": null,
+              "label": "B4 · Lê Duy Chính / Trương Thị Thanh Huyền",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:B",
+              "sourceSlot": "B4"
+            },
+            {
+              "id": "entry:mixed:c1",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:c1:1",
+                "player:mixed:c1:2"
+              ],
+              "teamId": null,
+              "label": "C1 · Trần Quang Tuấn Đan / Cao Thu Trang",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:C",
+              "sourceSlot": "C1"
+            },
+            {
+              "id": "entry:mixed:c2",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:c2:1",
+                "player:mixed:c2:2"
+              ],
+              "teamId": null,
+              "label": "C2 · Nguyễn Trung Định / Lê Thị Hoàng Anh",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:C",
+              "sourceSlot": "C2"
+            },
+            {
+              "id": "entry:mixed:c3",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:c3:1",
+                "player:mixed:c3:2"
+              ],
+              "teamId": null,
+              "label": "C3 · Phạm Ngọc Minh / Nguyễn Thị Băng An",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:C",
+              "sourceSlot": "C3"
+            },
+            {
+              "id": "entry:mixed:c4",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:c4:1",
+                "player:mixed:c4:2"
+              ],
+              "teamId": null,
+              "label": "C4 · Mr Việt / Ms Mai",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:C",
+              "sourceSlot": "C4"
+            },
+            {
+              "id": "entry:mixed:d1",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:d1:1",
+                "player:mixed:d1:2"
+              ],
+              "teamId": null,
+              "label": "D1 · Nguyễn Sỹ Trung Kiên / Nguyễn Thị Bảo Dung",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:D",
+              "sourceSlot": "D1"
+            },
+            {
+              "id": "entry:mixed:d2",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:d2:1",
+                "player:mixed:d2:2"
+              ],
+              "teamId": null,
+              "label": "D2 · Trần Vương Nguyên / Nguyễn Thị Huyền",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:D",
+              "sourceSlot": "D2"
+            },
+            {
+              "id": "entry:mixed:d3",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:d3:1",
+                "player:mixed:d3:2"
+              ],
+              "teamId": null,
+              "label": "D3 · Nguyễn Khắc Việt / Nguyễn Thị Thu Huyền",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:D",
+              "sourceSlot": "D3"
+            },
+            {
+              "id": "entry:mixed:d4",
+              "type": "double",
+              "playerIds": [
+                "player:mixed:d4:1",
+                "player:mixed:d4:2"
+              ],
+              "teamId": null,
+              "label": "D4 · Mr Đức / Ms Chi",
+              "createdAt": "2026-09-23T12:00:00.000Z",
+              "categoryId": "category:mixed",
+              "groupId": "group:mixed:D",
+              "sourceSlot": "D4"
+            }
+          ],
+          "teams": []
+        },
+        "schedule": [
+          {
+            "id": "match:mens:a:1",
+            "label": "Đôi Nam · Bảng A · Trận 1",
+            "groupId": "group:mens:A",
+            "courtId": "court:5",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:a1",
+              "B": "entry:mens:a4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Hải Nam",
+                "Bùi Thái Anh"
+              ],
+              "B": [
+                "Lục Thế Vinh",
+                "Lê Tuấn Anh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:a1",
+                "entry:mens:a4"
+              ],
+              "sourceOrder": [
+                "entry:mens:a1",
+                "entry:mens:a4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:a:2",
+            "label": "Đôi Nam · Bảng A · Trận 2",
+            "groupId": "group:mens:A",
+            "courtId": "court:5",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:a2",
+              "B": "entry:mens:a3"
+            },
+            "players": {
+              "A": [
+                "Trần Lê Huy",
+                "Trần Đức Khoa"
+              ],
+              "B": [
+                "Phạm Quang Hòa",
+                "Nguyễn Anh Quân"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:a2",
+                "entry:mens:a3"
+              ],
+              "sourceOrder": [
+                "entry:mens:a2",
+                "entry:mens:a3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:a:3",
+            "label": "Đôi Nam · Bảng A · Trận 3",
+            "groupId": "group:mens:A",
+            "courtId": "court:5",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:a1",
+              "B": "entry:mens:a3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Hải Nam",
+                "Bùi Thái Anh"
+              ],
+              "B": [
+                "Phạm Quang Hòa",
+                "Nguyễn Anh Quân"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:a1",
+                "entry:mens:a3"
+              ],
+              "sourceOrder": [
+                "entry:mens:a1",
+                "entry:mens:a3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:a:4",
+            "label": "Đôi Nam · Bảng A · Trận 4",
+            "groupId": "group:mens:A",
+            "courtId": "court:5",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:a4",
+              "B": "entry:mens:a2"
+            },
+            "players": {
+              "A": [
+                "Lục Thế Vinh",
+                "Lê Tuấn Anh"
+              ],
+              "B": [
+                "Trần Lê Huy",
+                "Trần Đức Khoa"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:a2",
+                "entry:mens:a4"
+              ],
+              "sourceOrder": [
+                "entry:mens:a4",
+                "entry:mens:a2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:a:5",
+            "label": "Đôi Nam · Bảng A · Trận 5",
+            "groupId": "group:mens:A",
+            "courtId": "court:5",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:a1",
+              "B": "entry:mens:a2"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Hải Nam",
+                "Bùi Thái Anh"
+              ],
+              "B": [
+                "Trần Lê Huy",
+                "Trần Đức Khoa"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:a1",
+                "entry:mens:a2"
+              ],
+              "sourceOrder": [
+                "entry:mens:a1",
+                "entry:mens:a2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:a:6",
+            "label": "Đôi Nam · Bảng A · Trận 6",
+            "groupId": "group:mens:A",
+            "courtId": "court:5",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:a3",
+              "B": "entry:mens:a4"
+            },
+            "players": {
+              "A": [
+                "Phạm Quang Hòa",
+                "Nguyễn Anh Quân"
+              ],
+              "B": [
+                "Lục Thế Vinh",
+                "Lê Tuấn Anh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:a3",
+                "entry:mens:a4"
+              ],
+              "sourceOrder": [
+                "entry:mens:a3",
+                "entry:mens:a4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:b:1",
+            "label": "Đôi Nam · Bảng B · Trận 1",
+            "groupId": "group:mens:B",
+            "courtId": "court:6",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:b1",
+              "B": "entry:mens:b4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Quang Huy",
+                "Nguyễn Tiến Đạt"
+              ],
+              "B": [
+                "Mr Tuấn",
+                "Mr Kiều Sơn"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:b1",
+                "entry:mens:b4"
+              ],
+              "sourceOrder": [
+                "entry:mens:b1",
+                "entry:mens:b4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:b:2",
+            "label": "Đôi Nam · Bảng B · Trận 2",
+            "groupId": "group:mens:B",
+            "courtId": "court:6",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:b2",
+              "B": "entry:mens:b3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Bình Quý",
+                "Nguyễn Văn Toàn"
+              ],
+              "B": [
+                "Mr Hùng",
+                "Mr Hải"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:b2",
+                "entry:mens:b3"
+              ],
+              "sourceOrder": [
+                "entry:mens:b2",
+                "entry:mens:b3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:b:3",
+            "label": "Đôi Nam · Bảng B · Trận 3",
+            "groupId": "group:mens:B",
+            "courtId": "court:6",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:b1",
+              "B": "entry:mens:b3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Quang Huy",
+                "Nguyễn Tiến Đạt"
+              ],
+              "B": [
+                "Mr Hùng",
+                "Mr Hải"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:b1",
+                "entry:mens:b3"
+              ],
+              "sourceOrder": [
+                "entry:mens:b1",
+                "entry:mens:b3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:b:4",
+            "label": "Đôi Nam · Bảng B · Trận 4",
+            "groupId": "group:mens:B",
+            "courtId": "court:6",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:b4",
+              "B": "entry:mens:b2"
+            },
+            "players": {
+              "A": [
+                "Mr Tuấn",
+                "Mr Kiều Sơn"
+              ],
+              "B": [
+                "Nguyễn Bình Quý",
+                "Nguyễn Văn Toàn"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:b2",
+                "entry:mens:b4"
+              ],
+              "sourceOrder": [
+                "entry:mens:b4",
+                "entry:mens:b2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:b:5",
+            "label": "Đôi Nam · Bảng B · Trận 5",
+            "groupId": "group:mens:B",
+            "courtId": "court:6",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:b1",
+              "B": "entry:mens:b2"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Quang Huy",
+                "Nguyễn Tiến Đạt"
+              ],
+              "B": [
+                "Nguyễn Bình Quý",
+                "Nguyễn Văn Toàn"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:b1",
+                "entry:mens:b2"
+              ],
+              "sourceOrder": [
+                "entry:mens:b1",
+                "entry:mens:b2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:b:6",
+            "label": "Đôi Nam · Bảng B · Trận 6",
+            "groupId": "group:mens:B",
+            "courtId": "court:6",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:b3",
+              "B": "entry:mens:b4"
+            },
+            "players": {
+              "A": [
+                "Mr Hùng",
+                "Mr Hải"
+              ],
+              "B": [
+                "Mr Tuấn",
+                "Mr Kiều Sơn"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:b3",
+                "entry:mens:b4"
+              ],
+              "sourceOrder": [
+                "entry:mens:b3",
+                "entry:mens:b4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:c:1",
+            "label": "Đôi Nam · Bảng C · Trận 1",
+            "groupId": "group:mens:C",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:c1",
+              "B": "entry:mens:c4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Quang Long",
+                "Phạm Ngọc Hưng"
+              ],
+              "B": [
+                "Mr Bình",
+                "Mr Tuấn"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:c1",
+                "entry:mens:c4"
+              ],
+              "sourceOrder": [
+                "entry:mens:c1",
+                "entry:mens:c4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:c:2",
+            "label": "Đôi Nam · Bảng C · Trận 2",
+            "groupId": "group:mens:C",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:c2",
+              "B": "entry:mens:c3"
+            },
+            "players": {
+              "A": [
+                "Vũ Văn Khoa",
+                "Nguyễn Hoàng Tùng"
+              ],
+              "B": [
+                "Nguyễn Hữu Bài",
+                "Lương Trường Anh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:c2",
+                "entry:mens:c3"
+              ],
+              "sourceOrder": [
+                "entry:mens:c2",
+                "entry:mens:c3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:c:3",
+            "label": "Đôi Nam · Bảng C · Trận 3",
+            "groupId": "group:mens:C",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:c1",
+              "B": "entry:mens:c3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Quang Long",
+                "Phạm Ngọc Hưng"
+              ],
+              "B": [
+                "Nguyễn Hữu Bài",
+                "Lương Trường Anh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:c1",
+                "entry:mens:c3"
+              ],
+              "sourceOrder": [
+                "entry:mens:c1",
+                "entry:mens:c3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:c:4",
+            "label": "Đôi Nam · Bảng C · Trận 4",
+            "groupId": "group:mens:C",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:c4",
+              "B": "entry:mens:c2"
+            },
+            "players": {
+              "A": [
+                "Mr Bình",
+                "Mr Tuấn"
+              ],
+              "B": [
+                "Vũ Văn Khoa",
+                "Nguyễn Hoàng Tùng"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:c2",
+                "entry:mens:c4"
+              ],
+              "sourceOrder": [
+                "entry:mens:c4",
+                "entry:mens:c2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:c:5",
+            "label": "Đôi Nam · Bảng C · Trận 5",
+            "groupId": "group:mens:C",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:c1",
+              "B": "entry:mens:c2"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Quang Long",
+                "Phạm Ngọc Hưng"
+              ],
+              "B": [
+                "Vũ Văn Khoa",
+                "Nguyễn Hoàng Tùng"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:c1",
+                "entry:mens:c2"
+              ],
+              "sourceOrder": [
+                "entry:mens:c1",
+                "entry:mens:c2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:c:6",
+            "label": "Đôi Nam · Bảng C · Trận 6",
+            "groupId": "group:mens:C",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:c3",
+              "B": "entry:mens:c4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Hữu Bài",
+                "Lương Trường Anh"
+              ],
+              "B": [
+                "Mr Bình",
+                "Mr Tuấn"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:c3",
+                "entry:mens:c4"
+              ],
+              "sourceOrder": [
+                "entry:mens:c3",
+                "entry:mens:c4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:d:1",
+            "label": "Đôi Nam · Bảng D · Trận 1",
+            "groupId": "group:mens:D",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:d1",
+              "B": "entry:mens:d4"
+            },
+            "players": {
+              "A": [
+                "Hoàng Văn Sơn",
+                "Nguyễn Ngọc Lâm"
+              ],
+              "B": [
+                "Vũ Xuân Tùng",
+                "Nguyễn Văn Lương"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:d1",
+                "entry:mens:d4"
+              ],
+              "sourceOrder": [
+                "entry:mens:d1",
+                "entry:mens:d4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:d:2",
+            "label": "Đôi Nam · Bảng D · Trận 2",
+            "groupId": "group:mens:D",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:d2",
+              "B": "entry:mens:d3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Đức Kiên",
+                "Nguyễn Đình Thi"
+              ],
+              "B": [
+                "Mr Nguyễn Sơn",
+                "Mr Hạnh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:d2",
+                "entry:mens:d3"
+              ],
+              "sourceOrder": [
+                "entry:mens:d2",
+                "entry:mens:d3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:d:3",
+            "label": "Đôi Nam · Bảng D · Trận 3",
+            "groupId": "group:mens:D",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:d1",
+              "B": "entry:mens:d3"
+            },
+            "players": {
+              "A": [
+                "Hoàng Văn Sơn",
+                "Nguyễn Ngọc Lâm"
+              ],
+              "B": [
+                "Mr Nguyễn Sơn",
+                "Mr Hạnh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:d1",
+                "entry:mens:d3"
+              ],
+              "sourceOrder": [
+                "entry:mens:d1",
+                "entry:mens:d3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:d:4",
+            "label": "Đôi Nam · Bảng D · Trận 4",
+            "groupId": "group:mens:D",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:d4",
+              "B": "entry:mens:d2"
+            },
+            "players": {
+              "A": [
+                "Vũ Xuân Tùng",
+                "Nguyễn Văn Lương"
+              ],
+              "B": [
+                "Nguyễn Đức Kiên",
+                "Nguyễn Đình Thi"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:d2",
+                "entry:mens:d4"
+              ],
+              "sourceOrder": [
+                "entry:mens:d4",
+                "entry:mens:d2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:d:5",
+            "label": "Đôi Nam · Bảng D · Trận 5",
+            "groupId": "group:mens:D",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:d1",
+              "B": "entry:mens:d2"
+            },
+            "players": {
+              "A": [
+                "Hoàng Văn Sơn",
+                "Nguyễn Ngọc Lâm"
+              ],
+              "B": [
+                "Nguyễn Đức Kiên",
+                "Nguyễn Đình Thi"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:d1",
+                "entry:mens:d2"
+              ],
+              "sourceOrder": [
+                "entry:mens:d1",
+                "entry:mens:d2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mens:d:6",
+            "label": "Đôi Nam · Bảng D · Trận 6",
+            "groupId": "group:mens:D",
+            "courtId": null,
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mens:d3",
+              "B": "entry:mens:d4"
+            },
+            "players": {
+              "A": [
+                "Mr Nguyễn Sơn",
+                "Mr Hạnh"
+              ],
+              "B": [
+                "Vũ Xuân Tùng",
+                "Nguyễn Văn Lương"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mens",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mens:d3",
+                "entry:mens:d4"
+              ],
+              "sourceOrder": [
+                "entry:mens:d3",
+                "entry:mens:d4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:a:1",
+            "label": "Đôi Nam Nữ · Bảng A · Trận 1",
+            "groupId": "group:mixed:A",
+            "courtId": "court:1",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:a1",
+              "B": "entry:mixed:a4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Văn Song",
+                "Nguyễn Thị Thu Hằng"
+              ],
+              "B": [
+                "Mr Đại",
+                "Ms Yến"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:a1",
+                "entry:mixed:a4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:a1",
+                "entry:mixed:a4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:a:2",
+            "label": "Đôi Nam Nữ · Bảng A · Trận 2",
+            "groupId": "group:mixed:A",
+            "courtId": "court:1",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:a2",
+              "B": "entry:mixed:a3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Công Sơn",
+                "Nguyễn Thị Thanh"
+              ],
+              "B": [
+                "Nguyễn Sơn Dương",
+                "Nguyễn Yến Vy"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:a2",
+                "entry:mixed:a3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:a2",
+                "entry:mixed:a3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:a:3",
+            "label": "Đôi Nam Nữ · Bảng A · Trận 3",
+            "groupId": "group:mixed:A",
+            "courtId": "court:1",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:a1",
+              "B": "entry:mixed:a3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Văn Song",
+                "Nguyễn Thị Thu Hằng"
+              ],
+              "B": [
+                "Nguyễn Sơn Dương",
+                "Nguyễn Yến Vy"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:a1",
+                "entry:mixed:a3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:a1",
+                "entry:mixed:a3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:a:4",
+            "label": "Đôi Nam Nữ · Bảng A · Trận 4",
+            "groupId": "group:mixed:A",
+            "courtId": "court:1",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:a4",
+              "B": "entry:mixed:a2"
+            },
+            "players": {
+              "A": [
+                "Mr Đại",
+                "Ms Yến"
+              ],
+              "B": [
+                "Nguyễn Công Sơn",
+                "Nguyễn Thị Thanh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:a2",
+                "entry:mixed:a4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:a4",
+                "entry:mixed:a2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:a:5",
+            "label": "Đôi Nam Nữ · Bảng A · Trận 5",
+            "groupId": "group:mixed:A",
+            "courtId": "court:1",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:a1",
+              "B": "entry:mixed:a2"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Văn Song",
+                "Nguyễn Thị Thu Hằng"
+              ],
+              "B": [
+                "Nguyễn Công Sơn",
+                "Nguyễn Thị Thanh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:a1",
+                "entry:mixed:a2"
+              ],
+              "sourceOrder": [
+                "entry:mixed:a1",
+                "entry:mixed:a2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:a:6",
+            "label": "Đôi Nam Nữ · Bảng A · Trận 6",
+            "groupId": "group:mixed:A",
+            "courtId": "court:1",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:a3",
+              "B": "entry:mixed:a4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Sơn Dương",
+                "Nguyễn Yến Vy"
+              ],
+              "B": [
+                "Mr Đại",
+                "Ms Yến"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:a3",
+                "entry:mixed:a4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:a3",
+                "entry:mixed:a4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:b:1",
+            "label": "Đôi Nam Nữ · Bảng B · Trận 1",
+            "groupId": "group:mixed:B",
+            "courtId": "court:2",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:b1",
+              "B": "entry:mixed:b4"
+            },
+            "players": {
+              "A": [
+                "Lê Quang Hiếu",
+                "Nguyễn Thị Hoài Phương"
+              ],
+              "B": [
+                "Lê Duy Chính",
+                "Trương Thị Thanh Huyền"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:b1",
+                "entry:mixed:b4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:b1",
+                "entry:mixed:b4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:b:2",
+            "label": "Đôi Nam Nữ · Bảng B · Trận 2",
+            "groupId": "group:mixed:B",
+            "courtId": "court:2",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:b2",
+              "B": "entry:mixed:b3"
+            },
+            "players": {
+              "A": [
+                "Ngô Minh Thắng",
+                "Bùi Thị Thu Hương"
+              ],
+              "B": [
+                "Tống Thanh Lê",
+                "Nguyễn Thị Thu Nga"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:b2",
+                "entry:mixed:b3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:b2",
+                "entry:mixed:b3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:b:3",
+            "label": "Đôi Nam Nữ · Bảng B · Trận 3",
+            "groupId": "group:mixed:B",
+            "courtId": "court:2",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:b1",
+              "B": "entry:mixed:b3"
+            },
+            "players": {
+              "A": [
+                "Lê Quang Hiếu",
+                "Nguyễn Thị Hoài Phương"
+              ],
+              "B": [
+                "Tống Thanh Lê",
+                "Nguyễn Thị Thu Nga"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:b1",
+                "entry:mixed:b3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:b1",
+                "entry:mixed:b3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:b:4",
+            "label": "Đôi Nam Nữ · Bảng B · Trận 4",
+            "groupId": "group:mixed:B",
+            "courtId": "court:2",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:b4",
+              "B": "entry:mixed:b2"
+            },
+            "players": {
+              "A": [
+                "Lê Duy Chính",
+                "Trương Thị Thanh Huyền"
+              ],
+              "B": [
+                "Ngô Minh Thắng",
+                "Bùi Thị Thu Hương"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:b2",
+                "entry:mixed:b4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:b4",
+                "entry:mixed:b2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:b:5",
+            "label": "Đôi Nam Nữ · Bảng B · Trận 5",
+            "groupId": "group:mixed:B",
+            "courtId": "court:2",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:b1",
+              "B": "entry:mixed:b2"
+            },
+            "players": {
+              "A": [
+                "Lê Quang Hiếu",
+                "Nguyễn Thị Hoài Phương"
+              ],
+              "B": [
+                "Ngô Minh Thắng",
+                "Bùi Thị Thu Hương"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:b1",
+                "entry:mixed:b2"
+              ],
+              "sourceOrder": [
+                "entry:mixed:b1",
+                "entry:mixed:b2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:b:6",
+            "label": "Đôi Nam Nữ · Bảng B · Trận 6",
+            "groupId": "group:mixed:B",
+            "courtId": "court:2",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:b3",
+              "B": "entry:mixed:b4"
+            },
+            "players": {
+              "A": [
+                "Tống Thanh Lê",
+                "Nguyễn Thị Thu Nga"
+              ],
+              "B": [
+                "Lê Duy Chính",
+                "Trương Thị Thanh Huyền"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:b3",
+                "entry:mixed:b4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:b3",
+                "entry:mixed:b4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:c:1",
+            "label": "Đôi Nam Nữ · Bảng C · Trận 1",
+            "groupId": "group:mixed:C",
+            "courtId": "court:3",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:c1",
+              "B": "entry:mixed:c4"
+            },
+            "players": {
+              "A": [
+                "Trần Quang Tuấn Đan",
+                "Cao Thu Trang"
+              ],
+              "B": [
+                "Mr Việt",
+                "Ms Mai"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:c1",
+                "entry:mixed:c4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:c1",
+                "entry:mixed:c4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:c:2",
+            "label": "Đôi Nam Nữ · Bảng C · Trận 2",
+            "groupId": "group:mixed:C",
+            "courtId": "court:3",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:c2",
+              "B": "entry:mixed:c3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Trung Định",
+                "Lê Thị Hoàng Anh"
+              ],
+              "B": [
+                "Phạm Ngọc Minh",
+                "Nguyễn Thị Băng An"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:c2",
+                "entry:mixed:c3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:c2",
+                "entry:mixed:c3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:c:3",
+            "label": "Đôi Nam Nữ · Bảng C · Trận 3",
+            "groupId": "group:mixed:C",
+            "courtId": "court:3",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:c1",
+              "B": "entry:mixed:c3"
+            },
+            "players": {
+              "A": [
+                "Trần Quang Tuấn Đan",
+                "Cao Thu Trang"
+              ],
+              "B": [
+                "Phạm Ngọc Minh",
+                "Nguyễn Thị Băng An"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:c1",
+                "entry:mixed:c3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:c1",
+                "entry:mixed:c3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:c:4",
+            "label": "Đôi Nam Nữ · Bảng C · Trận 4",
+            "groupId": "group:mixed:C",
+            "courtId": "court:3",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:c4",
+              "B": "entry:mixed:c2"
+            },
+            "players": {
+              "A": [
+                "Mr Việt",
+                "Ms Mai"
+              ],
+              "B": [
+                "Nguyễn Trung Định",
+                "Lê Thị Hoàng Anh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:c2",
+                "entry:mixed:c4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:c4",
+                "entry:mixed:c2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:c:5",
+            "label": "Đôi Nam Nữ · Bảng C · Trận 5",
+            "groupId": "group:mixed:C",
+            "courtId": "court:3",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:c1",
+              "B": "entry:mixed:c2"
+            },
+            "players": {
+              "A": [
+                "Trần Quang Tuấn Đan",
+                "Cao Thu Trang"
+              ],
+              "B": [
+                "Nguyễn Trung Định",
+                "Lê Thị Hoàng Anh"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:c1",
+                "entry:mixed:c2"
+              ],
+              "sourceOrder": [
+                "entry:mixed:c1",
+                "entry:mixed:c2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:c:6",
+            "label": "Đôi Nam Nữ · Bảng C · Trận 6",
+            "groupId": "group:mixed:C",
+            "courtId": "court:3",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:c3",
+              "B": "entry:mixed:c4"
+            },
+            "players": {
+              "A": [
+                "Phạm Ngọc Minh",
+                "Nguyễn Thị Băng An"
+              ],
+              "B": [
+                "Mr Việt",
+                "Ms Mai"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:c3",
+                "entry:mixed:c4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:c3",
+                "entry:mixed:c4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:d:1",
+            "label": "Đôi Nam Nữ · Bảng D · Trận 1",
+            "groupId": "group:mixed:D",
+            "courtId": "court:4",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:d1",
+              "B": "entry:mixed:d4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Sỹ Trung Kiên",
+                "Nguyễn Thị Bảo Dung"
+              ],
+              "B": [
+                "Mr Đức",
+                "Ms Chi"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:d1",
+                "entry:mixed:d4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:d1",
+                "entry:mixed:d4"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:d:2",
+            "label": "Đôi Nam Nữ · Bảng D · Trận 2",
+            "groupId": "group:mixed:D",
+            "courtId": "court:4",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:d2",
+              "B": "entry:mixed:d3"
+            },
+            "players": {
+              "A": [
+                "Trần Vương Nguyên",
+                "Nguyễn Thị Huyền"
+              ],
+              "B": [
+                "Nguyễn Khắc Việt",
+                "Nguyễn Thị Thu Huyền"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 1,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:d2",
+                "entry:mixed:d3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:d2",
+                "entry:mixed:d3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:d:3",
+            "label": "Đôi Nam Nữ · Bảng D · Trận 3",
+            "groupId": "group:mixed:D",
+            "courtId": "court:4",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:d1",
+              "B": "entry:mixed:d3"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Sỹ Trung Kiên",
+                "Nguyễn Thị Bảo Dung"
+              ],
+              "B": [
+                "Nguyễn Khắc Việt",
+                "Nguyễn Thị Thu Huyền"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:d1",
+                "entry:mixed:d3"
+              ],
+              "sourceOrder": [
+                "entry:mixed:d1",
+                "entry:mixed:d3"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:d:4",
+            "label": "Đôi Nam Nữ · Bảng D · Trận 4",
+            "groupId": "group:mixed:D",
+            "courtId": "court:4",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:d4",
+              "B": "entry:mixed:d2"
+            },
+            "players": {
+              "A": [
+                "Mr Đức",
+                "Ms Chi"
+              ],
+              "B": [
+                "Trần Vương Nguyên",
+                "Nguyễn Thị Huyền"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 2,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:d2",
+                "entry:mixed:d4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:d4",
+                "entry:mixed:d2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:d:5",
+            "label": "Đôi Nam Nữ · Bảng D · Trận 5",
+            "groupId": "group:mixed:D",
+            "courtId": "court:4",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:d1",
+              "B": "entry:mixed:d2"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Sỹ Trung Kiên",
+                "Nguyễn Thị Bảo Dung"
+              ],
+              "B": [
+                "Trần Vương Nguyên",
+                "Nguyễn Thị Huyền"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:d1",
+                "entry:mixed:d2"
+              ],
+              "sourceOrder": [
+                "entry:mixed:d1",
+                "entry:mixed:d2"
+              ],
+              "discrepancy": null
+            }
+          },
+          {
+            "id": "match:mixed:d:6",
+            "label": "Đôi Nam Nữ · Bảng D · Trận 6",
+            "groupId": "group:mixed:D",
+            "courtId": "court:4",
+            "type": "double",
+            "entrantIds": {
+              "A": "entry:mixed:d3",
+              "B": "entry:mixed:d4"
+            },
+            "players": {
+              "A": [
+                "Nguyễn Khắc Việt",
+                "Nguyễn Thị Thu Huyền"
+              ],
+              "B": [
+                "Mr Đức",
+                "Ms Chi"
+              ]
+            },
+            "readiness": "unknown",
+            "blockedReason": null,
+            "matchSessionId": null,
+            "operations": null,
+            "matchStartSnapshot": null,
+            "createdAt": "2026-09-23T12:00:00.000Z",
+            "categoryId": "category:mixed",
+            "stage": "group",
+            "round": 3,
+            "sourceIdentity": {
+              "entrantIds": [
+                "entry:mixed:d3",
+                "entry:mixed:d4"
+              ],
+              "sourceOrder": [
+                "entry:mixed:d3",
+                "entry:mixed:d4"
+              ],
+              "discrepancy": null
+            }
+          }
+        ],
+        "assignments": [
+          {
+            "id": "assignment:mens:a",
+            "version": 1,
+            "label": "Đôi Nam · Bảng A",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mens:A"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "assignment:mens:b",
+            "version": 1,
+            "label": "Đôi Nam · Bảng B",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mens:B"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "assignment:mens:c",
+            "version": 1,
+            "label": "Đôi Nam · Bảng C",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mens:C"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "assignment:mens:d",
+            "version": 1,
+            "label": "Đôi Nam · Bảng D",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mens:D"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "assignment:mixed:a",
+            "version": 1,
+            "label": "Đôi Nam Nữ · Bảng A",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mixed:A"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "assignment:mixed:b",
+            "version": 1,
+            "label": "Đôi Nam Nữ · Bảng B",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mixed:B"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "assignment:mixed:c",
+            "version": 1,
+            "label": "Đôi Nam Nữ · Bảng C",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mixed:C"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          },
+          {
+            "id": "assignment:mixed:d",
+            "version": 1,
+            "label": "Đôi Nam Nữ · Bảng D",
+            "scope": {
+              "kind": "group",
+              "ids": [
+                "group:mixed:D"
+              ]
+            },
+            "status": "assigned",
+            "createdAt": "2026-09-23T12:00:00.000Z"
+          }
+        ],
+        "workSessions": [],
+        "launches": {},
+        "operationalIssues": [],
+        "handovers": [],
+        "shiftCompletions": [],
+        "events": [],
+        "acceptanceFixture": {
+          "version": "autumn-bidv-2026-v1.0.0",
+          "applicationSourceSha": "af0c9c5d6169e240a1e401ffe9406066accc681f",
+          "eventDate": "2026-09-27",
+          "venue": "Sân vận động Quốc Gia Mỹ Đình",
+          "categories": [
+            {
+              "id": "category:mens",
+              "label": "Đôi Nam",
+              "entryCount": 16
+            },
+            {
+              "id": "category:mixed",
+              "label": "Đôi Nam Nữ",
+              "entryCount": 16
+            }
+          ],
+          "rules": {
+            "groupStageRulesVersionId": "rules:group-stage:v1",
+            "finalRulesVersionId": "rules:final:v1",
+            "rankingRulesVersionId": "ranking:group-stage:v1"
+          },
+          "knockout": {
+            "quarterfinals": [
+              "1A – 2B",
+              "1B – 2A",
+              "1C – 2D",
+              "1D – 2C"
+            ],
+            "templates": [
+              {
+                "id": "bracket:mens:qf:1",
+                "categoryId": "category:mens",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mens:A",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mens:B",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              },
+              {
+                "id": "bracket:mens:qf:2",
+                "categoryId": "category:mens",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mens:B",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mens:A",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              },
+              {
+                "id": "bracket:mens:qf:3",
+                "categoryId": "category:mens",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mens:C",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mens:D",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              },
+              {
+                "id": "bracket:mens:qf:4",
+                "categoryId": "category:mens",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mens:D",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mens:C",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              },
+              {
+                "id": "bracket:mixed:qf:1",
+                "categoryId": "category:mixed",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mixed:A",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mixed:B",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              },
+              {
+                "id": "bracket:mixed:qf:2",
+                "categoryId": "category:mixed",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mixed:B",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mixed:A",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              },
+              {
+                "id": "bracket:mixed:qf:3",
+                "categoryId": "category:mixed",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mixed:C",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mixed:D",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              },
+              {
+                "id": "bracket:mixed:qf:4",
+                "categoryId": "category:mixed",
+                "stage": "quarterfinal",
+                "left": {
+                  "groupId": "group:mixed:D",
+                  "rank": 1
+                },
+                "right": {
+                  "groupId": "group:mixed:C",
+                  "rank": 2
+                },
+                "rulesVersionId": "rules:group-stage:v1",
+                "status": "PENDING_GROUP_RESULTS"
+              }
+            ],
+            "semifinal": {
+              "status": "NEEDS_CONFIRMATION",
+              "reason": "Nguồn BTC có mapping bán kết mâu thuẫn; fixture không chọn hoặc sửa bất kỳ phương án nào."
+            },
+            "final": {
+              "rulesVersionId": "rules:final:v1",
+              "status": "PENDING_BRACKET_CONFIRMATION"
+            }
+          },
+          "sourceReview": {
+            "documents": [
+              "IMG_1432.jpeg",
+              "IMG_1433.jpeg"
+            ],
+            "conflicts": [
+              {
+                "code": "SEMIFINAL_BRACKET_CONFLICT",
+                "status": "NEEDS_CONFIRMATION",
+                "detail": "Mapping bán kết từ nguồn BTC mâu thuẫn; không seed cặp bán kết."
+              }
+            ],
+            "unknowns": [
+              {
+                "code": "MENS_GROUP_C_COURT",
+                "status": "UNKNOWN",
+                "detail": "Chưa có phân sân cho Đôi Nam bảng C."
+              },
+              {
+                "code": "MENS_GROUP_D_COURT",
+                "status": "UNKNOWN",
+                "detail": "Chưa có phân sân cho Đôi Nam bảng D."
+              },
+              {
+                "code": "POOL_MATCH_SOURCE_SCHEDULE",
+                "status": "NEEDS_CONFIRMATION",
+                "detail": "Không có lịch match-level BTC trong hai ảnh nguồn khả dụng; 48 trận được sinh theo round robin một lượt từ stable Entry IDs."
+              },
+              {
+                "code": "ROSTER_TRANSCRIPTION_REVIEW",
+                "status": "NEEDS_CONFIRMATION",
+                "detail": "Tên hiển thị được phiên âm từ ảnh danh sách BTC; identity dùng stable Player/Entry IDs và không phụ thuộc display name."
+              }
+            ],
+            "orderDiscrepancies": []
+          }
+        }
+      }
+    },
+    "activeWorkSession": null
+  },
+  "matchDocument": {
+    "version": 2,
+    "activeId": null,
+    "draft": null,
+    "matches": {}
+  },
+  "summary": {
+    "players": 64,
+    "entries": 32,
+    "groups": 8,
+    "poolMatches": 48,
+    "assignments": 8,
+    "quarterfinalTemplates": 8
+  }
+}
