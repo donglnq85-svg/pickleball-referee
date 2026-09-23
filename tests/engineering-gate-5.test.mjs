@@ -24,6 +24,7 @@ function finish(t,match,winner='A'){
 test('Match Report references exact Result Version and generated-but-unsent persists',()=>{
   const db=storage(),{t,first,rules}=setup(),{result}=finish(t,first),report=deriveMatchReport(t,first.id);
   assert.equal(report.status,'GENERATED');assert.deepEqual(report.source,{kind:'RESULT_VERSION',id:result.id,scheduledMatchId:first.id});assert.equal(report.rulesVersionId,rules.id);assert.ok(report.artifact.body.includes('Alpha'));
+  assert.equal(reportingAttention(t).items.find(item=>item.reportId===report.id).kind,'REPORT_UNSENT');
   createTournamentRepository(db).save(t);const reopened=createTournamentRepository(db).get(t.id),restored=currentMatchReport(reopened,first.id);
   assert.equal(restored.id,report.id);assert.equal(restored.status,'GENERATED');validateTournament(reopened);
 });

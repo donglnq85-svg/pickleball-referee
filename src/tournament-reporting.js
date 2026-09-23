@@ -89,7 +89,7 @@ export function reportingAttention(t){
     if(completion.status!=='READY'||!completion.groupSnapshotId)continue;const report=current(reporting(t).group[completion.groupId]),rules=t.rulesVersions.find(item=>item.id===t.activeRulesVersionId),required=reportPolicy(rules||{procedures:{}}).group==='required';
     if(required&&(!report||report.source.id!==completion.groupSnapshotId||report.status==='OUTDATED'))items.push({kind:'GROUP_REPORT_REQUIRED',severity:'medium',groupId:completion.groupId});
   }
-  for(const kind of ['match','group'])for(const [key,entry] of Object.entries(reporting(t)[kind])){const report=current(entry);if(report?.status==='NEEDS_RESEND')items.push({kind:'NEEDS_RESEND',severity:report.attention.severity,reportId:report.id,sourceKey:key});else if(report?.status==='SHARED_UNCONFIRMED')items.push({kind:'SHARED_NOT_CONFIRMED',severity:'medium',reportId:report.id,sourceKey:key})}
+  for(const kind of ['match','group'])for(const [key,entry] of Object.entries(reporting(t)[kind])){const report=current(entry);if(report?.status==='NEEDS_RESEND')items.push({kind:'NEEDS_RESEND',severity:report.attention.severity,reportId:report.id,sourceKey:key});else if(report?.status==='SHARED_UNCONFIRMED')items.push({kind:'SHARED_NOT_CONFIRMED',severity:'medium',reportId:report.id,sourceKey:key});else if(report?.status==='GENERATED')items.push({kind:'REPORT_UNSENT',severity:report.attention.severity,reportId:report.id,sourceKey:key})}
   return {status:items.some(item=>item.severity==='high')?'HIGH_ATTENTION':items.length?'ACTION_REQUIRED':'CLEAR',count:items.length,items};
 }
 
