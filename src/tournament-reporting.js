@@ -66,6 +66,7 @@ export function reportById(t,reportId){
 
 export function markReportShared(t,reportId,at=Date.now()){
   const report=reportById(t,reportId);if(!report||!report.isCurrent||!['GENERATED','NEEDS_RESEND','SHARED_UNCONFIRMED'].includes(report.status))throw Error('Biên bản không ở trạng thái có thể chia sẻ.');
+  if(report.status==='SHARED_UNCONFIRMED')return clone(report);
   report.status='SHARED_UNCONFIRMED';report.sharedAt=iso(at);record(t,'reportShareSheetOpened',{reportId},at);return clone(report);
 }
 
