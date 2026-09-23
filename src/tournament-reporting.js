@@ -53,7 +53,7 @@ export function deriveGroupReport(t,groupId,groupSnapshotId=null,rulesVersionId=
   const rules=rulesById(t,rulesVersionId),policy=reportPolicy(rules);if(policy.group==='disabled')throw Error('Reporting Policy không cho tạo biên bản cuối bảng.');
   const rows=snapshot.rows.map(row=>`${row.rank??'?'}. ${row.players.join(' / ')} · ${row.matchWins} thắng · ${row.qualification}`).join('\n');
   const title=`Biên bản bảng · ${group.label}`,body=`${title}\nSnapshot: ${snapshot.id}\n${rows}\nTrạng thái: ${snapshot.status}`;
-  const impact=snapshot.impact||[],attention=impact.includes('QUALIFICATION_CHANGED')?{kind:'QUALIFICATION_CHANGED',severity:'high'}:impact.includes('RANKING_CHANGED')?{kind:'RANKING_CHANGED',severity:'medium'}:impact.includes('RESULT_CHANGED')?{kind:'RESULT_CHANGED',severity:'medium'}:{kind:'NONE',severity:'normal'};
+  const previous=current(reporting(t).group[groupId]),impact=previous?snapshot.impact||[]:[],attention=impact.includes('QUALIFICATION_CHANGED')?{kind:'QUALIFICATION_CHANGED',severity:'high'}:impact.includes('RANKING_CHANGED')?{kind:'RANKING_CHANGED',severity:'medium'}:impact.includes('RESULT_CHANGED')?{kind:'RESULT_CHANGED',severity:'medium'}:{kind:'NONE',severity:'normal'};
   return appendReport(t,'group',groupId,{kind:'GROUP_SNAPSHOT',id:snapshot.id,groupId},rulesVersionId,{format:'text/plain',title,body,share:{title,text:body}},attention,at);
 }
 

@@ -54,7 +54,7 @@ test('Result correction makes old report OUTDATED and sent report creates NEEDS_
 
 test('Group Report revision references exact Snapshot and qualification change is high attention',()=>{
   const db=storage(),{t,group,ranking,first,second}=setup();finish(t,first,'A');finish(t,second,'A');
-  const snapshot1=calculateGroupSnapshot(t,group.id,ranking.id,10_000);assessGroupCompletion(t,group.id,11_000);const report1=deriveGroupReport(t,group.id,snapshot1.id,t.activeRulesVersionId,12_000);markReportSent(t,report1.id,13_000);
+  const snapshot1=calculateGroupSnapshot(t,group.id,ranking.id,10_000);assessGroupCompletion(t,group.id,11_000);const report1=deriveGroupReport(t,group.id,snapshot1.id,t.activeRulesVersionId,12_000);assert.equal(report1.attention.kind,'NONE');markReportSent(t,report1.id,13_000);
   const corrected=correctCanonicalResult(t,first.id,{games:[{score:{A:0,B:1}}],reason:'BTC'},20_000);confirmCanonicalResult(t,first.id,corrected.id,21_000);const snapshot2=calculateGroupSnapshot(t,group.id,ranking.id,22_000);assessGroupCompletion(t,group.id,23_000);
   assert.ok(snapshot2.impact.includes('QUALIFICATION_CHANGED'));assert.equal(t.reporting.group[group.id].versions[0].status,'OUTDATED');
   const report2=deriveGroupReport(t,group.id,snapshot2.id,t.activeRulesVersionId,24_000);assert.equal(report2.status,'NEEDS_RESEND');assert.equal(report2.source.id,snapshot2.id);assert.equal(report2.attention.kind,'QUALIFICATION_CHANGED');assert.equal(report2.attention.severity,'high');assert.equal(reportingAttention(t).status,'HIGH_ATTENTION');
