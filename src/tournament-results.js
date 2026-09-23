@@ -1,3 +1,4 @@
+import {invalidateMatchReports,invalidateGroupReports} from './tournament-reporting.js';
 const clone=value=>structuredClone(value);
 const id=()=>globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;
 const iso=value=>new Date(value??Date.now()).toISOString();
@@ -28,7 +29,7 @@ function resultBody(match,session,games){
   if(!match.entrantIds?.A||!match.entrantIds?.B)throw Error('Scheduled Match thiếu stable Entry identity.');
   const normalized=normalizeGames(games),gamesWon={A:0,B:0};for(const game of normalized)gamesWon[game.winner]++;
   if(gamesWon.A===gamesWon.B)throw Error('Kết quả trận chưa xác định đội thắng.');
-  return {matchSessionId:session.id,matchEndedAt:session.finishedAt,type:session.config.type,players:clone(session.players),games:normalized,gamesWon,winner:gamesWon.A>gamesWon.B?'A':'B',
+  return {matchSessionId:session.id,matchEndedAt:session.finishedAt,rulesVersionId:session.tournamentContext?.rulesVersionId||null,type:session.config.type,players:clone(session.players),games:normalized,gamesWon,winner:gamesWon.A>gamesWon.B?'A':'B',
     entrants:{A:{id:match.entrantIds.A,players:clone(session.players.A)},B:{id:match.entrantIds.B,players:clone(session.players.B)}}};
 }
 function appendResult(t,match,body,source,at=Date.now()){
@@ -62,7 +63,8 @@ export function correctCanonicalResult(t,matchId,{games,reason,actor='referee'},
   const match=matchById(t,matchId),previous=currentResult(t,matchId);
   if(!previous)throw Error('Chưa có Canonical Result để sửa.');
   const sessionLike={id:previous.matchSessionId,finishedAt:previous.matchEndedAt,config:{type:previous.type},players:previous.players};
-  const body=resultBody(match,sessionLike,games);
+  const body={...resultBody(match,sessionLike,games),rulesVersionId:previous.rulesVersionId||null};
+  invalidateMatchReports(t,matchId,at);
   return appendResult(t,match,body,{kind:'RESULT_CORRECTION',parentResultVersionId:previous.id,reason:text(reason,'Lý do sửa kết quả'),actor:text(actor,'Người sửa')},at);
 }
 
@@ -109,6 +111,7 @@ export function calculateGroupSnapshot(t,groupId,rankingRulesVersionId=t.activeR
   if(!prior||prior.status!==status||!same(prior.rows.map(item=>[item.entrantId,item.rank]),rankingProjection))impact.push('RANKING_CHANGED');
   if(!prior||prior.qualification.status!==qualificationStatus||!same(prior.qualification.qualified,qualified))impact.push('QUALIFICATION_CHANGED');
   const snapshot={id:id(),groupId,createdAt:iso(at),rankingRulesVersionId:rules?.id||rankingRulesVersionId||null,resultVersionIds,status,reason,rows:clone(ordered),qualification:{status:qualificationStatus,qualified},impact};
+  invalidateGroupReports(t,groupId,snapshot.id,impact,at);
   snapshots(t).push(snapshot);touch(t,'groupSnapshotCalculated',{groupId,groupSnapshotId:snapshot.id,impact},at);return clone(snapshot);
 }
 
