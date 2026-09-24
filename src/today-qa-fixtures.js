@@ -38,7 +38,8 @@ function makeTournament(storage,{active=false,finished=0,total=7}={}){
 }
 
 function seedNoWork(storage){
-  const upcoming=[['Vietnam Pickleball Open 2026','2026-09-26','Cụm sân ABC Pickleball'],['Hà Nội Open 2026','2026-10-10','Hà Nội'],['Pickleball Masters 2026','2026-10-24','Đà Nẵng']];
+  const dateAfter=days=>new Date(Date.now()+days*86400000).toLocaleDateString('sv-SE',{timeZone:'Asia/Ho_Chi_Minh'});
+  const upcoming=[['Vietnam Pickleball Open 2026',dateAfter(2),'Cụm sân ABC Pickleball'],['Hà Nội Open 2026',dateAfter(16),'Hà Nội'],['Pickleball Masters 2026',dateAfter(30),'Đà Nẵng']];
   const repo=createTournamentRepository(storage);
   for(const [name,day,location] of upcoming){
     const tournament=createTournament(name);tournament.startsAt=day;tournament.endsAt=day;tournament.location=location;
@@ -57,9 +58,10 @@ function seedCompleted(storage){
 export function applyTodayQaFixtureIfRequested(storage=localStorage,locationValue=location){
   const params=new URLSearchParams(locationValue.search),fixture=params.get(QA_PARAMETER);
   const previewHost=locationValue.hostname.endsWith('.vercel.app')&&locationValue.hostname!=='pickleball-referee-two.vercel.app';
-  if(!previewHost||!ALLOWED.has(fixture))return false;
-  document.documentElement.dataset.todayQa='true';
-  storage.removeItem(STORE_KEY);storage.removeItem(TOURNAMENT_STORE_KEY);
+  if(typeof __REFEREE_PREVIEW__==='undefined'||!__REFEREE_PREVIEW__||!previewHost||!ALLOWED.has(fixture))return false;
+  // An explicit QA request may seed a fresh Preview, never reset existing work.
+  try{const tournaments=JSON.parse(storage.getItem(TOURNAMENT_STORE_KEY)||'null'),matches=JSON.parse(storage.getItem(STORE_KEY)||'null');if(tournaments&&Object.keys(tournaments.tournaments||{}).length||matches&&(matches.activeId||matches.draft||Object.keys(matches.matches||{}).length))return false}catch{return false}
+
   if(fixture==='no-work')seedNoWork(storage);
   if(fixture==='work-today')makeTournament(storage);
   if(fixture==='working')makeTournament(storage,{active:true,finished:3});

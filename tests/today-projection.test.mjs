@@ -43,14 +43,6 @@ test('SCREEN 01 sorts persisted assignments, never invents schedule readiness, a
   assert.equal(result.upcoming[0].tournamentId,later.t.id);
 });
 
-test('SCREEN 01 CTA and schedule are ID-based interactive deep links to tournament context',()=>{
-  const shell=readFileSync(new URL('../src/app-shell.js',import.meta.url),'utf8');
-  const experience=readFileSync(new URL('../src/tournament-experience.js',import.meta.url),'utf8');
-  assert.match(shell,/data-shell="open-upcoming" data-tournament-id=/);
-  assert.match(shell,/openTournamentExperience\(\{tournamentId:target\.dataset\.tournamentId,screen:'info'\}\)/);
-  assert.match(experience,/detail\.screen==='info'\?renderInfo\(\):renderGroups\(\)/);
-});
-
 test('active Work Session resolves working then waiting without creating Today-owned state',()=>{
   const data=setup(),work=startWorkSession(data.t,data.assignment.id);data.tournaments.activeWorkSession={tournamentId:data.t.id,workSessionId:work.id};
   let projection=resolveTodayProjection({matchDocument:data.matches,tournamentDocument:data.tournaments,now});
@@ -78,7 +70,34 @@ test('completed workday resolves only from a real completed Work Session on the 
 });
 
 test('production shell has no state switcher and old inline frontend is no longer an entry point',()=>{
-  const index=readFileSync(new URL('../index.html',import.meta.url),'utf8'),shell=readFileSync(new URL('../src/app-shell.js',import.meta.url),'utf8');
+  const index=readFileSync(new URL('../index.html',import.meta.url),'utf8'),shell=readFileSync(new URL('../src/app-shell.js',import.meta.url),'utf8')+readFileSync(new URL('../src/app-bottom-nav.js',import.meta.url),'utf8');
   assert.match(index,/src\/app-shell\.js/);assert.doesNotMatch(index,/data-a=|Chọn chế độ làm việc|Sắp ra mắt/);
   assert.doesNotMatch(shell,/visualState|state-switcher|demo-state/);assert.match(shell,/Hôm nay/);assert.match(shell,/Giải đấu/);assert.doesNotMatch(shell,/\['work','work','Công việc'\]/);assert.match(shell,/Trận đấu/);assert.match(shell,/Thông báo/);assert.match(shell,/Hồ sơ/);
+});
+
+
+test('SCREEN 01 requires upcoming work; invalid and cancelled planning cannot invent it',()=>{
+  assert.equal(resolveTodayProjection({matchDocument:emptyMatches(),tournamentDocument:emptyTournaments(),now}).kind,'no-assignments');
+  const data=setup({startsAt:'bad-date'});
+  assert.equal(resolveTodayProjection({matchDocument:data.matches,tournamentDocument:data.tournaments,now}).kind,'no-assignments');
+  data.assignment.workPlan.startsAt='2026-09-26';
+  assert.equal(resolveTodayProjection({matchDocument:data.matches,tournamentDocument:data.tournaments,now}).upcoming[0].countdown,'Còn 2 ngày');
+  data.assignment.status='cancelled';
+  assert.equal(resolveTodayProjection({matchDocument:data.matches,tournamentDocument:data.tournaments,now}).kind,'no-assignments');
+});
+
+test('a remaining assignment today outranks an earlier completed shift',()=>{
+  const data=setup(),work=startWorkSession(data.t,data.assignment.id);
+  work.status='completed';work.endedAt=now.toISOString();data.assignment.status='completed';
+  const another=createAssignment(data.t,{label:'Ca chiều',scopeKind:'court',scopeIds:[data.court.id]});
+  another.workPlan={startsAt:'2026-09-24T08:00:00Z'};
+  const result=resolveTodayProjection({matchDocument:data.matches,tournamentDocument:data.tournaments,now});
+  assert.equal(result.kind,'work-today');assert.equal(result.work.assignmentId,another.id);
+});
+
+
+test('countdown uses local calendar days across year/month boundaries',()=>{
+ assert.equal(upcomingCountdown('2027-01-01T07:00:00+07:00',new Date('2026-12-31T16:59:59Z')),'Ngày mai');
+ assert.equal(upcomingCountdown('2028-03-01T07:00:00+07:00',new Date('2028-02-28T06:00:00Z')),'Còn 2 ngày');
+ assert.equal(upcomingCountdown('2026-09-26',new Date('2026-09-25T17:00:00Z')),'Hôm nay');
 });

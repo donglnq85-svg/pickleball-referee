@@ -1,3 +1,4 @@
+import {notifyDomainChange} from './domain-events.js';
 import {MATCH_SCHEMA_VERSION, RULES_VERSION, validateMatchState} from './match-domain.js';
 
 export const STORE_KEY = 'pickleball-referee:matches:v2';
@@ -28,6 +29,7 @@ function upgradeMatch(input){
 export function createMatchRepository(storage) {
   function commit(document) {
     storage.setItem(STORE_KEY, JSON.stringify(document));
+    notifyDomainChange();
     return document;
   }
   function migrate() {

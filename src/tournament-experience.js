@@ -8,6 +8,7 @@ import {currentResult} from './tournament-results.js';
 import {projectMatch,projectStandings,nextReadyMatchId} from './tournament-experience-projection.js';
 import './tournament-experience.css';
 import {appHeader} from './app-header.js';
+import {bottomNav} from './app-bottom-nav.js';
 import {tournamentListState,tournamentWorkBadge} from './tournament-list-projection.js';
 
 const app=document.getElementById('app');
@@ -16,6 +17,7 @@ const matchRepo=createMatchRepository(localStorage);
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const uid=()=>globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;
 const today=()=>new Date().toISOString().slice(0,10);
+let workAssignmentId=null;
 let screen='list',tournamentId=null,groupId=null,listFilter='all',groupTab='athletes';
 
 const glyph=name=>{
@@ -30,14 +32,10 @@ const glyph=name=>{
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.trophy}</svg>`;
 };
 
-function bottomNav(){
-  const items=[['today','home','Hôm nay'],['tournament','trophy','Giải đấu'],['matches','match','Trận đấu'],['notifications','bell','Thông báo'],['profile','user','Hồ sơ']];
-  return `<nav class="app-bottom-nav" aria-label="Điều hướng chính">${items.map(([id,icon,label])=>`<button class="nav-item ${id==='tournament'?'active':''}" data-shell="tab:${id}" aria-current="${id==='tournament'?'page':'false'}">${glyph(icon)}<span>${label}</span></button>`).join('')}</nav>`;
-}
 
 function shell(content,{title=null,subtitle=null,back=null,action=''}={}){
   const hasHeader=Boolean(title||subtitle||back||action);
-  app.innerHTML=`<main class="app-shell tx-app${hasHeader?'':' tx-headerless'}">${hasHeader?`<header class="tx-header">${back?`<button class="tx-icon" data-tx="${back}" aria-label="Quay lại">${glyph('back')}</button>`:'<span class="tx-header-spacer"></span>'}<div>${title?`<h1>${escape(title)}</h1>`:''}${subtitle?`<p>${escape(subtitle)}</p>`:''}</div>${action||'<span class="tx-header-spacer"></span>'}</header>`:''}<section class="app-content tx-content">${content}</section>${bottomNav()}</main>`;
+  app.innerHTML=`<main class="app-shell tx-app${hasHeader?'':' tx-headerless'}">${hasHeader?`<header class="tx-header">${back?`<button class="tx-icon" data-tx="${back}" aria-label="Quay lại">${glyph('back')}</button>`:'<span class="tx-header-spacer"></span>'}<div>${title?`<h1>${escape(title)}</h1>`:''}${subtitle?`<p>${escape(subtitle)}</p>`:''}</div>${action||'<span class="tx-header-spacer"></span>'}</header>`:''}<section class="app-content tx-content">${content}</section>${bottomNav('tournament')}</main>`;
   app.querySelector('.tx-content')?.scrollTo(0,0);
 }
 
@@ -51,7 +49,7 @@ const entryLabel=(t,id)=>{const entry=t.structure.entries.find(item=>item.id===i
 const resource=(items,id,fallback)=>items.find(item=>item.id===id)?.label||fallback;
 
 function renderList(){
-  screen='list';tournamentId=null;groupId=null;
+  screen='list';tournamentId=null;groupId=null;workAssignmentId=null;
   const all=repo.list(),groups=[['upcoming','Sắp diễn ra'],['live','Đang diễn ra'],['done','Đã kết thúc']];
   const counts=Object.fromEntries(groups.map(([id])=>[id,all.filter(t=>tournamentListState(t)===id).length]));counts.all=all.length;
   const create=`<button class="primary-button tl-create" data-tx="create">${glyph('plus')}Tạo giải đấu</button>`;
@@ -66,7 +64,7 @@ function renderList(){
   }).join('');
   const empty=`<div class="tl-empty"><div class="tl-calendar" aria-hidden="true">${glyph('calendar')}</div><h2>Bạn chưa có giải đấu nào</h2><p>Hãy tạo giải đấu khi bạn nhận được<br>thông tin mời tham gia từ ban tổ chức.</p>${create}</div><aside class="tl-note"><h2><span aria-hidden="true">ⓘ</span> Lưu ý</h2><ul><li>Chỉ tạo giải đấu khi bạn đã nhận được thông tin mời tham gia.</li><li>Bạn có thể bổ sung lịch làm việc sau.</li><li>Các trận đấu sẽ được cập nhật khi có phân công từ ban tổ chức.</li></ul></aside>`;
   const content=`<div class="tl-heading"><h1>Giải đấu</h1><p>Các giải đấu bạn được mời tham gia</p></div>${all.length?`${create}<div class="tl-filters" aria-label="Lọc giải đấu">${[['all','Tất cả'],...groups].map(([id,label])=>`<button aria-pressed="${listFilter===id}" class="${listFilter===id?'active':''}" data-tx="filter:${id}">${label} (${counts[id]})</button>`).join('')}</div>${sections||'<p class="tl-no-results">Chưa có giải đấu trong nhóm này.</p>'}`:empty}`;
-  app.innerHTML=`<main class="app-shell tl-app">${appHeader(glyph('bell'))}<section class="app-content tl-content">${content}</section>${bottomNav()}</main>`;
+  app.innerHTML=`<main class="app-shell tl-app">${appHeader(glyph('bell'))}<section class="app-content tl-content">${content}</section>${bottomNav('tournament')}</main>`;
 }
 
 function renderCreate(){
@@ -107,9 +105,11 @@ function renderRuleEditor(){
 
 function renderCourts(){
   screen='courts';const t=selected();
-  const assignmentCourts=new Map();for(const a of t.assignments||[])if(a.scope.kind==='court')for(const id of a.scope.ids)assignmentCourts.set(id,a);
-  const cards=[...assignmentCourts].map(([id,a])=>{const court=t.structure.courts.find(c=>c.id===id),matches=t.schedule.filter(m=>m.courtId===id);return `<section class="tx-court-card"><div class="tx-court-top"><span>${glyph('court')}</span><div><h3>${escape(court?.label||'Sân chưa xác định')}</h3><p>${escape(t.location||'Chưa có địa điểm')}</p></div><i class="tx-status ${a.status==='active'?'live':'upcoming'}">${a.status==='active'?'Đang diễn ra':'Chưa bắt đầu'}</i></div><div class="tx-court-meta"><span>${glyph('clock')}${escape(a.workPlan?.startsAt?fmtTime(a.workPlan.startsAt):'07:00')} – ${escape(a.workPlan?.endsAt?fmtTime(a.workPlan.endsAt):'18:00')}</span><span>${matches.length} trận</span></div><p>${[...new Set(matches.map(m=>resource(t.structure.groups,m.groupId,'Chưa xác định bảng')))].join(', ')||'Chưa có bảng đấu'}</p><div class="tx-card-actions"><button data-tx="courtMatches:${id}">Xem danh sách trận</button><button class="tx-primary" data-tx="startAssignment:${a.id}">Vào ${escape(court?.label||'sân')}</button></div></section>`}).join('');
-  shell(`${detailHeader(t,'courts')}<div class="tx-note">Đây là các sân bạn được phân công phụ trách. Chỉ hiển thị sân và lịch thi đấu thuộc phần việc của bạn.</div><div class="tx-date-row"><b>${fmtDate(t.startsAt)}</b><button data-tx="assignment">+ Thêm phân công</button></div>${cards||'<section class="tx-empty compact"><h2>Chưa có sân được phân công</h2><p>Thêm phân công để sân xuất hiện tại đây.</p><button class="tx-primary" data-tx="assignment">Thêm phân công</button></section>'}<button class="tx-secondary" data-tx="groups">Xem lịch tổng quan</button>`,{title:t.name,subtitle:'Chi tiết giải đấu',back:'list'});
+  const assignments=(t.assignments||[]).filter(a=>a.status!=='cancelled'&&(!workAssignmentId||a.id===workAssignmentId));
+  const assignmentCourts=[];for(const a of assignments){const courtIds=a.scope.kind==='court'?a.scope.ids:[...new Set(t.schedule.filter(m=>a.scope.kind==='match'?a.scope.ids.includes(m.id):a.scope.ids.includes(m.groupId)).map(m=>m.courtId).filter(Boolean))];for(const id of courtIds)assignmentCourts.push([id,a]);}
+  const focused=assignments.find(a=>a.id===workAssignmentId);
+  const cards=assignmentCourts.map(([id,a])=>{const court=t.structure.courts.find(c=>c.id===id),matches=t.schedule.filter(m=>m.courtId===id);return `<section class="tx-court-card" data-assignment-id="${escape(a.id)}"><div class="tx-court-top"><span>${glyph('court')}</span><div><h3>${escape(court?.label||'Sân chưa xác định')}</h3><p>${escape(t.location||'Chưa có địa điểm')}</p></div><i class="tx-status ${a.status==='active'?'live':'upcoming'}">${a.status==='active'?'Đang diễn ra':'Chưa bắt đầu'}</i></div><div class="tx-court-meta"><span>${glyph('clock')}${escape(a.workPlan?.startsAt?.includes('T')?fmtTime(a.workPlan.startsAt):'Chưa có giờ')}${a.workPlan?.endsAt?` – ${escape(fmtTime(a.workPlan.endsAt))}`:''}</span><span>${matches.length} trận</span></div><p>${[...new Set(matches.map(m=>resource(t.structure.groups,m.groupId,'Chưa xác định bảng')))].join(', ')||'Chưa có bảng đấu'}</p><div class="tx-card-actions"><button data-tx="courtMatches:${id}">Xem danh sách trận</button><button class="tx-primary" data-tx="startAssignment:${a.id}">Vào ${escape(court?.label||'sân')}</button></div></section>`}).join('');
+  shell(`${detailHeader(t,'courts')}<div class="tx-note">Đây là các sân bạn được phân công phụ trách. Chỉ hiển thị sân và lịch thi đấu thuộc phần việc của bạn.</div>${focused?`<section class="tx-info-card" data-work-context="${escape(focused.id)}"><h3>${escape(focused.label)}</h3><p>${fmtDate(focused.workPlan?.startsAt||t.startsAt)}${focused.workPlan?.startsAt?.includes('T')?` · ${fmtTime(focused.workPlan.startsAt)}${focused.workPlan.endsAt?` – ${fmtTime(focused.workPlan.endsAt)}`:''}`:''}</p></section>`:''}<div class="tx-date-row"><b>${fmtDate(focused?.workPlan?.startsAt||t.startsAt)}</b><button data-tx="assignment">+ Thêm phân công</button></div>${cards||(focused?'<section class="tx-empty compact"><h2>Chưa có sân cho phần việc này</h2><p>Sân sẽ hiển thị khi lịch trận của phần việc này được bổ sung.</p></section>':'<section class="tx-empty compact"><h2>Chưa có sân được phân công</h2><p>Thêm phân công để sân xuất hiện tại đây.</p><button class="tx-primary" data-tx="assignment">Thêm phân công</button></section>')}<button class="tx-secondary" data-tx="groups">Xem lịch tổng quan</button>`,{title:t.name,subtitle:'Chi tiết giải đấu',back:'list'});
 }
 
 function renderGroups(){
@@ -199,7 +199,10 @@ document.addEventListener('click',event=>{
 });
 
 export function openTournamentExperience(detail={}){
-  const target=detail?.tournamentId&&repo.get(detail.tournamentId);if(target){tournamentId=target.id;return detail.screen==='info'?renderInfo():renderGroups()}
+  const target=detail?.tournamentId&&repo.get(detail.tournamentId);if(target){tournamentId=target.id;workAssignmentId=detail.assignmentId||null;
+    if(detail.screen==='work'){const assignment=target.assignments.find(a=>a.id===workAssignmentId&&['assigned','active'].includes(a.status));if(!assignment){workAssignmentId=null;return renderInfo()}return renderCourts()}
+    return detail.screen==='info'?renderInfo():renderGroups()}
+  workAssignmentId=null;
   renderList();
 }
 

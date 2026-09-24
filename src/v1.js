@@ -12,7 +12,9 @@ import './v1.css';
 const app=document.getElementById('app');
 const repository=createMatchRepository(localStorage),tournamentRepository=createTournamentRepository(localStorage);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=repository.active(),draft=repository.load().draft,historyProjection=null,historyRecordId=null,historyFullTimeline=false,screen='',warmInterval=null,medicalChoice=null;
+let state=null,draft=null,historyProjection=null,historyRecordId=null,historyFullTimeline=false,screen='',warmInterval=null,medicalChoice=null;
+// The shell owns recovery errors; a damaged snapshot must not abort its import.
+try{state=repository.active();draft=repository.load().draft}catch{ /* preserved for shell recovery */ }
 function persist(){try{if(state)repository.saveSession(state,{draft,clearDraft:!draft});else repository.saveDraft(draft)}catch(error){alert('Không lưu được trận trên thiết bị này: '+error.message);window.location.reload();throw error}}
 function save(){persist()}
 function recordIfFinished(){if(state?.status==='finished')historyProjection=null}

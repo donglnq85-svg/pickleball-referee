@@ -6,7 +6,7 @@ import {createTournament,addPlayer,addEntry,addResource,addScheduledMatch} from 
 const source=readFileSync(new URL('../src/tournament-experience.js',import.meta.url),'utf8');
 
 test('Global Bottom Navigation V1.1 exposes Giải đấu and removes Công việc as a tab',()=>{
-  const shell=readFileSync(new URL('../src/app-shell.js',import.meta.url),'utf8');
+  const shell=readFileSync(new URL('../src/app-shell.js',import.meta.url),'utf8')+readFileSync(new URL('../src/app-bottom-nav.js',import.meta.url),'utf8');
   assert.match(shell,/\['tournament','tournament','Giải đấu'\]/);
   assert.doesNotMatch(shell,/\['work','work','Công việc'\]/);
   assert.match(shell,/openTournamentExperience/);

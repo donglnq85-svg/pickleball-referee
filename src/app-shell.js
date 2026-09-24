@@ -5,6 +5,7 @@ import {resolveTodayProjection,TODAY_TIME_ZONE} from './today-projection.js';
 import {applyTodayQaFixtureIfRequested} from './today-qa-fixtures.js';
 import {openTournamentExperience} from './tournament-experience.js';
 import {appHeader} from './app-header.js';
+import {bottomNav} from './app-bottom-nav.js';
 import './app-shell.css';
 import './v1.js';
 
@@ -42,32 +43,29 @@ function dateHeading(){
   return text.charAt(0).toUpperCase()+text.slice(1);
 }
 const shortDate=value=>value?new Intl.DateTimeFormat('vi-VN',{timeZone:TODAY_TIME_ZONE,day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(value)):'Chưa có ngày';
-const clock=value=>value?new Intl.DateTimeFormat('vi-VN',{timeZone:TODAY_TIME_ZONE,hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'—';
-const workTime=plan=>plan?.startsAt?`${clock(plan.startsAt)}${plan.endsAt?' – '+clock(plan.endsAt):''}`:'Chưa có giờ';
+const clock=value=>value&&String(value).includes('T')?new Intl.DateTimeFormat('vi-VN',{timeZone:TODAY_TIME_ZONE,hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'—';
+const workTime=plan=>plan?.startsAt&&String(plan.startsAt).includes('T')?`${clock(plan.startsAt)}${plan.endsAt?' – '+clock(plan.endsAt):''}`:'Chưa có giờ';
 const teamNames=(players,team)=>players?.[team]?.length?players[team].map(escape).join(' / '):`Đội ${team}`;
 
 function shell(content,tab=activeTab){
   activeTab=tab;
-  app.innerHTML=`<main class="app-shell">${appHeader(icon('bell'))}<section class="app-content">${content}</section>${bottomNav(tab)}</main>`;
+  app.innerHTML=`<main class="app-shell"${tab==='today'?` data-today-kind="${currentProjection?.kind||'error'}"`:""}>${appHeader(icon('bell'))}<section class="app-content">${content}</section>${bottomNav(tab)}</main>`;
   app.querySelector('.app-content').scrollTop=0;
 }
 
-function bottomNav(active){
-  const items=[['today','home','Hôm nay'],['tournament','tournament','Giải đấu'],['matches','match','Trận đấu'],['notifications','notice','Thông báo'],['profile','profile','Hồ sơ']];
-  return `<nav class="app-bottom-nav" aria-label="Điều hướng chính">${items.map(([id,glyph,label])=>`<button class="nav-item ${active===id?'active':''}" data-shell="tab:${id}" aria-current="${active===id?'page':'false'}">${icon(glyph)}<span>${label}</span></button>`).join('')}</nav>`;
-}
 
 const heading=()=>`<div class="today-heading"><h1>Hôm nay</h1><p>${escape(dateHeading())}</p></div>`;
 const arrowButton=(label,action,red=false)=>`<button class="primary-button${red?' red':''}" data-shell="${action}">${escape(label)}${icon('arrow')}</button>`;
-const locationRows=work=>`${work?.plan?.startsAt?`<div class="meta-row">${icon('calendar')}<span>${shortDate(work.plan.startsAt)} · ${workTime(work.plan)}</span></div>`:''}${work?.plan?.location?`<div class="meta-row">${icon('pin')}<span>${escape(work.plan.location)}</span></div>${work.plan.city?`<div class="meta-small">${escape(work.plan.city)}</div>`:''}`:''}`;
+const locationRows=work=>`${work?.plan?.startsAt?`<div class="meta-row">${icon('calendar')}<span>${shortDate(work.plan.startsAt)}${String(work.plan.startsAt).includes('T')?` · ${workTime(work.plan)}`:''}</span></div>`:''}${work?.plan?.location?`<div class="meta-row">${icon('pin')}<span>${escape(work.plan.location)}</span></div>${work.plan.city?`<div class="meta-small">${escape(work.plan.city)}</div>`:''}`:''}`;
 const workTitle=work=>escape(work?.tournamentName||'Công việc chưa đặt tên');
 const matchLabel=match=>escape(match?.label||'Trận tiếp theo');
+const calendarMark=()=>`<svg viewBox="0 0 100 80" aria-hidden="true"><defs><linearGradient id="calendar-blue" x2="1" y2="1"><stop stop-color="#a8cffc"/><stop offset="1" stop-color="#83b2f0"/></linearGradient></defs><g fill="none" stroke="#bad7f8" stroke-width="3" stroke-linecap="round"><path d="m6 27 6 4m-7 16 7-2m76-17 6-4m-6 20 7 2"/></g><g transform="rotate(-4 50 40)"><rect x="25" y="12" width="52" height="53" rx="5" fill="#fff"/><path d="M30 12h42a5 5 0 0 1 5 5v10H25V17a5 5 0 0 1 5-5" fill="url(#calendar-blue)"/><g stroke="#a3c6f4" stroke-width="1.5" fill="#eff7ff"><rect x="36" y="7" width="4" height="13" rx="2"/><rect x="63" y="7" width="4" height="13" rx="2"/></g><g fill="#b8d8fb">${[34,47,60].flatMap(x=>[34,47].map(y=>`<rect x="${x}" y="${y}" width="8" height="8" rx="3"/>`)).join('')}</g></g></svg>`;
 
 function noWorkView(p){
   const upcoming=p.upcoming||[];
   const next=upcoming[0];
   const readiness=next?[['Đã nhận công việc',next.readiness?.accepted],['Đã có thông tin giải',next.readiness?.hasTournamentInfo],['Đã có lịch trận',next.readiness?.hasSchedule]].filter(([,verified])=>verified):[];
-  return `${heading()}<div class="today-stack today-no-work"><section class="empty-hero"><div class="empty-calendar">${icon('calendar')}</div><h2>Hôm nay bạn không có<br>lịch làm việc.</h2><p>Hãy nghỉ ngơi và chuẩn bị cho<br>những giải đấu sắp tới!</p></section>${next?`<section class="today-card work-card"><div class="section-kicker">Công việc sắp tới</div><div class="upcoming-main"><span class="upcoming-icon">${icon('calendar')}</span><div class="upcoming-facts"><div class="upcoming-title"><strong>${workTitle(next)}</strong>${next.countdown?`<span class="upcoming-countdown">${escape(next.countdown)}</span>`:''}</div>${locationRows(next)}</div><button class="upcoming-chevron" data-shell="open-upcoming" data-tournament-id="${escape(next.tournamentId)}" aria-label="Mở ${workTitle(next)}">›</button></div><button class="primary-button" data-shell="open-upcoming" data-tournament-id="${escape(next.tournamentId)}">Xem công việc ${icon('arrow')}</button></section>`:''}${readiness.length?`<section class="today-card"><div class="section-kicker">Cần chuẩn bị</div><div class="check-list">${readiness.map(([label])=>`<div class="check-row"><span class="check-icon">✓</span><span>${label}</span></div>`).join('')}</div></section>`:''}${upcoming.length?`<section class="today-card"><div class="section-kicker">Lịch sắp tới</div><div class="schedule-list">${upcoming.map(item=>`<button class="schedule-row" data-shell="open-upcoming" data-tournament-id="${escape(item.tournamentId)}"><strong>${item.plan?.startsAt?new Intl.DateTimeFormat('vi-VN',{day:'2-digit',month:'2-digit',timeZone:TODAY_TIME_ZONE}).format(new Date(item.plan.startsAt)):'—'}</strong><span>${workTitle(item)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></section>`:''}</div>`;
+  return `${heading()}<div class="today-stack today-no-work"><section class="empty-hero"><div class="empty-calendar">${calendarMark()}</div><h2>Hôm nay bạn không có lịch làm việc.</h2><p>Hãy nghỉ ngơi và chuẩn bị cho những giải đấu sắp tới!</p></section>${next?`<section class="today-card work-card"><div class="section-kicker">Công việc sắp tới</div><div class="upcoming-main"><span class="upcoming-icon">${icon('calendar')}</span><div class="upcoming-facts"><div class="upcoming-title"><strong>${workTitle(next)}</strong>${next.countdown?`<span class="upcoming-countdown">${escape(next.countdown)}</span>`:''}</div>${locationRows(next)}</div><button class="upcoming-chevron" data-shell="open-upcoming" data-tournament-id="${escape(next.tournamentId)}" data-assignment-id="${escape(next.assignmentId)}" aria-label="Mở ${workTitle(next)}">›</button></div><button class="primary-button" data-shell="open-upcoming" data-tournament-id="${escape(next.tournamentId)}" data-assignment-id="${escape(next.assignmentId)}">Xem công việc ${icon('arrow')}</button></section>`:''}${readiness.length?`<section class="today-card"><div class="section-kicker">Cần chuẩn bị</div><div class="check-list">${readiness.map(([label])=>`<div class="check-row"><span class="check-icon">✓</span><span>${label}</span></div>`).join('')}</div></section>`:''}${upcoming.length?`<section class="today-card"><div class="section-kicker">Lịch sắp tới</div><div class="schedule-list">${upcoming.map(item=>`<button class="schedule-row" data-shell="open-upcoming" data-tournament-id="${escape(item.tournamentId)}" data-assignment-id="${escape(item.assignmentId)}"><strong>${item.plan?.startsAt?new Intl.DateTimeFormat('vi-VN',{day:'2-digit',month:'2-digit',timeZone:TODAY_TIME_ZONE}).format(new Date(item.plan.startsAt)):'—'}</strong><span>${workTitle(item)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></section>`:''}</div>`;
 }
 
 function workTodayView(p){
@@ -96,8 +94,8 @@ function completedView(p){
 
 function renderToday(){
   activeTab='today';
-  try{currentProjection=loadProjection();const views={'no-work':noWorkView,'work-today':workTodayView,working:workingView,waiting:waitingView,'active-match':activeMatchView,completed:completedView};shell((views[currentProjection.kind]||noWorkView)(currentProjection),'today')}
-  catch(error){shell(`${heading()}<section class="today-card waiting-card"><h2>Chưa thể khôi phục dữ liệu</h2><p>${escape(error.message)}</p><p>Dữ liệu gốc được giữ nguyên để có thể xử lý an toàn.</p></section>`,'today')}
+  try{currentProjection=loadProjection();const views={'no-work':noWorkView,'no-assignments':noWorkView,'work-today':workTodayView,working:workingView,waiting:waitingView,'active-match':activeMatchView,completed:completedView};shell((views[currentProjection.kind]||noWorkView)(currentProjection),'today')}
+  catch{currentProjection=null;shell(`${heading()}<section class="today-card waiting-card" role="status"><h2>Chưa thể hiển thị lịch làm việc</h2><p>Thông tin đã lưu vẫn được giữ lại. Vui lòng thử lại.</p><button class="primary-button" data-shell="tab:today">Thử lại</button></section>`,'today')}
 }
 
 function workCards(){
@@ -105,8 +103,8 @@ function workCards(){
   if(!items.length)return '<section class="today-card waiting-card"><h2>Chưa có công việc</h2><p>Module Công việc đang được hoàn thiện theo gói thiết kế riêng.</p></section>';
   return items.map(tournament=>{const active=tournament.workSessions?.find(item=>item.status==='active'),assignment=active?tournament.assignments.find(item=>item.id===active.assignmentId):tournament.assignments?.find(item=>item.status==='assigned');const action=active?'open-tournament':assignment?'start-assignment':'open-tournament';return `<section class="today-card"><div class="section-kicker">${active?'Đang làm việc':'Hồ sơ công việc'}</div><div class="work-title">${escape(tournament.name)}</div><p class="meta-row">${escape(assignment?.label||'Chưa có phần việc được giao')}</p><button class="bridge-button" data-shell="${action}" data-tournament-id="${escape(tournament.id)}" data-assignment-id="${escape(assignment?.id||'')}" data-work-session-id="${escape(active?.id||'')}">${active?'Tiếp tục công việc':assignment?'Bắt đầu ngày làm việc':'Mở hồ sơ công việc'}${icon('arrow')}</button></section>`}).join('');
 }
-function renderWork(){openTournamentExperience()}
-function renderPlaceholder(tab,title,message){shell(`<section class="placeholder"><div class="placeholder-icon">${icon(tab==='matches'?'match':tab==='notifications'?'notice':'profile')}</div><h1>${escape(title)}</h1><p>${escape(message)}</p>${tab==='matches'?'<button class="bridge-button" data-shell="history">Xem lịch sử trận đấu</button>':''}</section>`,tab)}
+function renderWork(){activeTab='tournament';history.replaceState(null,'',location.pathname+location.search);openTournamentExperience()}
+function renderPlaceholder(tab,title,message){history.replaceState(null,'',location.pathname+location.search);shell(`<section class="placeholder"><div class="placeholder-icon">${icon(tab==='matches'?'match':tab==='notifications'?'notice':'profile')}</div><h1>${escape(title)}</h1><p>${escape(message)}</p>${tab==='matches'?'<button class="bridge-button" data-shell="history">Xem lịch sử trận đấu</button>':''}</section>`,tab)}
 
 function openTournamentContext({tournamentId,workSessionId=null,screen='assignment',matchId=null}){window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen,tournamentId,workSessionId,matchId}}))}
 function beginAssignment(tournamentId,assignmentId){
@@ -126,8 +124,12 @@ function todayAction(action){
 document.addEventListener('click',event=>{
   const target=event.target.closest('[data-shell]');if(!target)return;
   const action=target.dataset.shell;
-  if(action?.startsWith('tab:')){const tab=action.slice(4);if(tab==='today')renderToday();else if(tab==='tournament')renderWork();else if(tab==='matches')renderPlaceholder('matches','Trận đấu','Công cụ trận đấu đang được hoàn thiện. Các trận đang diễn ra vẫn được mở trực tiếp từ Hôm nay.');else if(tab==='notifications')renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');else renderPlaceholder('profile','Hồ sơ','Module Hồ sơ đang được hoàn thiện.');return}
-  if(action==='open-upcoming')return openTournamentExperience({tournamentId:target.dataset.tournamentId,screen:'info'});
+  if(action?.startsWith('tab:')){const tab=action.slice(4);if(tab==='today'){history.replaceState(null,'',location.pathname+location.search);renderToday();}else if(tab==='tournament')renderWork();else if(tab==='matches')renderPlaceholder('matches','Trận đấu','Công cụ trận đấu đang được hoàn thiện. Các trận đang diễn ra vẫn được mở trực tiếp từ Hôm nay.');else if(tab==='notifications')renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');else renderPlaceholder('profile','Hồ sơ','Module Hồ sơ đang được hoàn thiện.');return}
+  if(action==='open-upcoming'){
+    const {tournamentId,assignmentId}=target.dataset;
+    location.hash=`/tournaments/${encodeURIComponent(tournamentId)}/work/${encodeURIComponent(assignmentId)}`;
+    return openUpcomingRoute();
+  }
   if(['open-work','resume-match','start-work','prepare-match','open-active-work','view-summary'].includes(action))return todayAction(action);
   if(action==='notifications')return renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');
   if(action==='history')return window.dispatchEvent(new Event('history-open'));
@@ -135,9 +137,29 @@ document.addEventListener('click',event=>{
   if(action==='open-tournament')return openTournamentContext({tournamentId:target.dataset.tournamentId,workSessionId:target.dataset.workSessionId||null,screen:target.dataset.workSessionId?'court':'assignment'});
 });
 
-window.addEventListener('app-shell-home',renderToday);
-window.addEventListener('pageshow',event=>{if(event.persisted)renderToday()});
-window.addEventListener('focus',()=>{if(activeTab==='today')renderToday()});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&activeTab==='today')renderToday()});
-window.addEventListener('storage',()=>{if(activeTab==='today')renderToday()});
-renderToday();
+function openUpcomingRoute(){
+  const route=location.hash.match(/^#\/tournaments\/([^/]+)\/work\/([^/]+)$/);
+  if(!route)return false;
+  try{activeTab='tournament';openTournamentExperience({tournamentId:decodeURIComponent(route[1]),assignmentId:decodeURIComponent(route[2]),screen:'work'});return true}catch{return false}
+}
+function refreshToday(){
+  if(!app.querySelector('[data-today-kind]'))return;
+  const oldContent=app.querySelector('.app-content'),scroll=oldContent?.scrollTop||0;
+  const focused=document.activeElement?.closest('[data-shell]');
+  const focusKey=focused?{action:focused.dataset.shell,tournamentId:focused.dataset.tournamentId,assignmentId:focused.dataset.assignmentId}:null;
+  let signature;try{signature=JSON.stringify(loadProjection())+dateHeading()+navigator.onLine}catch{signature='error'}
+  if(signature===lastSignature)return;
+  lastSignature=signature;renderToday();
+  app.querySelector('.app-content').scrollTop=scroll;
+  if(focusKey){const restored=[...app.querySelectorAll('[data-shell]')].find(el=>el.dataset.shell===focusKey.action&&el.dataset.tournamentId===focusKey.tournamentId&&el.dataset.assignmentId===focusKey.assignmentId);restored?.focus({preventScroll:true})}
+}
+let lastSignature='';
+function scheduleClockRefresh(){setTimeout(()=>{refreshToday();scheduleClockRefresh()},60000-Date.now()%60000+25)}
+window.addEventListener('app-shell-home',()=>{history.replaceState(null,'',location.pathname+location.search);renderToday()});
+window.addEventListener('hashchange',()=>{if(!openUpcomingRoute()&&!location.hash)renderToday()});
+window.addEventListener('pageshow',event=>{if(event.persisted){if(!openUpcomingRoute())renderToday()}});
+window.addEventListener('focus',refreshToday);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshToday()});
+for(const event of ['storage','referee-domain-changed','online','offline'])window.addEventListener(event,refreshToday);
+if(!openUpcomingRoute())renderToday();
+scheduleClockRefresh();

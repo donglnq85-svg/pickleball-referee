@@ -1,3 +1,4 @@
+import {notifyDomainChange} from './domain-events.js';
 import {validateTournament} from './tournament-domain.js';
 import {migrateTournamentIdentity,migrateTournamentScoreSemantics} from './tournament-identity-migration.js';
 
@@ -42,7 +43,7 @@ export function createTournamentRepository(storage){
       const sid=document.activeWorkSession.workSessionId;
       if(!tournament.workSessions.some(s=>s.id===sid&&s.status==='active'))document.activeWorkSession=null;
     }
-    storage.setItem(TOURNAMENT_STORE_KEY,JSON.stringify(document));return clone(tournament);
+    storage.setItem(TOURNAMENT_STORE_KEY,JSON.stringify(document));notifyDomainChange();return clone(tournament);
   }
   const list=()=>Object.values(load().tournaments).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   const get=id=>load().tournaments[id]||null;

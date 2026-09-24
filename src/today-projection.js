@@ -5,7 +5,9 @@ const clone=value=>structuredClone(value);
 const timestamp=value=>value?Date.parse(value):NaN;
 const newest=(a,b)=>(timestamp(b)-timestamp(a));
 
-function dayKey(value,timeZone=TODAY_TIME_ZONE){
+export function dayKey(value,timeZone=TODAY_TIME_ZONE){
+  if(typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value))return Number.isNaN(Date.parse(value))?null:value;
+  if(value==null)return null;
   const date=value instanceof Date?value:new Date(value);
   if(Number.isNaN(date.getTime()))return null;
   const parts=new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
@@ -112,17 +114,11 @@ export function resolveTodayProjection({matchDocument,tournamentDocument,now=new
   const completed=[];
   const planned=[];
   for(const tournament of tournaments){
-    for(const assignment of tournament.assignments||[]){const plan=planFor(tournament,assignment);if(assignment.status==='assigned'&&plan.startsAt)planned.push({tournament,assignment,plan})}
+    for(const assignment of tournament.assignments||[]){const plan=planFor(tournament,assignment);if(assignment.status==='assigned'&&dayKey(plan.startsAt,timeZone))planned.push({tournament,assignment,plan})}
     for(const workSession of tournament.workSessions||[]){
       if(workSession.status!=='completed'||dayKey(workSession.endedAt,timeZone)!==today)continue;
       const assignment=tournament.assignments?.find(item=>item.id===workSession.assignmentId);if(assignment)completed.push({tournament,assignment,workSession});
     }
-  }
-  if(completed.length){
-    completed.sort((a,b)=>newest(a.workSession.endedAt,b.workSession.endedAt));
-    const {tournament,assignment,workSession}=completed[0],progress=scopedProgress(tournament,assignment,matchDocument);
-    const durationMinutes=Math.max(0,Math.round((timestamp(workSession.endedAt)-timestamp(workSession.startedAt))/60000));
-    return {kind:'completed',statusLabel:'HOÀN THÀNH HÔM NAY',work:workContext(tournament,assignment,workSession),summary:{matches:progress.finished,durationMinutes}};
   }
   planned.sort((a,b)=>timestamp(a.plan.startsAt)-timestamp(b.plan.startsAt));
   const todayWork=planned.find(item=>dayKey(item.plan.startsAt,timeZone)===today);
@@ -130,12 +126,18 @@ export function resolveTodayProjection({matchDocument,tournamentDocument,now=new
     const progress=scopedProgress(todayWork.tournament,todayWork.assignment,matchDocument);
     return {kind:'work-today',statusLabel:'CÓ VIỆC HÔM NAY',work:workContext(todayWork.tournament,todayWork.assignment),readiness:{accepted:true,hasTournamentInfo:Boolean(todayWork.tournament.name),hasSchedule:progress.total>0,ready:Boolean(todayWork.plan.startsAt)},progress:{total:progress.total,finished:progress.finished,percent:progress.percent}};
   }
-  const upcoming=planned.filter(item=>timestamp(item.plan.startsAt)>now.getTime()).slice(0,3).map(item=>({
+  if(completed.length){
+    completed.sort((a,b)=>newest(a.workSession.endedAt,b.workSession.endedAt));
+    const {tournament,assignment,workSession}=completed[0],progress=scopedProgress(tournament,assignment,matchDocument);
+    const durationMinutes=Math.max(0,Math.round((timestamp(workSession.endedAt)-timestamp(workSession.startedAt))/60000));
+    return {kind:'completed',statusLabel:'HOÀN THÀNH HÔM NAY',work:workContext(tournament,assignment,workSession),summary:{matches:progress.finished,durationMinutes}};
+  }
+  const upcoming=planned.filter(item=>dayKey(item.plan.startsAt,timeZone)>today).slice(0,3).map(item=>({
     ...workContext(item.tournament,item.assignment),
     countdown:upcomingCountdown(item.plan.startsAt,now,timeZone),
     readiness:{accepted:item.assignment.status==='assigned',hasTournamentInfo:Boolean(item.tournament.name&&item.plan.startsAt),hasSchedule:scopedProgress(item.tournament,item.assignment,matchDocument).total>0}
   }));
-  return {kind:'no-work',statusLabel:'KHÔNG CÓ VIỆC HÔM NAY',upcoming};
+  return {kind:upcoming.length?'no-work':'no-assignments',statusLabel:'KHÔNG CÓ VIỆC HÔM NAY',upcoming};
 }
 
 export function resolveTodayFromStorage(storage,now=new Date(),timeZone=TODAY_TIME_ZONE){

@@ -2,8 +2,8 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body,#app{margin:0;width:100%;min-height:100%;height:100%;overflow:hidden}body{background:#eaf1f8;color:var(--navy);touch-action:manipulation}button,input,select,textarea{font:inherit}button{cursor:pointer}
 .app-shell{width:100%;max-width:390px;height:100dvh;margin:0 auto;background:var(--canvas);display:flex;flex-direction:column;overflow:hidden;position:relative;box-shadow:0 0 60px rgba(20,50,85,.14)}
 .app-header{flex:none;padding:calc(13px + env(safe-area-inset-top)) 19px 3px;display:grid;grid-template-columns:48px 1fr 48px;align-items:center;min-height:73px}
-.app-avatar{width:35px;height:35px;border-radius:50%;background:linear-gradient(145deg,#d9eaff,#98bde8);border:2px solid #fff;box-shadow:0 2px 7px #9cb2ca;display:grid;place-items:center;font-size:11px;font-weight:900;color:var(--navy);position:relative}.app-avatar:after{content:"";position:absolute;right:-1px;bottom:0;width:8px;height:8px;border:2px solid white;border-radius:50%;background:#15b968}
-.app-brand{text-align:center;font-size:12px;font-weight:900;letter-spacing:-.15px}.app-bell{justify-self:end;width:37px;height:37px;border:0;background:transparent;color:var(--navy);display:grid;place-items:center;position:relative;padding:5px}.app-bell svg{width:25px;height:25px;stroke-width:1.8}.app-bell:after{content:"";position:absolute;top:4px;right:4px;width:7px;height:7px;background:#ff3347;border:2px solid white;border-radius:50%}
+.app-avatar{width:35px;height:35px;border-radius:50%;background:linear-gradient(145deg,#d9eaff,#98bde8);border:2px solid #fff;box-shadow:0 2px 7px #9cb2ca;display:grid;place-items:center;font-size:11px;font-weight:900;color:var(--navy);position:relative}.app-avatar.is-online:after{content:"";position:absolute;right:-1px;bottom:0;width:8px;height:8px;border:2px solid white;border-radius:50%;background:#15b968}
+.app-brand{text-align:center;font-size:12px;font-weight:900;letter-spacing:-.15px}.app-bell{justify-self:end;width:37px;height:37px;border:0;background:transparent;color:var(--navy);display:grid;place-items:center;position:relative;padding:5px}.app-bell svg{width:25px;height:25px;stroke-width:1.8}.app-bell.has-unread:after{content:"";position:absolute;top:4px;right:4px;width:7px;height:7px;background:#ff3347;border:2px solid white;border-radius:50%}
 .app-content{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 14px 22px;scrollbar-width:none}.app-content::-webkit-scrollbar{display:none}.today-heading{padding:1px 4px 13px}.today-heading h1{font-size:25px;line-height:1.1;margin:0 0 4px;letter-spacing:-.65px}.today-heading p{margin:0;font-size:13px;color:#62718d}.today-stack{display:grid;gap:10px}.today-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:13px}.today-card h2,.today-card h3,.today-card p{margin-top:0}.section-kicker{font-size:12px;line-height:1.2;font-weight:900;color:var(--blue);letter-spacing:.15px;margin:0 0 9px;text-transform:uppercase}
 .primary-button,.bridge-button{width:100%;min-height:48px;border:0;border-radius:9px;background:linear-gradient(180deg,#168bff,#0878ed);color:#fff;font-weight:800;font-size:15px;box-shadow:0 4px 10px rgba(0,116,239,.2);display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 15px}.primary-button.red{background:linear-gradient(180deg,#ff4052,#ff233a);box-shadow:0 4px 12px rgba(255,42,64,.22)}.primary-button:active{transform:translateY(1px)}.primary-button svg{width:18px;height:18px}
 .empty-hero{text-align:center;padding:38px 26px 4px}.empty-calendar{width:76px;height:76px;margin:0 auto 17px;display:grid;place-items:center;color:#9bc5fb;filter:drop-shadow(8px 10px 8px rgba(66,130,208,.12))}.empty-calendar svg{width:68px;height:68px}.empty-hero h2{font-size:17px;line-height:1.32;margin:0 0 11px;color:#101e52}.empty-hero p{font-size:13px;line-height:1.45;color:#61708b;margin:0}
@@ -23,5 +23,31 @@
 /* A phone viewport is the app surface, not a mockup inside a device frame. */
 @media(max-width:767px){.app-shell{max-width:none;box-shadow:none}}
 @media(min-width:768px){body{padding:18px 0}.app-shell{height:calc(100dvh - 36px);border-radius:28px}}
-html[data-today-qa="true"] body{padding:0}
-html[data-today-qa="true"] .app-shell{height:844px;border-radius:0}
+
+/* SCREEN 01: MASTER hierarchy, natural height, no fit-to-screen compression. */
+.today-no-work{gap:12px;padding-top:0}
+.today-no-work .empty-hero{padding:0 20px 4px}
+.today-no-work .empty-hero h2{font-size:1.1875rem;line-height:1.2;max-width:15rem;margin:0 auto 8px}
+.today-no-work .empty-hero p{font-size:.875rem;line-height:1.4;max-width:16rem;margin:0 auto}
+.today-no-work .empty-calendar{height:72px;width:80px;margin:0 auto 7px}
+.today-no-work .today-card{border-color:#f1f5fa;border-radius:12px;padding:12px;box-shadow:0 3px 13px #193c6909}
+.today-no-work .section-kicker{font-size:.8125rem;margin-bottom:12px;letter-spacing:-.2px}
+.today-no-work .upcoming-main{grid-template-columns:26px minmax(0,1fr);position:relative;gap:12px}
+.today-no-work .upcoming-facts{padding-right:0}
+.today-no-work .upcoming-title{display:block;padding-right:66px;min-height:22px}
+.today-no-work .upcoming-title strong{font-size:.875rem;letter-spacing:-.45px}
+.today-no-work .upcoming-countdown{position:absolute;right:0;top:0;font-size:.6875rem;padding:5px 8px;line-height:1}
+.today-no-work .upcoming-chevron{position:absolute;right:-10px;top:32px;width:44px;height:44px}
+.today-no-work .meta-row{font-size:.875rem;margin:5px 24px 5px 0;line-height:1.4;gap:8px}
+.today-no-work .meta-small{font-size:.8125rem;line-height:1.4}
+.today-no-work .primary-button{font-size:1rem;min-height:44px;border-radius:8px;box-shadow:none;background:#007aff}
+.today-no-work .check-list{gap:0}
+.today-no-work .check-row{font-size:.875rem;min-height:28px;gap:12px}
+.today-no-work .check-row>span:last-child{align-self:stretch;display:flex;align-items:center;flex:1;border-bottom:1px solid var(--line)}
+.today-no-work .check-row:last-child>span:last-child{border-bottom:0}
+.today-no-work .check-icon{background:#00b853}
+.today-no-work .schedule-row{font-size:.8125rem;grid-template-columns:60px minmax(0,1fr) 16px;gap:11px;min-height:44px}
+.today-no-work .schedule-row strong{font-size:.875rem;font-weight:500}
+.nav-symbol{position:relative;display:flex}.nav-unread{position:absolute;right:-3px;top:-2px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1px solid white}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.app-avatar{padding:0;min-width:35px}
