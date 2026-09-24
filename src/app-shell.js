@@ -46,6 +46,7 @@ const teamNames=(players,team)=>players?.[team]?.length?players[team].map(escape
 function shell(content,tab=activeTab){
   activeTab=tab;
   app.innerHTML=`<main class="app-shell"><header class="app-header"><div class="app-avatar" aria-label="Hồ sơ trọng tài">TT</div><div class="app-brand">PICKLEBALL REFEREE</div><button class="app-bell" data-shell="notifications" aria-label="Thông báo">${icon('bell')}</button></header><section class="app-content">${content}</section>${bottomNav(tab)}</main>`;
+  app.querySelector('.app-content').scrollTop=0;
 }
 
 function bottomNav(active){

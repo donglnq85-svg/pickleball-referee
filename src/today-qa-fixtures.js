@@ -67,7 +67,7 @@ export function applyTodayQaFixtureIfRequested(storage=localStorage,locationValu
     const data=makeTournament(storage,{active:true,finished:3});
     const scheduled=data.matches[3];setMatchReadiness(data.tournament,scheduled.id,'ready');
     const session=createMatch({type:'double',sets:3,points:11,rule:'touch',scoring:'side-out',players:scheduled.players,start:{A:0,B:0},note:scheduled.label},{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0});
-    session.currentGamePoints={A:8,B:6};session.game=2;session.tournamentContext={tournamentId:data.tournament.id,scheduledMatchId:scheduled.id,rulesVersionId:data.tournament.activeRulesVersionId};
+    session.completedGames=[{gameNumber:1,points:{A:11,B:4},winner:'A'}];session.gamesWon={A:1,B:0};session.currentGamePoints={A:8,B:6};session.game=2;session.tournamentContext={tournamentId:data.tournament.id,scheduledMatchId:scheduled.id,rulesVersionId:data.tournament.activeRulesVersionId};
     scheduled.matchSessionId=session.id;data.sessions.saveSession(session);createTournamentRepository(storage).save(data.tournament,{activeWorkSession:data.workSession.id});
   }
   return true;
