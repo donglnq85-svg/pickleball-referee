@@ -70,7 +70,9 @@ function renderPreMatch(){screen='prematch';const t=selected(),match=selectedMat
 }
 function render(){if(screen==='list')renderList();else if(['tournament','assignment'].includes(screen))renderTournament();else if(screen==='court')renderCourt();else if(screen==='operations')renderOperations();else if(screen==='prematch')renderPreMatch();else if(screen==='result')renderResultReview();else if(screen==='report')renderReport();else if(['shift','shiftAttention'].includes(screen))renderShift()}
 export function openTournament(){screen='list';render()}
-window.addEventListener('tournament-open',openTournament);
+// The approved Tournament Experience owns normal navigation. This legacy UI
+// remains only as a functional bridge for live operational workflows.
+window.addEventListener('tournament-legacy-open',openTournament);
 window.addEventListener('application-resume',event=>{
   const target=event.detail;if(target?.kind!=='tournament')return;
   tournamentId=target.tournamentId;workSessionId=target.workSessionId;matchId=target.matchId;

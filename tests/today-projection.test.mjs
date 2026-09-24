@@ -56,5 +56,5 @@ test('completed workday resolves only from a real completed Work Session on the 
 test('production shell has no state switcher and old inline frontend is no longer an entry point',()=>{
   const index=readFileSync(new URL('../index.html',import.meta.url),'utf8'),shell=readFileSync(new URL('../src/app-shell.js',import.meta.url),'utf8');
   assert.match(index,/src\/app-shell\.js/);assert.doesNotMatch(index,/data-a=|Chọn chế độ làm việc|Sắp ra mắt/);
-  assert.doesNotMatch(shell,/visualState|state-switcher|demo-state/);assert.match(shell,/Hôm nay/);assert.match(shell,/Công việc/);assert.match(shell,/Trận đấu/);assert.match(shell,/Thông báo/);assert.match(shell,/Hồ sơ/);
+  assert.doesNotMatch(shell,/visualState|state-switcher|demo-state/);assert.match(shell,/Hôm nay/);assert.match(shell,/Giải đấu/);assert.doesNotMatch(shell,/\['work','work','Công việc'\]/);assert.match(shell,/Trận đấu/);assert.match(shell,/Thông báo/);assert.match(shell,/Hồ sơ/);
 });
