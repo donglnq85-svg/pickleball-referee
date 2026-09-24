@@ -1,10 +1,12 @@
 import {createMatchRepository} from './match-persistence.js';
 import {createTournamentRepository} from './tournament-persistence.js';
 import {resolveTodayProjection,TODAY_TIME_ZONE} from './today-projection.js';
+import {applyTodayQaFixtureIfRequested} from './today-qa-fixtures.js';
 import './app-shell.css';
 import './v1.js';
 
 const app=document.getElementById('app');
+applyTodayQaFixtureIfRequested();
 const matchRepository=createMatchRepository(localStorage);
 const tournamentRepository=createTournamentRepository(localStorage);
 let activeTab='today';
