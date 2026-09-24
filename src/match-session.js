@@ -6,7 +6,7 @@ const button=(label,action,kind='secondary',disabled=false)=>`<button class="ref
 const playerNames=(s,t)=>s.players[t].map(escape).join(' / ');
 
 function eventsSheet(s){
-  const team=t=>`<section class="ref-event-team"><h3>Đội ${t} · ${playerNames(s,t)}</h3>${button(`Time-out · ${s.timeout[t]} đã dùng trong game`,'timeout:'+t,'secondary')}${s.players[t].map((name,i)=>button(`Y tế · ${escape(name)}${s.medical[t][i]?' · đã dùng':''}`,`medical:${t}:${i}`,'secondary',!!s.medical[t][i])).join('')}</section>`;
+  const team=t=>`<section class="ref-event-team"><h3>Đội ${t} · ${playerNames(s,t)}</h3>${button(`Hội ý · ${s.timeout[t]} lần đã dùng trong ván`,'timeout:'+t,'secondary')}${s.players[t].map((name,i)=>button(`Chăm sóc y tế · ${escape(name)}${s.medical[t][i]?' · đã dùng':''}`,`medical:${t}:${i}`,'secondary',!!s.medical[t][i])).join('')}</section>`;
   return `<div class="ref-sheet-content"><h2>Sự kiện trận đấu</h2><p>Trận và lượt giao hiện tại được giữ nguyên khi tạm dừng.</p>${team('A')}${team('B')}${button('Sửa trạng thái trận','correction','secondary')}</div>`;
 }
 function correctionSheet(s){
@@ -20,7 +20,7 @@ function correctionSheet(s){
 }
 function pauseSheet(s){
   const p=s.pause;
-  return `<div class="ref-sheet-content ref-pause-sheet"><h2>${p.type==='medical'?'Hỗ trợ y tế':'Time-out'}</h2><p>${p.type==='medical'?escape(s.players[p.team][p.playerIndex]):'Đội '+p.team}</p><div class="ref-clock" data-pauseclock></div><p>Trận bên dưới được giữ nguyên. Đồng hồ tiếp tục chạy khi app ở nền.</p>${button('Trở lại rally đang chờ','endPause','primary')}</div>`;
+  return `<div class="ref-sheet-content ref-pause-sheet"><h2>${p.type==='medical'?'Chăm sóc y tế':'Hội ý'}</h2><p>${p.type==='medical'?escape(s.players[p.team][p.playerIndex]):'Đội '+p.team}</p><div class="ref-clock" data-pauseclock></div><p>Trận bên dưới được giữ nguyên. Đồng hồ tiếp tục chạy khi app ở nền.</p>${button('Trở lại pha bóng đang chờ','endPause','primary')}</div>`;
 }
 function sheet(s,panel){
   if(!s.pause&&!panel)return '';
@@ -34,9 +34,10 @@ export function renderSession(s,panel){
   const scorePanels=`<div class="ref-call ${s.config.type==='single'?'ref-call-single':''}" aria-label="Xướng tỷ số ${view.scoreCall}">
     <div class="ref-call-cell ref-call-serving"><small>ĐIỂM ĐỘI GIAO</small><strong>${call[0]}</strong><span>ĐỘI ${view.serving}</span></div>
     <div class="ref-call-cell"><small>ĐIỂM ĐỘI ĐỠ</small><strong>${call[1]}</strong><span>ĐỘI ${view.receiving}</span></div>
-    ${s.config.type==='double'?`<div class="ref-call-cell ref-call-number"><small>LƯỢT GIAO</small><strong>${call[2]}</strong><span>SERVER ${call[2]}</span></div>`:''}</div>`;
-  const teams=`<div class="ref-teams"><div class="ref-team ${view.serving==='A'?'is-serving':''}"><span>ĐỘI A · ĐIỂM GAME</span><strong>${s.currentGamePoints.A}</strong><small>${playerNames(s,'A')}</small></div><div class="ref-game-status">GAME<br><b>${s.game}/${s.config.sets}</b><small>Game thắng ${s.gamesWon.A} : ${s.gamesWon.B}</small></div><div class="ref-team ${view.serving==='B'?'is-serving':''}"><span>ĐỘI B · ĐIỂM GAME</span><strong>${s.currentGamePoints.B}</strong><small>${playerNames(s,'B')}</small></div></div>`;
-  const body=`<div class="ref-session">${scorePanels}${teams}<div class="ref-service"><span>ĐỘI ${view.serving} GIAO${s.config.type==='double'?' · LƯỢT '+view.serverNumber:''}</span><strong>${escape(view.server)} <em>GIAO →</em> ${escape(view.receiver)} <em>ĐỠ</em></strong></div>${s.notice?`<div class="ref-notice" role="status">${escape(s.notice)}</div>`:''}${courtView(s)}<div class="ref-actions">${button('↶ Hoàn tác','undo','secondary',!s.undo.length)}${button('↷ Làm lại','redo','secondary',!s.redo.length)}${button('⇄ Đổi bên sân','swap','secondary')}${button('Time-out · Y tế · Sự cố','tools','secondary')}</div></div>`;
-  const footer=`<div class="ref-rally-actions">${button(`ĐỘI ${view.serving} THẮNG RALLY`,`rally:${view.serving}`,'primary',!!s.pause)}${button(`ĐỘI ${view.receiving} THẮNG RALLY`,`rally:${view.receiving}`,'neutral',!!s.pause)}</div>`;
+    ${s.config.type==='double'?`<div class="ref-call-cell ref-call-number"><small>LƯỢT GIAO</small><strong>${call[2]}</strong><span>LƯỢT ${call[2]}</span></div>`:''}</div>`;
+  const teams=`<div class="ref-teams"><div class="ref-team ${view.serving==='A'?'is-serving':''}"><span>ĐỘI A · ĐIỂM VÁN</span><strong>${s.currentGamePoints.A}</strong><small>${playerNames(s,'A')}</small></div><div class="ref-game-status">VÁN<br><b>${s.game}/${s.config.sets}</b><small>Ván thắng ${s.gamesWon.A} : ${s.gamesWon.B}</small></div><div class="ref-team ${view.serving==='B'?'is-serving':''}"><span>ĐỘI B · ĐIỂM VÁN</span><strong>${s.currentGamePoints.B}</strong><small>${playerNames(s,'B')}</small></div></div>`;
+  const notice=s.notice?.replace('SIDE OUT','ĐỔI QUYỀN GIAO').replace('Time-out','Hội ý');
+  const body=`<div class="ref-session">${scorePanels}${teams}<div class="ref-service"><span>ĐỘI ${view.serving} GIAO${s.config.type==='double'?' · LƯỢT '+view.serverNumber:''}</span><strong>${escape(view.server)} <em>GIAO →</em> ${escape(view.receiver)} <em>ĐỠ</em></strong></div>${notice?`<div class="ref-notice" role="status">${escape(notice)}</div>`:''}${courtView(s)}<div class="ref-actions">${button('↶ Hoàn tác','undo','secondary',!s.undo.length)}${button('↷ Làm lại','redo','secondary',!s.redo.length)}${button('⇄ Đổi bên sân','swap','secondary')}${button('Hội ý · Y tế · Sự cố','tools','secondary')}</div></div>`;
+  const footer=`<div class="ref-rally-actions">${button(`ĐỘI ${view.serving} THẮNG PHA BÓNG`,`rally:${view.serving}`,'primary',!!s.pause)}${button(`ĐỘI ${view.receiving} THẮNG PHA BÓNG`,`rally:${view.receiving}`,'neutral',!!s.pause)}</div>`;
   return {body,footer,overlay:sheet(s,panel)};
 }

@@ -18,9 +18,10 @@ function persist(){try{if(state)repository.saveSession(state,{draft,clearDraft:!
 function save(){persist()}
 function recordIfFinished(){if(state?.status==='finished')historyProjection=null}
 const names=team=>(state||draft)?.config?.players?.[team]||state?.players?.[team]||[];
+const naturalCopy=value=>String(value).replaceAll('Game thắng','Ván thắng').replaceAll('ĐIỂM GAME','ĐIỂM VÁN').replaceAll('Game ','Ván ').replaceAll('GAME','VÁN').replaceAll('game ','ván ').replaceAll('rally cuối','pha bóng cuối');
 function base(title,body,footer='',overlay=''){
   window.v1Active=true;
-  app.innerHTML=`<main class="v1"><header class="v1-head"><button data-v1="home" aria-label="Về trang chủ">‹</button><h1>${title}</h1></header><div class="v1-body">${body}</div>${footer?`<footer class="v1-footer">${footer}</footer>`:''}</main>${overlay}`;
+  app.innerHTML=`<main class="v1"><header class="v1-head"><button data-v1="home" aria-label="Về trang chủ">‹</button><h1>${naturalCopy(title)}</h1></header><div class="v1-body">${naturalCopy(body)}</div>${footer?`<footer class="v1-footer">${naturalCopy(footer)}</footer>`:''}</main>${naturalCopy(overlay)}`;
 }
 function button(text,act,cls='v1-main'){return `<button class="${cls}" data-v1="${act}">${text}</button>`}
 function mainHome(){

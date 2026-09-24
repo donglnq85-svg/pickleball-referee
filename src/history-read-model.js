@@ -37,11 +37,11 @@ function significantLabel(event,record){
   const type=event.type,detail=event.detail;
   if(type==='rally'&&detail.before?.serving!==detail.after?.serving)return `Side-out · Đội ${detail.after.serving} giao`;
   if(type==='rally'&&detail.before?.serverNumber!==detail.after?.serverNumber)return `Đổi lượt giao · Server ${detail.after.serverNumber}`;
-  if(type==='rally'&&detail.before?.status!==detail.after?.status)return detail.after.status==='finished'?'Match kết thúc':`Game ${detail.after.game} kết thúc`;
+  if(type==='rally'&&detail.before?.status!==detail.after?.status)return detail.after.status==='finished'?'Trận kết thúc':`Ván ${detail.after.game} kết thúc`;
   if(type==='canonicalResultVersionCreated'){
     const version=record.canonicalResult.versions.find(item=>item.id===detail.resultVersionId);return version?.source?.kind==='RESULT_CORRECTION'?`Điều chỉnh kết quả · lần ${version.version}`:`Ghi nhận kết quả · lần ${version?.version||''}`;
   }
-  const labels={nextGame:'Bắt đầu game tiếp theo',timeout:'Hội ý',medical:'Chăm sóc y tế',resume:'Tiếp tục trận',courtEnd:'Đổi bên sân',correction:'Điều chỉnh trạng thái trận',undo:'Hoàn tác',redo:'Làm lại',playersCalled:'Gọi VĐV',waitingStarted:'Bắt đầu chờ',waitingExtended:'Gia hạn chờ',playersArrived:'VĐV đã đến',noShowResolved:'Xử lý VĐV đến muộn',matchStartSnapshotCreated:'Chốt thiết lập trước trận',matchSessionLinked:'Bắt đầu thi đấu',canonicalResultConfirmed:'Xác nhận kết quả',reportGenerated:'Tạo nội dung gửi BTC',reportOutdated:'Nội dung gửi BTC cần cập nhật',reportShareSheetOpened:'Mở chia sẻ',reportSent:'Đã gửi BTC'};
+  const labels={nextGame:'Bắt đầu ván tiếp theo',timeout:'Hội ý',medical:'Chăm sóc y tế',resume:'Tiếp tục trận',courtEnd:'Đổi bên sân',correction:'Điều chỉnh trạng thái trận',undo:'Hoàn tác',redo:'Làm lại',playersCalled:'Gọi VĐV',waitingStarted:'Bắt đầu chờ',waitingExtended:'Gia hạn chờ',playersArrived:'VĐV đã đến',noShowResolved:'Xử lý VĐV đến muộn',matchStartSnapshotCreated:'Chốt thiết lập trước trận',matchSessionLinked:'Bắt đầu thi đấu',canonicalResultConfirmed:'Xác nhận kết quả',reportGenerated:'Tạo nội dung gửi BTC',reportOutdated:'Nội dung gửi BTC cần cập nhật',reportShareSheetOpened:'Mở chia sẻ',reportSent:'Đã gửi BTC'};
   return labels[type]||type;
 }
 function projectMatch(session,t=null,scheduled=null){

@@ -19,10 +19,11 @@ const option=(values,selected=null)=>values.map(([id,label])=>`<option value="${
 const formatTime=value=>value?new Date(value).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}):'—';
 const duration=seconds=>`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
 const statusText=value=>({draft:'Đang chuẩn bị',active:'Đang làm việc',assigned:'Đã nhận',completed:'Đã hoàn tất',ready:'Sẵn sàng',blocked:'Có vướng mắc',unknown:'Chưa xác định',CONFIRMED:'Đã xác nhận',PENDING_CONFIRMATION:'Chờ xác nhận',NOT_DERIVED:'Chưa có kết quả',SENT:'Đã gửi BTC',GENERATED:'Chưa gửi',NEEDS_RESEND:'Cần gửi lại',SHARED_UNCONFIRMED:'Đã mở chia sẻ · chưa xác nhận gửi',OUTDATED:'Đã cũ'})[value]||'Chưa xác định';
+const naturalCopy=value=>String(value).replaceAll('Time-out mỗi game','Số lần hội ý mỗi ván').replaceAll('Time-out (phút)','Thời gian hội ý (phút)').replaceAll('Y tế (phút)','Chăm sóc y tế (phút)').replaceAll('Số game','Số ván').replaceAll('Hiệu số game','Hiệu số ván').replaceAll('Bốc thăm và setup vị trí','Bốc thăm và thiết lập vị trí').replaceAll('để setup vị trí','để thiết lập vị trí').replaceAll('Điểm từng game','Điểm từng ván').replaceAll('Game ','Ván ');
 
 function base(title,body,footer=''){
   clearInterval(timer);window.v1Active=true;
-  app.innerHTML=`<main class="v1 t2 professional"><header class="v1-head"><button type="button" data-t2="back" aria-label="Quay lại">‹</button><h1>${escape(title)}</h1></header><div class="v1-body">${body}</div>${footer?`<footer class="v1-footer">${footer}</footer>`:''}</main>`;
+  app.innerHTML=`<main class="v1 t2 professional"><header class="v1-head"><button type="button" data-t2="back" aria-label="Quay lại">‹</button><h1>${escape(naturalCopy(title))}</h1></header><div class="v1-body">${naturalCopy(body)}</div>${footer?`<footer class="v1-footer">${naturalCopy(footer)}</footer>`:''}</main>`;
 }
 const selected=()=>{const t=repo.get(tournamentId);if(!t)throw Error('Không tìm thấy giải.');ensureRefereeWorkspace(t);return t};
 const selectedMatch=t=>{const match=t.schedule.find(item=>item.id===matchId);if(!match)throw Error('Không tìm thấy trận.');return match};
