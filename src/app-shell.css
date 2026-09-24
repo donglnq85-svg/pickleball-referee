@@ -51,3 +51,6 @@
 .nav-symbol{position:relative;display:flex}.nav-unread{position:absolute;right:-3px;top:-2px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1px solid white}
 button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .app-avatar{padding:0;min-width:35px}
+
+.today-no-work .empty-calendar{width:100px;height:72px}
+.today-no-work .empty-calendar svg{width:100px;height:80px;flex:none}
