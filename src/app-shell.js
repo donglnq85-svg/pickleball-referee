@@ -65,7 +65,9 @@ const matchLabel=match=>escape(match?.label||'Trận tiếp theo');
 
 function noWorkView(p){
   const upcoming=p.upcoming||[];
-  return `${heading()}<div class="today-stack"><section class="empty-hero"><div class="empty-calendar">${icon('calendar')}</div><h2>Hôm nay bạn không có<br>lịch làm việc.</h2><p>Hãy nghỉ ngơi và chuẩn bị cho<br>những giải đấu sắp tới!</p></section><section class="today-card work-card"><div class="section-kicker">Công việc sắp tới</div>${upcoming.length?`<div class="work-title">${workTitle(upcoming[0])}</div>${locationRows(upcoming[0])}`:'<p class="meta-row">Chưa có công việc nào được lên lịch.</p>'}${arrowButton('Xem công việc','open-work')}</section>${upcoming.length>1?`<section class="today-card"><div class="section-kicker">Lịch sắp tới</div><div class="schedule-list">${upcoming.map(item=>`<div class="schedule-row"><strong>${item.plan?.startsAt?new Intl.DateTimeFormat('vi-VN',{day:'2-digit',month:'2-digit',timeZone:TODAY_TIME_ZONE}).format(new Date(item.plan.startsAt)):'—'}</strong><span>${workTitle(item)}</span><span>›</span></div>`).join('')}</div></section>`:''}</div>`;
+  const next=upcoming[0];
+  const readiness=next?[['Đã nhận công việc',next.readiness?.accepted],['Đã có thông tin giải',next.readiness?.hasTournamentInfo],['Đã có lịch trận',next.readiness?.hasSchedule]].filter(([,verified])=>verified):[];
+  return `${heading()}<div class="today-stack today-no-work"><section class="empty-hero"><div class="empty-calendar">${icon('calendar')}</div><h2>Hôm nay bạn không có<br>lịch làm việc.</h2><p>Hãy nghỉ ngơi và chuẩn bị cho<br>những giải đấu sắp tới!</p></section>${next?`<section class="today-card work-card"><div class="section-kicker">Công việc sắp tới</div><div class="upcoming-main"><span class="upcoming-icon">${icon('calendar')}</span><div class="upcoming-facts"><div class="upcoming-title"><strong>${workTitle(next)}</strong>${next.countdown?`<span class="upcoming-countdown">${escape(next.countdown)}</span>`:''}</div>${locationRows(next)}</div><button class="upcoming-chevron" data-shell="open-upcoming" data-tournament-id="${escape(next.tournamentId)}" aria-label="Mở ${workTitle(next)}">›</button></div><button class="primary-button" data-shell="open-upcoming" data-tournament-id="${escape(next.tournamentId)}">Xem công việc ${icon('arrow')}</button></section>`:''}${readiness.length?`<section class="today-card"><div class="section-kicker">Cần chuẩn bị</div><div class="check-list">${readiness.map(([label])=>`<div class="check-row"><span class="check-icon">✓</span><span>${label}</span></div>`).join('')}</div></section>`:''}${upcoming.length?`<section class="today-card"><div class="section-kicker">Lịch sắp tới</div><div class="schedule-list">${upcoming.map(item=>`<button class="schedule-row" data-shell="open-upcoming" data-tournament-id="${escape(item.tournamentId)}"><strong>${item.plan?.startsAt?new Intl.DateTimeFormat('vi-VN',{day:'2-digit',month:'2-digit',timeZone:TODAY_TIME_ZONE}).format(new Date(item.plan.startsAt)):'—'}</strong><span>${workTitle(item)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></section>`:''}</div>`;
 }
 
 function workTodayView(p){
@@ -125,6 +127,7 @@ document.addEventListener('click',event=>{
   const target=event.target.closest('[data-shell]');if(!target)return;
   const action=target.dataset.shell;
   if(action?.startsWith('tab:')){const tab=action.slice(4);if(tab==='today')renderToday();else if(tab==='tournament')renderWork();else if(tab==='matches')renderPlaceholder('matches','Trận đấu','Công cụ trận đấu đang được hoàn thiện. Các trận đang diễn ra vẫn được mở trực tiếp từ Hôm nay.');else if(tab==='notifications')renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');else renderPlaceholder('profile','Hồ sơ','Module Hồ sơ đang được hoàn thiện.');return}
+  if(action==='open-upcoming')return openTournamentExperience({tournamentId:target.dataset.tournamentId,screen:'info'});
   if(['open-work','resume-match','start-work','prepare-match','open-active-work','view-summary'].includes(action))return todayAction(action);
   if(action==='notifications')return renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');
   if(action==='history')return window.dispatchEvent(new Event('history-open'));
@@ -134,4 +137,7 @@ document.addEventListener('click',event=>{
 
 window.addEventListener('app-shell-home',renderToday);
 window.addEventListener('pageshow',event=>{if(event.persisted)renderToday()});
+window.addEventListener('focus',()=>{if(activeTab==='today')renderToday()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&activeTab==='today')renderToday()});
+window.addEventListener('storage',()=>{if(activeTab==='today')renderToday()});
 renderToday();

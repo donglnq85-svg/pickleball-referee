@@ -13,6 +13,14 @@ function dayKey(value,timeZone=TODAY_TIME_ZONE){
   return `${read('year')}-${read('month')}-${read('day')}`;
 }
 
+export function upcomingCountdown(start,now=new Date(),timeZone=TODAY_TIME_ZONE){
+  const startDay=dayKey(start,timeZone),currentDay=dayKey(now,timeZone);
+  if(!startDay||!currentDay)return null;
+  const utcDay=key=>Date.parse(`${key}T00:00:00Z`);
+  const days=Math.round((utcDay(startDay)-utcDay(currentDay))/86400000);
+  return days===1?'Ngày mai':days>1?`Còn ${days} ngày`:days===0?'Hôm nay':null;
+}
+
 const planFor=(tournament,assignment)=>{
   const source=assignment?.workPlan||tournament?.workPlan||{};
   return {
@@ -122,7 +130,11 @@ export function resolveTodayProjection({matchDocument,tournamentDocument,now=new
     const progress=scopedProgress(todayWork.tournament,todayWork.assignment,matchDocument);
     return {kind:'work-today',statusLabel:'CÓ VIỆC HÔM NAY',work:workContext(todayWork.tournament,todayWork.assignment),readiness:{accepted:true,hasTournamentInfo:Boolean(todayWork.tournament.name),hasSchedule:progress.total>0,ready:Boolean(todayWork.plan.startsAt)},progress:{total:progress.total,finished:progress.finished,percent:progress.percent}};
   }
-  const upcoming=planned.filter(item=>timestamp(item.plan.startsAt)>now.getTime()).slice(0,3).map(item=>workContext(item.tournament,item.assignment));
+  const upcoming=planned.filter(item=>timestamp(item.plan.startsAt)>now.getTime()).slice(0,3).map(item=>({
+    ...workContext(item.tournament,item.assignment),
+    countdown:upcomingCountdown(item.plan.startsAt,now,timeZone),
+    readiness:{accepted:item.assignment.status==='assigned',hasTournamentInfo:Boolean(item.tournament.name&&item.plan.startsAt),hasSchedule:scopedProgress(item.tournament,item.assignment,matchDocument).total>0}
+  }));
   return {kind:'no-work',statusLabel:'KHÔNG CÓ VIỆC HÔM NAY',upcoming};
 }
 

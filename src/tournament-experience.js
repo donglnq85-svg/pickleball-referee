@@ -199,7 +199,7 @@ document.addEventListener('click',event=>{
 });
 
 export function openTournamentExperience(detail={}){
-  const target=detail?.tournamentId&&repo.get(detail.tournamentId);if(target){tournamentId=target.id;return renderGroups()}
+  const target=detail?.tournamentId&&repo.get(detail.tournamentId);if(target){tournamentId=target.id;return detail.screen==='info'?renderInfo():renderGroups()}
   renderList();
 }
 
