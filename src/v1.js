@@ -153,13 +153,16 @@ document.addEventListener('click',event=>{
 },true);
 let lastFormHtml='';window.addEventListener('v1-config',event=>{lastFormHtml=event.detail.html});
 window.addEventListener('tournament-match-open',event=>{if(!event.detail)return;state=event.detail;draft=null;medicalChoice=null;renderMatch()});
+window.addEventListener('match-resume',event=>{const id=event.detail?.matchId;state=id?repository.get(id):repository.active();if(!state||state.status==='finished')return;draft=null;medicalChoice=null;renderMatch()});
+window.addEventListener('history-open',()=>renderHistory());
 
-const resumeTarget=resolveApplicationResume(localStorage);
-if(resumeTarget.kind==='match'){
-  window.v1Active=true;state=repository.get(resumeTarget.matchId);medicalChoice=null;renderMatch();
-}else if(resumeTarget.kind==='tournament'){
-  window.v1Active=true;window.dispatchEvent(new CustomEvent('application-resume',{detail:resumeTarget}));
-}else if(resumeTarget.kind==='draft'){
-  window.v1Active=true;draft=repository.load().draft;
-  if(draft?.phase==='warmup')renderWarm();else if(draft?.final)renderReview();else startFinal();
+// The new App Shell owns bootstrap. Existing Match/Tournament modules remain
+// functional bridges, but they never bypass HÔM NAY on a normal page load.
+export function openRecoveredWorkflow(target=resolveApplicationResume(localStorage)){
+  if(target.kind==='match')window.dispatchEvent(new CustomEvent('match-resume',{detail:{matchId:target.matchId}}));
+  else if(target.kind==='tournament')window.dispatchEvent(new CustomEvent('application-resume',{detail:target}));
+  else if(target.kind==='draft'){
+    draft=repository.load().draft;if(!draft)return;
+    if(draft.phase==='warmup')renderWarm();else if(draft.final)renderReview();else startFinal();
+  }
 }
