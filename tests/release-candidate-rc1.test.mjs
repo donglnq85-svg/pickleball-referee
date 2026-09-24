@@ -142,17 +142,18 @@ test('RC1 mobile close target and completed-shift History escape remain wired',(
   const css=readFileSync(new URL('../src/v1.css',import.meta.url),'utf8');
   const tournamentUi=readFileSync(new URL('../src/tournament-ui.js',import.meta.url),'utf8');
   assert.match(css,/\.ref-sheet \.ref-button-quiet\{[^}]*min-width:44px;min-height:44px/);
-  assert.match(tournamentUi,/data-v1="history">Lịch sử<\/button>/);
+  assert.match(tournamentUi,/data-v1="history">Mở lịch sử<\/button>/);
 });
 
-test('RC1.1 normal Home exposes the implemented Tournament workspace',()=>{
+test('professional Home makes tournament work primary and Quick Match secondary',()=>{
   const shell=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const app=readFileSync(new URL('../src/v1.js',import.meta.url),'utf8');
   const tournamentUi=readFileSync(new URL('../src/tournament-ui.js',import.meta.url),'utf8');
   assert.match(shell,/<strong>Giải đấu<\/strong><small>Sắp ra mắt<\/small>/,'regression fixture must cover the legacy locked card');
-  assert.match(app,/tournamentMode\.classList\.remove\('off'\);tournamentMode\.dataset\.v1='tournament'/);
-  assert.match(app,/description\.textContent='Điều hành giải đấu'/);
-  assert.doesNotMatch(app,/button\('Quản lý giải đấu','tournament'/,'do not depend on a secondary injected CTA');
+  assert.match(app,/head\.textContent='LỊCH LÀM VIỆC'/);
+  assert.match(app,/class="mode work-primary" data-v1="tournament"/);
+  assert.match(app,/Trận đấu nhanh \/ trận độc lập/);
+  assert.doesNotMatch(app,/tournamentMode\.classList\.remove\('off'\)/,'new Home does not depend on mutating the legacy disabled card');
   assert.match(app,/if\(action==='tournament'\)\{window\.dispatchEvent\(new Event\('tournament-open'\)\);return\}/);
   assert.match(tournamentUi,/window\.addEventListener\('tournament-open',openTournament\)/);
 });

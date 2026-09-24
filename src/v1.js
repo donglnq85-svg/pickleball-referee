@@ -6,6 +6,7 @@ import {projectHistory,searchHistory} from './history-read-model.js';
 import {createMatchRepository} from './match-persistence.js';
 import {createTournamentRepository} from './tournament-persistence.js';
 import {resolveApplicationResume} from './application-resume.js';
+import {displayWorkDate,ensureRefereeWorkspace} from './referee-workspace.js';
 import './tournament-ui.js';
 import './v1.css';
 
@@ -24,13 +25,13 @@ function base(title,body,footer='',overlay=''){
 function button(text,act,cls='v1-main'){return `<button class="${cls}" data-v1="${act}">${text}</button>`}
 function mainHome(){
   const place=app.querySelector('#v1-home-actions');if(!place)return;
-  const tournamentMode=[...app.querySelectorAll('.mode')].find(item=>item.querySelector('strong')?.textContent.trim()==='Giải đấu');
-  if(tournamentMode){
-    tournamentMode.classList.remove('off');tournamentMode.dataset.v1='tournament';
-    const description=tournamentMode.querySelector('small');if(description)description.textContent='Điều hành giải đấu';
-  }
+  const head=app.querySelector('.homeHead h1'),subtitle=app.querySelector('.homeHead .muted'),grid=app.querySelector('.modeGrid');
+  if(head)head.textContent='LỊCH LÀM VIỆC';if(subtitle)subtitle.textContent='Công việc trọng tài của anh';
+  const tournaments=tournamentRepository.list().map(t=>{ensureRefereeWorkspace(t);return t}).sort((a,b)=>(a.refereeWorkspace.profile.date||'9999').localeCompare(b.refereeWorkspace.profile.date||'9999'));
+  if(grid)grid.innerHTML=`<button class="mode work-primary" data-v1="tournament"><strong>Giải đấu của tôi</strong><small>Xem lịch, chuẩn bị và bắt đầu công việc</small></button>`;
   const latest=repository.active(),active=latest?.status==='finished'?null:latest,pending=repository.load().draft,count=Object.values(repository.load().matches).filter(match=>match.status==='finished').length;
-  place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}${button(`Lịch sử trận đấu${count?' · '+count:''}`,'history','v1-home-button')}`;
+  const upcoming=tournaments.slice(0,3).map(t=>`<button class="home-work-card" data-v1="openTournament:${escape(t.id)}"><b>${escape(t.name||'Chưa có tên giải')}</b><span>${escape(displayWorkDate(t))}</span><small>${escape(t.refereeWorkspace.profile.location||'Chưa có địa điểm')} · ${t.refereeWorkspace.profile.commitment==='accepted'?'Đã nhận lời':'Dự định · chưa chốt'}</small></button>`).join('');
+  place.innerHTML=`${active?button('TRẬN ĐANG DIỄN RA — TIẾP TỤC','resume'):pending?button('Tiếp tục chuẩn bị trận','resumeDraft'):''}<h2>Lịch sắp tới</h2>${upcoming||'<p class="v1-muted">Chưa có lịch. Tạo công việc khi anh biết ngày.</p>'}${button('Mở toàn bộ lịch làm việc','tournament','v1-main')}${button('Trận đấu nhanh / trận độc lập','quick','v1-home-button')}${button(`Lịch sử${count?' · '+count:''}`,'history','v1-home-button')}`;
 }
 new MutationObserver(()=>{if(app.querySelector('#v1-home-actions')&&!app.querySelector('#v1-home-actions button'))mainHome()}).observe(app,{subtree:true,childList:true});
 function parseConfig(){
@@ -70,13 +71,13 @@ window.addEventListener('v1-final-back',()=>{if(draft){draft.phase='warmup';save
 function renderSingleFinal(){
   const f=draft.final||{serving:'A',courtLeft:'A',right:{A:0,B:0},serverIndex:0};draft.final=f;save();screen='finalSingle';
   const v=matchView(previewState(draft.config,f));
-  base('Final Setup',`<p class="v1-muted">Sau khởi động · theo góc nhìn trọng tài</p><h2>Kiểm tra vị trí thực tế</h2><div class="v1-setting"><b>Ai giao trước?</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="serve:${t}" class="${f.serving===t?'selected':''}">Đội ${t} · ${escape(draft.config.players[t][0])}</button>`).join('')}</div></div><div class="v1-setting"><b>Ai ở bên trái trọng tài?</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="end:${t}" class="${f.courtLeft===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div>${courtView(previewState(draft.config,f))}<div class="v1-call">${v.scoreCall}</div><p>${escape(v.server)} giao → ${escape(v.receiver)} đỡ</p>`,button('Xem lại và bắt đầu','reviewFinal'));
+  base('Thiết lập vị trí',`<p class="v1-muted">Sau khởi động · theo góc nhìn trọng tài</p><h2>Kiểm tra vị trí thực tế</h2><div class="v1-setting"><b>Ai giao trước?</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="serve:${t}" class="${f.serving===t?'selected':''}">Đội ${t} · ${escape(draft.config.players[t][0])}</button>`).join('')}</div></div><div class="v1-setting"><b>Ai ở bên trái trọng tài?</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="end:${t}" class="${f.courtLeft===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div>${courtView(previewState(draft.config,f))}<div class="v1-call">${v.scoreCall}</div><p>${escape(v.server)} giao → ${escape(v.receiver)} đỡ</p>`,button('Xem lại và bắt đầu','reviewFinal'));
 }
 function renderNextFinal(){
   const f=draft.final,c=draft.config;
   draft.final=resolveFinal(c,f);save();screen='finalNext';
   const v=matchView(previewState(c,draft.final));
-  base(`Final Setup · Game ${state.game+1}`,`<p class="v1-muted">Đội giao và bên sân dự kiến đã được chuyển từ game trước. Kiểm tra vị trí thực tế trước khi bắt đầu.</p><div class="v1-setting"><b>Đội giao trước</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="nextServe:${t}" class="${f.serving===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div><div class="v1-setting"><b>Bên trái trọng tài</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="nextEnd:${t}" class="${f.courtLeft===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div>${c.type==='double'?`<div class="v1-setting"><b>Vị trí VĐV</b><div class="v1-options">${['A','B'].map(t=>button(`Đổi vị trí Đội ${t}`,'nextSwap:'+t,'v1-secondary')).join('')}</div></div>`:''}${courtView(previewState(c,draft.final))}<div class="v1-call">${v.scoreCall}</div><div class="v1-pair">${escape(v.server)} GIAO → ${escape(v.receiver)} ĐỠ</div>`,button('Xác nhận và bắt đầu game','reviewFinal'));
+  base(`Thiết lập vị trí · Game ${state.game+1}`,`<p class="v1-muted">Đội giao và bên sân dự kiến đã được chuyển từ game trước. Kiểm tra vị trí thực tế trước khi bắt đầu.</p><div class="v1-setting"><b>Đội giao trước</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="nextServe:${t}" class="${f.serving===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div><div class="v1-setting"><b>Bên trái trọng tài</b><div class="v1-options">${['A','B'].map(t=>`<button data-v1="nextEnd:${t}" class="${f.courtLeft===t?'selected':''}">Đội ${t}</button>`).join('')}</div></div>${c.type==='double'?`<div class="v1-setting"><b>Vị trí VĐV</b><div class="v1-options">${['A','B'].map(t=>button(`Đổi vị trí Đội ${t}`,'nextSwap:'+t,'v1-secondary')).join('')}</div></div>`:''}${courtView(previewState(c,draft.final))}<div class="v1-call">${v.scoreCall}</div><div class="v1-pair">${escape(v.server)} GIAO → ${escape(v.receiver)} ĐỠ</div>`,button('Xác nhận và bắt đầu game','reviewFinal'));
 }
 function parseDoublesFinal(detail){
   const doc=document.createElement('div');doc.innerHTML=detail.html;
@@ -95,7 +96,7 @@ function parseDoublesFinal(detail){
 window.addEventListener('v1-final-ready',event=>{if(!draft)return;draft.final=parseDoublesFinal(event.detail);save();screen='review';renderReview()});
 function previewState(config,final){return createMatch(config,resolveFinal(config,final))}
 function renderReview(){if(!draft?.final)return;screen='review';const f=resolveFinal(draft.config,draft.final),c=draft.config,v=matchView(previewState(c,f));
-  base('Final Setup',`<p class="v1-muted">Đối chiếu lần cuối trước khi xướng điểm</p>${courtView(previewState(c,f))}<div class="v1-call">${v.scoreCall}</div><div class="v1-pair">${escape(v.server)} GIAO → ${escape(v.receiver)} ĐỠ</div><p>Đội ${f.serving} giao trước · ${c.type==='single'?'Đánh đơn':'Đánh đôi'}.</p>`,`${button('Sửa vị trí','editFinal','v1-secondary')}${button('BẮT ĐẦU TRẬN','begin')}`)
+  base('Thiết lập vị trí',`<p class="v1-muted">Đối chiếu lần cuối trước khi xướng điểm</p>${courtView(previewState(c,f))}<div class="v1-call">${v.scoreCall}</div><div class="v1-pair">${escape(v.server)} GIAO → ${escape(v.receiver)} ĐỠ</div><p>Đội ${f.serving} giao trước · ${c.type==='single'?'Đánh đơn':'Đánh đôi'}.</p>`,`${button('Sửa vị trí','editFinal','v1-secondary')}${button('BẮT ĐẦU TRẬN','begin')}`)
 }
 function renderMatch(){if(!state)return;if(state.status!=='playing')return renderResult();screen='match';clearInterval(warmInterval);
   const {body,footer,overlay}=renderSession(state,medicalChoice);
@@ -103,19 +104,21 @@ function renderMatch(){if(!state)return;if(state.status!=='playing')return rende
   if(state.pause){const update=()=>{const p=state.pause,el=app.querySelector('[data-pauseclock]');if(!p||!el)return;const sec=Math.max(0,Math.ceil((p.duration-(Date.now()-p.startedAt))/1000));el.textContent=`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`};update();warmInterval=setInterval(update,500)}
 }
 function renderResult(){if(!state)return;screen='result';const s=state,last=s.completedGames.at(-1);
-  base(s.status==='finished'?'Kết quả trận':`Game ${last.gameNumber} kết thúc`,`<h2>Đội ${last.winner} thắng ${s.status==='finished'?'trận':'game '+last.gameNumber}</h2><div class="v1-matchScore"><div><small>ĐỘI A · ĐIỂM GAME</small><strong>${last.points.A}</strong></div><div><small>ĐỘI B · ĐIỂM GAME</small><strong>${last.points.B}</strong></div></div><p><b>Kết quả trận (game thắng): ${s.gamesWon.A} – ${s.gamesWon.B}</b></p><div class="v1-gameList">${s.completedGames.map(g=>`<div>Game ${g.gameNumber} · ${g.points.A} – ${g.points.B} · Đội ${g.winner}</div>`).join('')}</div>${button('Hoàn tác rally cuối','undo','v1-secondary')}`,s.status==='finished'?`${s.tournamentContext?button('Xem và xác nhận kết quả','reviewTournamentResult'):''}${button('Lịch sử trận đấu','history')}${button('Về trang chủ','home','v1-secondary')}`:button('Final Setup game tiếp theo','nextGame'));
+  base(s.status==='finished'?'Kết quả trận':`Game ${last.gameNumber} kết thúc`,`<h2>Đội ${last.winner} thắng ${s.status==='finished'?'trận':'game '+last.gameNumber}</h2><div class="v1-matchScore"><div><small>ĐỘI A · ĐIỂM GAME</small><strong>${last.points.A}</strong></div><div><small>ĐỘI B · ĐIỂM GAME</small><strong>${last.points.B}</strong></div></div><p><b>Kết quả trận (game thắng): ${s.gamesWon.A} – ${s.gamesWon.B}</b></p><div class="v1-gameList">${s.completedGames.map(g=>`<div>Game ${g.gameNumber} · ${g.points.A} – ${g.points.B} · Đội ${g.winner}</div>`).join('')}</div>${button('Hoàn tác rally cuối','undo','v1-secondary')}`,s.status==='finished'?`${s.tournamentContext?button('Xem và xác nhận kết quả','reviewTournamentResult'):''}${button('Lịch sử trận đấu','history')}${button('Về trang chủ','home','v1-secondary')}`:button('Thiết lập vị trí game tiếp theo','nextGame'));
 }
 function refreshHistory(){historyProjection=projectHistory(repository,tournamentRepository);return historyProjection}
 function renderHistory(filters={}){screen='history';const projection=refreshHistory(),results=searchHistory(projection,filters);base('Lịch sử',historyOverview(projection,results,filters),button('Về trang chủ','home','v1-secondary'))}
-function renderHistoryMatch(id){const projection=refreshHistory(),record=projection.matches.find(item=>item.id===id);if(!record)return renderHistory();screen='historyMatch';historyRecordId=id;base('Match Record',matchRecordDetail(record,{fullTimeline:historyFullTimeline}),button('Lịch sử','history'))}
-function renderHistoryTournament(id){const projection=refreshHistory(),record=projection.tournaments.find(item=>item.id===id);if(!record)return renderHistory();screen='historyTournament';base('Tournament History',tournamentRecordDetail(record,projection),button('Lịch sử','history'))}
-function renderHistoryWork(id){const projection=refreshHistory(),record=projection.workSessions.find(item=>item.id===id);if(!record)return renderHistory();screen='historyWork';base('Work Session History',workRecordDetail(record,projection),button('Lịch sử','history'))}
-function renderHistoryGroup(id){const projection=refreshHistory(),record=projection.groups.find(item=>item.id===id);if(!record)return renderHistory();screen='historyGroup';base('Group History',groupRecordDetail(record),button('Lịch sử','history'))}
+function renderHistoryMatch(id){const projection=refreshHistory(),record=projection.matches.find(item=>item.id===id);if(!record)return renderHistory();screen='historyMatch';historyRecordId=id;base('Chi tiết trận',matchRecordDetail(record,{fullTimeline:historyFullTimeline}),button('Lịch sử','history'))}
+function renderHistoryTournament(id){const projection=refreshHistory(),record=projection.tournaments.find(item=>item.id===id);if(!record)return renderHistory();screen='historyTournament';base('Hồ sơ giải',tournamentRecordDetail(record,projection),button('Lịch sử','history'))}
+function renderHistoryWork(id){const projection=refreshHistory(),record=projection.workSessions.find(item=>item.id===id);if(!record)return renderHistory();screen='historyWork';base('Ca làm việc',workRecordDetail(record,projection),button('Lịch sử','history'))}
+function renderHistoryGroup(id){const projection=refreshHistory(),record=projection.groups.find(item=>item.id===id);if(!record)return renderHistory();screen='historyGroup';base('Lịch sử bảng',groupRecordDetail(record),button('Lịch sử','history'))}
 document.addEventListener('submit',event=>{const form=event.target.closest('[data-history-search]');if(!form)return;event.preventDefault();event.stopImmediatePropagation();const data=new FormData(form);renderHistory({query:data.get('query'),scope:data.get('scope')})},true);
 document.addEventListener('click',event=>{
   const b=event.target.closest('[data-v1]');if(!b)return;event.preventDefault();event.stopImmediatePropagation();const action=b.dataset.v1;
   if(action==='home'){clearInterval(warmInterval);screen='';window.location.reload();return}
   if(action==='tournament'){window.dispatchEvent(new Event('tournament-open'));return}
+  if(action.startsWith('openTournament:')){window.dispatchEvent(new CustomEvent('tournament-open',{detail:{tournamentId:action.slice(15)}}));return}
+  if(action==='quick'){const quick=app.querySelector('[data-a="quick"]');if(quick)quick.click();return}
   if(action==='returnTournament'&&state?.tournamentContext){window.dispatchEvent(new CustomEvent('tournament-return',{detail:state.tournamentContext}));return}
   if(action==='reviewTournamentResult'&&state?.tournamentContext){window.dispatchEvent(new CustomEvent('tournament-result-review',{detail:state.tournamentContext}));return}
   if(action==='resume'){state=repository.active();if(state){medicalChoice=null;renderMatch()}return}

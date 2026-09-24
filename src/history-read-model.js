@@ -39,9 +39,9 @@ function significantLabel(event,record){
   if(type==='rally'&&detail.before?.serverNumber!==detail.after?.serverNumber)return `Đổi lượt giao · Server ${detail.after.serverNumber}`;
   if(type==='rally'&&detail.before?.status!==detail.after?.status)return detail.after.status==='finished'?'Match kết thúc':`Game ${detail.after.game} kết thúc`;
   if(type==='canonicalResultVersionCreated'){
-    const version=record.canonicalResult.versions.find(item=>item.id===detail.resultVersionId);return version?.source?.kind==='RESULT_CORRECTION'?`Correction · Result v${version.version}`:`Canonical Result v${version?.version||''}`;
+    const version=record.canonicalResult.versions.find(item=>item.id===detail.resultVersionId);return version?.source?.kind==='RESULT_CORRECTION'?`Điều chỉnh kết quả · lần ${version.version}`:`Ghi nhận kết quả · lần ${version?.version||''}`;
   }
-  const labels={nextGame:'Bắt đầu game tiếp theo',timeout:'Time-out',medical:'Medical',resume:'Tiếp tục trận',courtEnd:'Đổi bên sân',correction:'Sửa Match State',undo:'Undo',redo:'Redo',playersCalled:'Gọi VĐV',waitingStarted:'Bắt đầu chờ',waitingExtended:'Gia hạn chờ',playersArrived:'VĐV đã đến',noShowResolved:'Xử lý no-show',matchStartSnapshotCreated:'Khóa Match Start Snapshot',matchSessionLinked:'Bắt đầu Match Session',canonicalResultConfirmed:'Xác nhận kết quả',reportGenerated:`Tạo report${detail.status?` · ${detail.status}`:''}`,reportOutdated:`Report OUTDATED · ${detail.reason||''}`,reportShareSheetOpened:'Mở chia sẻ report',reportSent:'Report SENT'};
+  const labels={nextGame:'Bắt đầu game tiếp theo',timeout:'Hội ý',medical:'Chăm sóc y tế',resume:'Tiếp tục trận',courtEnd:'Đổi bên sân',correction:'Điều chỉnh trạng thái trận',undo:'Hoàn tác',redo:'Làm lại',playersCalled:'Gọi VĐV',waitingStarted:'Bắt đầu chờ',waitingExtended:'Gia hạn chờ',playersArrived:'VĐV đã đến',noShowResolved:'Xử lý VĐV đến muộn',matchStartSnapshotCreated:'Chốt thiết lập trước trận',matchSessionLinked:'Bắt đầu thi đấu',canonicalResultConfirmed:'Xác nhận kết quả',reportGenerated:'Tạo nội dung gửi BTC',reportOutdated:'Nội dung gửi BTC cần cập nhật',reportShareSheetOpened:'Mở chia sẻ',reportSent:'Đã gửi BTC'};
   return labels[type]||type;
 }
 function projectMatch(session,t=null,scheduled=null){
