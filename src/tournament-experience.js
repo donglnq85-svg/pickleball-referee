@@ -5,6 +5,7 @@ import {
 import {createTournamentRepository} from './tournament-persistence.js';
 import {createMatchRepository} from './match-persistence.js';
 import {currentResult} from './tournament-results.js';
+import {projectMatch,projectStandings,nextReadyMatchId} from './tournament-experience-projection.js';
 import './tournament-experience.css';
 
 const app=document.getElementById('app');
@@ -116,11 +117,7 @@ function groupHeader(t,g){
 
 function resultFor(t,match){return currentResult(t,match.id)}
 function groupRows(t,g){
-  const entries=groupEntries(t,g),latest=[...(t.groupSnapshots||[])].reverse().find(item=>item.groupId===g.id),stats=new Map(entries.map(e=>[e.id,{entry:e,played:0,wins:0,losses:0,pointsFor:0,pointsAgainst:0,rank:null}]));
-  if(latest)for(const snapshotRow of latest.rows||[]){const row=stats.get(snapshotRow.entrantId);if(row)Object.assign(row,{played:snapshotRow.played,wins:snapshotRow.matchWins,losses:snapshotRow.matchLosses,pointsFor:snapshotRow.pointsFor,pointsAgainst:snapshotRow.pointsAgainst,rank:snapshotRow.rank})}
-  if(latest)return [...stats.values()].sort((a,b)=>(a.rank??Number.MAX_SAFE_INTEGER)-(b.rank??Number.MAX_SAFE_INTEGER));
-  for(const match of t.schedule.filter(m=>m.groupId===g.id)){const result=resultFor(t,match);if(!result||result.status!=='CONFIRMED')continue;const final=result.completedGames?.at(-1),winner=result.winnerEntrantId||(result.matchGamesWon.A>result.matchGamesWon.B?match.entrantIds.A:match.entrantIds.B);for(const side of ['A','B']){const row=stats.get(match.entrantIds[side]);if(!row)continue;row.played++;if(match.entrantIds[side]===winner)row.wins++;else row.losses++;for(const game of result.completedGames||[]){row.pointsFor+=game.points[side];row.pointsAgainst+=game.points[side==='A'?'B':'A'];}}}
-  return [...stats.values()];
+  return projectStandings(t,g).rows;
 }
 
 function renderGroup(){
@@ -135,7 +132,12 @@ function renderGroup(){
 
 function formatSummary(t){const f=t.rulesVersions.find(v=>v.id===t.activeRulesVersionId)?.format;return `<dl class="tx-format-summary"><div><dt>Số game</dt><dd>${f?.sets||'Chưa có'}</dd></div><div><dt>Điểm mỗi game</dt><dd>${f?.points||'Chưa có'}</dd></div><div><dt>Cách biệt thắng</dt><dd>${f?f.rule==='touch'?'Chạm điểm':'Cách 2 điểm':'Chưa có'}</dd></div><div><dt>Giới hạn điểm</dt><dd>${f?.cap||'Không có'}</dd></div></dl>`}
 function formatInline(t){const f=t.rulesVersions.find(v=>v.id===t.activeRulesVersionId)?.format;return f?`${f.sets} game · đến ${f.points}${f.rule==='touch'?', chạm điểm':', cách 2'}${f.cap?` · tối đa ${f.cap}`:''}`:'Chưa có cấu hình'}
-function matchRow(t,m,index,showNext){const result=resultFor(t,m),a=entryLabel(t,m.entrantIds.A),b=entryLabel(t,m.entrantIds.B),final=result?.completedGames?.at(-1),status=result?.status==='CONFIRMED'?'Đã kết thúc':m.matchSessionId?'Đang diễn ra':showNext&&index===0?'Tiếp theo':'Chưa diễn ra';return `<button class="tx-match-row" data-tx="match:${m.id}"><span><b>${escape(m.label||`Trận ${index+1}`)}</b><small>${escape(resource(t.structure.courts,m.courtId,'Chưa xác định sân'))}</small></span><span class="tx-team-pair"><b>${escape(a)}</b><b>${escape(b)}</b></span><span class="tx-score-pair"><b>${final?final.points.A:'–'}</b><b>${final?final.points.B:'–'}</b></span><i class="tx-match-status ${status==='Đang diễn ra'?'live':''}">${status}</i><strong>›</strong></button>`}
+function matchRow(t,m,index){
+  const sessions=matchRepo.load().matches;
+  const view=projectMatch(t,m,sessions,nextReadyMatchId(t,m.groupId)),labels={COMPLETED:'Đã kết thúc',LIVE:'Đang diễn ra',NEXT:'Tiếp theo',NOT_STARTED:'Chưa diễn ra'};
+  const playerSide=side=>`<span class="tx-match-team ${view.winner===side?'winner':''}">${entryPlayers(t,m.entrantIds[side]).map(name=>`<span>${escape(name)}</span>`).join('')||'Chưa xác định'}</span>`;
+  return `<button class="tx-match-row state-${view.status.toLowerCase()}" data-tx="match:${m.id}"><span class="tx-match-meta"><b>${escape(m.label||`Trận ${index+1}`)}</b><small>${escape(resource(t.structure.courts,m.courtId,'Chưa xác định sân'))}</small></span>${playerSide('A')}<span class="tx-score-horizontal" aria-label="${view.scoreKind==='MATCH_GAMES_WON'?'Game thắng':'Điểm game'}"><b class="${view.winner==='A'?'winner':''}">${view.points?.A??'–'}</b><span>–</span><b class="${view.winner==='B'?'winner':''}">${view.points?.B??'–'}</b></span>${playerSide('B')}<i class="tx-match-status">${labels[view.status]}</i><span aria-hidden="true">›</span></button>`;
+}
 function standingsTable(t,g,compact){const rows=groupRows(t,g);return `<section class="tx-standings ${compact?'compact':''}"><h3>${escape(g.label)} — ${escape(g.category||'Chưa có nội dung')}</h3><div class="tx-table-head"><span>Cặp VĐV</span><span>Trận</span><span>Thắng</span><span>Thua</span><span>Hiệu số</span><span>Điểm</span></div>${rows.map(row=>`<div class="tx-table-row"><i>${row.rank??'—'}</i><b>${entryPlayers(t,row.entry.id).map(escape).join(' / ')}</b><span>${row.played}</span><span>${row.wins}</span><span>${row.losses}</span><span>${row.pointsFor-row.pointsAgainst>=0?'+':''}${row.pointsFor-row.pointsAgainst}</span><strong>—</strong></div>`).join('')}</section>`}
 
 function scheduleShareText(t,g){const matches=t.schedule.filter(m=>m.groupId===g.id);return [`${t.name} · ${g.label}`,`${g.category||'Chưa có nội dung'} · ${fmtDate(t.startsAt)}`,...matches.map((m,index)=>`${m.label||`Trận ${index+1}`}: ${entryLabel(t,m.entrantIds.A)} — ${entryLabel(t,m.entrantIds.B)} · ${resource(t.structure.courts,m.courtId,'Chưa xác định sân')}`)].join('\n')}
@@ -171,7 +173,15 @@ document.addEventListener('click',event=>{
   if(action==='shareSchedule'||action==='shareStandings'){const t=selected(),g=t.structure.groups.find(item=>item.id===groupId);if(!g)return;const title=`${t.name} · ${g.label}`,text=action==='shareSchedule'?scheduleShareText(t,g):standingsShareText(t,g);shareText(title,text).catch(error=>{if(error.name!=='AbortError')alert(error.message)});return}
   if(action.startsWith('startAssignment:')){const assignmentId=action.slice(16),t=selected();let active=t.workSessions.find(s=>s.status==='active');if(!active){try{active=startWorkSession(t,assignmentId);repo.save(t,{activeWorkSession:active.id})}catch(error){alert(error.message);return}}window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen:'court',tournamentId:t.id,workSessionId:active.id,matchId:null}}));return}
   if(action==='beginGroup'){const t=selected(),active=t.workSessions.find(s=>s.status==='active');if(active)return window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen:'court',tournamentId:t.id,workSessionId:active.id,matchId:null}}));return renderCourts()}
-  if(action.startsWith('match:')){const t=selected(),match=t.schedule.find(m=>m.id===action.slice(6)),active=t.workSessions.find(s=>s.status==='active');if(active)return window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen:match.operations?'operations':'court',tournamentId:t.id,workSessionId:active.id,matchId:match.id}}));return renderCourts()}
+  if(action.startsWith('match:')){
+    const t=selected(),match=t.schedule.find(m=>m.id===action.slice(6));if(!match)return renderGroups();
+    const session=match.matchSessionId?matchRepo.get(match.matchSessionId):null;
+    if(session&&session.status!=='finished')return window.dispatchEvent(new CustomEvent('tournament-match-open',{detail:session}));
+    const active=t.workSessions.find(s=>s.status==='active');
+    if(session?.status==='finished'||resultFor(t,match))return window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen:'result',tournamentId:t.id,workSessionId:active?.id||null,matchId:match.id}}));
+    if(active)return window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen:'operations',tournamentId:t.id,workSessionId:active.id,matchId:match.id}}));
+    return renderCourts();
+  }
 });
 
 export function openTournamentExperience(detail={}){
