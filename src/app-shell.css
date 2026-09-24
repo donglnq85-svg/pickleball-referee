@@ -20,4 +20,5 @@
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-height:760px){.app-header{min-height:64px;padding-top:calc(8px + env(safe-area-inset-top))}.empty-hero{padding-top:20px}.today-stack{gap:8px}.today-card{padding:10px}.app-bottom-nav{height:calc(61px + env(safe-area-inset-bottom))}.nav-item svg{width:19px;height:19px}}
 @media(min-width:391px){body{padding:18px 0}.app-shell{height:calc(100dvh - 36px);border-radius:28px}}
-html[data-today-qa="true"] .app-shell{height:844px}
+html[data-today-qa="true"] body{padding:0}
+html[data-today-qa="true"] .app-shell{height:844px;border-radius:0}
