@@ -41,7 +41,8 @@ function seedNoWork(storage){
   const upcoming=[['Vietnam Pickleball Open 2026','2026-09-26','Cụm sân ABC Pickleball'],['Hà Nội Open 2026','2026-10-10','Hà Nội'],['Pickleball Masters 2026','2026-10-24','Đà Nẵng']];
   const repo=createTournamentRepository(storage);
   for(const [name,day,location] of upcoming){
-    const tournament=createTournament(name),court=addResource(tournament,'courts','Sân chưa chốt'),assignment=createAssignment(tournament,{label:'Công việc sắp tới',scopeKind:'court',scopeIds:[court.id]});
+    const tournament=createTournament(name);tournament.startsAt=day;tournament.endsAt=day;tournament.location=location;
+    const court=addResource(tournament,'courts','Sân chưa chốt'),assignment=createAssignment(tournament,{label:'Công việc sắp tới',scopeKind:'court',scopeIds:[court.id]});
     assignment.workPlan={startsAt:at(day,'07:30'),location,city:name.startsWith('Vietnam')?'TP. Hồ Chí Minh':null};repo.save(tournament);
   }
 }
