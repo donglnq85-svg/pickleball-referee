@@ -18,6 +18,14 @@ test('Experience Build #1 contains every verified READY screen and no guessed co
   assert.match(source,/window\.addEventListener\('tournament-open'/);
 });
 
+test('Experience controls have real navigation/share actions and standings never invent a rank',()=>{
+  assert.match(source,/action\.startsWith\('courtMatches:'\)/);
+  assert.match(source,/action==='shareSchedule'\|\|action==='shareStandings'/);
+  assert.match(source,/row\.rank\?\?'—'/);
+  assert.doesNotMatch(source,/row\.rank\|\|index\+1/);
+  assert.doesNotMatch(source,/data-tx="addGroup">✎ Thêm \/ Chỉnh sửa/);
+});
+
 test('round-robin screens preserve Player and Entry identity instead of display-name identity',()=>{
   const t=createTournament('Giải kiểm thử'),group=addResource(t,'groups','Bảng A'),court=addResource(t,'courts','Sân 3');
   const makePair=(a,b)=>{const ids=[a,b].map(displayName=>addPlayer(t,{displayName}).id);return addEntry(t,{type:'double',playerIds:ids})};
