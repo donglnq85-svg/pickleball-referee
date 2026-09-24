@@ -3,6 +3,7 @@ import {createTournamentRepository} from './tournament-persistence.js';
 import {startWorkSession} from './tournament-domain.js';
 import {resolveTodayProjection,TODAY_TIME_ZONE} from './today-projection.js';
 import {applyTodayQaFixtureIfRequested} from './today-qa-fixtures.js';
+import {openTournamentExperience} from './tournament-experience.js';
 import './app-shell.css';
 import './v1.js';
 
@@ -18,7 +19,7 @@ const icon=(name)=>{
   const paths={
     bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
     home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
-    work:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+    tournament:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0Z"/><path d="M7 6H4v2a4 4 0 0 0 4 4m9-6h3v2a4 4 0 0 1-4 4"/>',
     match:'<path d="M7 3h10v18H7zM3 8h4m10 8h4M10 6v4m4 4v4"/>',
     notice:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
     profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -51,7 +52,7 @@ function shell(content,tab=activeTab){
 }
 
 function bottomNav(active){
-  const items=[['today','home','Hôm nay'],['work','work','Công việc'],['matches','match','Trận đấu'],['notifications','notice','Thông báo'],['profile','profile','Hồ sơ']];
+  const items=[['today','home','Hôm nay'],['tournament','tournament','Giải đấu'],['matches','match','Trận đấu'],['notifications','notice','Thông báo'],['profile','profile','Hồ sơ']];
   return `<nav class="app-bottom-nav" aria-label="Điều hướng chính">${items.map(([id,glyph,label])=>`<button class="nav-item ${active===id?'active':''}" data-shell="tab:${id}" aria-current="${active===id?'page':'false'}">${icon(glyph)}<span>${label}</span></button>`).join('')}</nav>`;
 }
 
@@ -101,7 +102,7 @@ function workCards(){
   if(!items.length)return '<section class="today-card waiting-card"><h2>Chưa có công việc</h2><p>Module Công việc đang được hoàn thiện theo gói thiết kế riêng.</p></section>';
   return items.map(tournament=>{const active=tournament.workSessions?.find(item=>item.status==='active'),assignment=active?tournament.assignments.find(item=>item.id===active.assignmentId):tournament.assignments?.find(item=>item.status==='assigned');const action=active?'open-tournament':assignment?'start-assignment':'open-tournament';return `<section class="today-card"><div class="section-kicker">${active?'Đang làm việc':'Hồ sơ công việc'}</div><div class="work-title">${escape(tournament.name)}</div><p class="meta-row">${escape(assignment?.label||'Chưa có phần việc được giao')}</p><button class="bridge-button" data-shell="${action}" data-tournament-id="${escape(tournament.id)}" data-assignment-id="${escape(assignment?.id||'')}" data-work-session-id="${escape(active?.id||'')}">${active?'Tiếp tục công việc':assignment?'Bắt đầu ngày làm việc':'Mở hồ sơ công việc'}${icon('arrow')}</button></section>`}).join('');
 }
-function renderWork(){shell(`<div class="work-bridge"><div class="bridge-title"><h1>Công việc</h1><p>Đi tới đúng hồ sơ và trạng thái công việc hiện có.</p></div>${workCards()}</div>`,'work')}
+function renderWork(){openTournamentExperience()}
 function renderPlaceholder(tab,title,message){shell(`<section class="placeholder"><div class="placeholder-icon">${icon(tab==='matches'?'match':tab==='notifications'?'notice':'profile')}</div><h1>${escape(title)}</h1><p>${escape(message)}</p>${tab==='matches'?'<button class="bridge-button" data-shell="history">Xem lịch sử trận đấu</button>':''}</section>`,tab)}
 
 function openTournamentContext({tournamentId,workSessionId=null,screen='assignment',matchId=null}){window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen,tournamentId,workSessionId,matchId}}))}
@@ -122,7 +123,7 @@ function todayAction(action){
 document.addEventListener('click',event=>{
   const target=event.target.closest('[data-shell]');if(!target)return;
   const action=target.dataset.shell;
-  if(action?.startsWith('tab:')){const tab=action.slice(4);if(tab==='today')renderToday();else if(tab==='work')renderWork();else if(tab==='matches')renderPlaceholder('matches','Trận đấu','Công cụ trận đấu đang được hoàn thiện. Các trận đang diễn ra vẫn được mở trực tiếp từ Hôm nay.');else if(tab==='notifications')renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');else renderPlaceholder('profile','Hồ sơ','Module Hồ sơ đang được hoàn thiện.');return}
+  if(action?.startsWith('tab:')){const tab=action.slice(4);if(tab==='today')renderToday();else if(tab==='tournament')renderWork();else if(tab==='matches')renderPlaceholder('matches','Trận đấu','Công cụ trận đấu đang được hoàn thiện. Các trận đang diễn ra vẫn được mở trực tiếp từ Hôm nay.');else if(tab==='notifications')renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');else renderPlaceholder('profile','Hồ sơ','Module Hồ sơ đang được hoàn thiện.');return}
   if(['open-work','resume-match','start-work','prepare-match','open-active-work','view-summary'].includes(action))return todayAction(action);
   if(action==='notifications')return renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');
   if(action==='history')return window.dispatchEvent(new Event('history-open'));
