@@ -108,7 +108,12 @@ export function calculateGroupSnapshot(t,groupId,rankingRulesVersionId=t.activeR
     qualificationStatus='KNOWN';qualified=ordered.slice(0,rules.qualification.count).map(item=>item.entrantId);for(const item of ordered)item.qualification=qualified.includes(item.entrantId)?'QUALIFIED':'NOT_QUALIFIED';
   }else if(rules?.qualification.kind==='top')qualificationStatus='NEEDS_CONFIRMATION';
   const prior=[...snapshots(t)].reverse().find(item=>item.groupId===groupId)||null;
-  const resultVersionIds=results.map(item=>item.id).sort(),rankingProjection=ordered.map(item=>[item.entrantId,item.rank]),impact=[];
+  const resultVersionIds=results.map(item=>item.id).sort(),rankingProjection=ordered.map(item=>[item.entrantId,item.rank]);
+  // A retry after the snapshot write boundary must resolve to the already
+  // persisted projection. Result and Ranking Rules versions are immutable,
+  // therefore these exact inputs deterministically identify the calculation.
+  if(prior&&prior.rankingRulesVersionId===(rules?.id||rankingRulesVersionId||null)&&same(prior.resultVersionIds,resultVersionIds))return clone(prior);
+  const impact=[];
   if(!prior||!same(prior.resultVersionIds,resultVersionIds))impact.push('RESULT_CHANGED');
   if(!prior||prior.status!==status||!same(prior.rows.map(item=>[item.entrantId,item.rank]),rankingProjection))impact.push('RANKING_CHANGED');
   if(!prior||prior.qualification.status!==qualificationStatus||!same(prior.qualification.qualified,qualified))impact.push('QUALIFICATION_CHANGED');
@@ -125,7 +130,9 @@ export function assessGroupCompletion(t,groupId,at=Date.now()){
     if(latest&&same(latest.resultVersionIds,expected)&&latest.status==='RANKED'&&latest.qualification.status==='KNOWN'){status='READY';reason=null}
     else{status='NEEDS_CONFIRMATION';reason='RANKING_OR_QUALIFICATION_UNRESOLVED'}
   }
-  const completion={id:id(),groupId,createdAt:iso(at),status,reason,matchIds:matches.map(item=>item.id),resultVersionIds:expected,groupSnapshotId:latest?.id||null};
+  const matchIds=matches.map(item=>item.id),groupSnapshotId=latest?.id||null,prior=[...completions(t)].reverse().find(item=>item.groupId===groupId)||null;
+  if(prior&&prior.status===status&&prior.reason===reason&&prior.groupSnapshotId===groupSnapshotId&&same(prior.matchIds,matchIds)&&same(prior.resultVersionIds,expected))return clone(prior);
+  const completion={id:id(),groupId,createdAt:iso(at),status,reason,matchIds,resultVersionIds:expected,groupSnapshotId};
   completions(t).push(completion);touch(t,'groupCompletionAssessed',{groupId,groupCompletionId:completion.id,status},at);return clone(completion);
 }
 
