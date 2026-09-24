@@ -4,6 +4,7 @@ import {startWorkSession} from './tournament-domain.js';
 import {resolveTodayProjection,TODAY_TIME_ZONE} from './today-projection.js';
 import {applyTodayQaFixtureIfRequested} from './today-qa-fixtures.js';
 import {openTournamentExperience} from './tournament-experience.js';
+import {appHeader} from './app-header.js';
 import './app-shell.css';
 import './v1.js';
 
@@ -47,7 +48,7 @@ const teamNames=(players,team)=>players?.[team]?.length?players[team].map(escape
 
 function shell(content,tab=activeTab){
   activeTab=tab;
-  app.innerHTML=`<main class="app-shell"><header class="app-header"><div class="app-avatar" aria-label="Hồ sơ trọng tài">TT</div><div class="app-brand">PICKLEBALL REFEREE</div><button class="app-bell" data-shell="notifications" aria-label="Thông báo">${icon('bell')}</button></header><section class="app-content">${content}</section>${bottomNav(tab)}</main>`;
+  app.innerHTML=`<main class="app-shell">${appHeader(icon('bell'))}<section class="app-content">${content}</section>${bottomNav(tab)}</main>`;
   app.querySelector('.app-content').scrollTop=0;
 }
 

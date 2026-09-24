@@ -7,6 +7,8 @@ import {createMatchRepository} from './match-persistence.js';
 import {currentResult} from './tournament-results.js';
 import {projectMatch,projectStandings,nextReadyMatchId} from './tournament-experience-projection.js';
 import './tournament-experience.css';
+import {appHeader} from './app-header.js';
+import {tournamentListState,tournamentWorkBadge} from './tournament-list-projection.js';
 
 const app=document.getElementById('app');
 const repo=createTournamentRepository(localStorage);
@@ -34,7 +36,8 @@ function bottomNav(){
 }
 
 function shell(content,{title=null,subtitle=null,back=null,action=''}={}){
-  app.innerHTML=`<main class="app-shell tx-app"><header class="tx-header">${back?`<button class="tx-icon" data-tx="${back}" aria-label="Quay lại">${glyph('back')}</button>`:'<span class="tx-header-spacer"></span>'}<div>${title?`<h1>${escape(title)}</h1>`:''}${subtitle?`<p>${escape(subtitle)}</p>`:''}</div>${action||'<span class="tx-header-spacer"></span>'}</header><section class="app-content tx-content">${content}</section>${bottomNav()}</main>`;
+  const hasHeader=Boolean(title||subtitle||back||action);
+  app.innerHTML=`<main class="app-shell tx-app${hasHeader?'':' tx-headerless'}">${hasHeader?`<header class="tx-header">${back?`<button class="tx-icon" data-tx="${back}" aria-label="Quay lại">${glyph('back')}</button>`:'<span class="tx-header-spacer"></span>'}<div>${title?`<h1>${escape(title)}</h1>`:''}${subtitle?`<p>${escape(subtitle)}</p>`:''}</div>${action||'<span class="tx-header-spacer"></span>'}</header>`:''}<section class="app-content tx-content">${content}</section>${bottomNav()}</main>`;
   app.querySelector('.tx-content')?.scrollTo(0,0);
 }
 
@@ -49,10 +52,21 @@ const resource=(items,id,fallback)=>items.find(item=>item.id===id)?.label||fallb
 
 function renderList(){
   screen='list';tournamentId=null;groupId=null;
-  const all=repo.list(),counts={all:all.length,live:all.filter(t=>statusClass(t)==='live').length,upcoming:all.filter(t=>statusClass(t)==='upcoming').length,done:all.filter(t=>statusClass(t)==='done').length};
-  const filtered=listFilter==='all'?all:all.filter(t=>statusClass(t)===listFilter);
-  const cards=filtered.length?filtered.map((t,index)=>`<button class="tx-tournament-card" data-tx="open:${t.id}"><span class="tx-logo logo-${index%5}">${escape((t.name.match(/[A-ZÀ-Ỹ]/g)||['G']).slice(0,2).join(''))}</span><span class="tx-card-copy"><b>${escape(t.name)}</b><small>${escape(t.description||'Hồ sơ giải đấu')}</small><em>${glyph('calendar')}${fmtDate(t.startsAt)}${t.endsAt&&t.endsAt!==t.startsAt?` – ${fmtDate(t.endsAt)}`:''} ${glyph('pin')}${escape(t.location||'Chưa có địa điểm')}</em></span><span class="tx-card-side"><i class="tx-status ${statusClass(t)}">${tournamentStatus(t)}</i><strong>›</strong></span></button>`).join(''):`<section class="tx-empty"><div>${glyph('trophy')}</div><h2>Chưa có giải đấu</h2><p>Tạo hồ sơ giải đầu tiên để bắt đầu chuẩn bị công việc.</p></section>`;
-  shell(`<div class="tx-list-title"><div><h1>Giải đấu</h1><p>Quản lý các giải đấu bạn tham gia</p></div><button class="tx-add" data-tx="create">${glyph('plus')}<span>Tạo giải đấu</span></button></div><div class="tx-filters">${[['all','Tất cả'],['live','Đang diễn ra'],['upcoming','Sắp diễn ra'],['done','Đã kết thúc']].map(([id,label])=>`<button class="${listFilter===id?'active':''}" data-tx="filter:${id}">${label} (${counts[id]})</button>`).join('')}</div><div class="tx-tournament-list">${cards}</div>`);
+  const all=repo.list(),groups=[['upcoming','Sắp diễn ra'],['live','Đang diễn ra'],['done','Đã kết thúc']];
+  const counts=Object.fromEntries(groups.map(([id])=>[id,all.filter(t=>tournamentListState(t)===id).length]));counts.all=all.length;
+  const create=`<button class="primary-button tl-create" data-tx="create">${glyph('plus')}Tạo giải đấu</button>`;
+  const card=t=>{
+    const badge=tournamentWorkBadge(t,tournamentListState(t));
+    const logo=typeof t.logoUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(t.logoUrl)?`<img src="${escape(t.logoUrl)}" alt="">`:`<span>${escape((t.name||'Giải đấu').split(/\s+/).slice(0,3).map(s=>s[0]).join(''))}</span>`;
+    return `<button class="tl-card" data-tx="open:${escape(t.id)}"><span class="tl-cover">${logo}</span><span class="tl-details"><b>${escape(t.name)}</b><span class="tl-meta">${glyph('calendar')}<span>${fmtDate(t.startsAt)}${t.endsAt&&t.endsAt!==t.startsAt?` – ${fmtDate(t.endsAt)}`:''}</span></span><span class="tl-meta">${glyph('pin')}<span>${escape(t.location||'Chưa có địa điểm')}${t.city?`<br>${escape(t.city)}`:''}</span></span><span class="tl-badge ${badge.tone}">${glyph('calendar')}${badge.label}</span></span><span class="tl-chevron" aria-hidden="true">›</span></button>`;
+  };
+  const sections=groups.filter(([id])=>listFilter==='all'||listFilter===id).map(([id,label])=>{
+    const items=all.filter(t=>tournamentListState(t)===id);
+    return items.length?`<section class="tl-group"><h2>${label}<span>${items.length}</span></h2>${items.map(card).join('')}</section>`:'';
+  }).join('');
+  const empty=`<div class="tl-empty"><div class="tl-calendar" aria-hidden="true">${glyph('calendar')}</div><h2>Bạn chưa có giải đấu nào</h2><p>Hãy tạo giải đấu khi bạn nhận được<br>thông tin mời tham gia từ ban tổ chức.</p>${create}</div><aside class="tl-note"><h2><span aria-hidden="true">ⓘ</span> Lưu ý</h2><ul><li>Chỉ tạo giải đấu khi bạn đã nhận được thông tin mời tham gia.</li><li>Bạn có thể bổ sung lịch làm việc sau.</li><li>Các trận đấu sẽ được cập nhật khi có phân công từ ban tổ chức.</li></ul></aside>`;
+  const content=`<div class="tl-heading"><h1>Giải đấu</h1><p>Các giải đấu bạn được mời tham gia</p></div>${all.length?`${create}<div class="tl-filters" aria-label="Lọc giải đấu">${[['all','Tất cả'],...groups].map(([id,label])=>`<button aria-pressed="${listFilter===id}" class="${listFilter===id?'active':''}" data-tx="filter:${id}">${label} (${counts[id]})</button>`).join('')}</div>${sections||'<p class="tl-no-results">Chưa có giải đấu trong nhóm này.</p>'}`:empty}`;
+  app.innerHTML=`<main class="app-shell tl-app">${appHeader(glyph('bell'))}<section class="app-content tl-content">${content}</section>${bottomNav()}</main>`;
 }
 
 function renderCreate(){
