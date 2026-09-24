@@ -1,5 +1,6 @@
 import {createMatchRepository} from './match-persistence.js';
 import {createTournamentRepository} from './tournament-persistence.js';
+import {startWorkSession} from './tournament-domain.js';
 import {resolveTodayProjection,TODAY_TIME_ZONE} from './today-projection.js';
 import {applyTodayQaFixtureIfRequested} from './today-qa-fixtures.js';
 import './app-shell.css';
@@ -98,17 +99,21 @@ function renderToday(){
 function workCards(){
   const document=tournamentRepository.load(),items=Object.values(document.tournaments).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
   if(!items.length)return '<section class="today-card waiting-card"><h2>Chưa có công việc</h2><p>Module Công việc đang được hoàn thiện theo gói thiết kế riêng.</p></section>';
-  return items.map(tournament=>{const active=tournament.workSessions?.find(item=>item.status==='active'),assignment=active?tournament.assignments.find(item=>item.id===active.assignmentId):tournament.assignments?.find(item=>item.status==='assigned');return `<section class="today-card"><div class="section-kicker">${active?'Đang làm việc':'Hồ sơ công việc'}</div><div class="work-title">${escape(tournament.name)}</div><p class="meta-row">${escape(assignment?.label||'Chưa có phần việc được giao')}</p><button class="bridge-button" data-shell="open-tournament" data-tournament-id="${escape(tournament.id)}" data-work-session-id="${escape(active?.id||'')}">${active?'Tiếp tục công việc':'Mở hồ sơ công việc'}${icon('arrow')}</button></section>`}).join('');
+  return items.map(tournament=>{const active=tournament.workSessions?.find(item=>item.status==='active'),assignment=active?tournament.assignments.find(item=>item.id===active.assignmentId):tournament.assignments?.find(item=>item.status==='assigned');const action=active?'open-tournament':assignment?'start-assignment':'open-tournament';return `<section class="today-card"><div class="section-kicker">${active?'Đang làm việc':'Hồ sơ công việc'}</div><div class="work-title">${escape(tournament.name)}</div><p class="meta-row">${escape(assignment?.label||'Chưa có phần việc được giao')}</p><button class="bridge-button" data-shell="${action}" data-tournament-id="${escape(tournament.id)}" data-assignment-id="${escape(assignment?.id||'')}" data-work-session-id="${escape(active?.id||'')}">${active?'Tiếp tục công việc':assignment?'Bắt đầu ngày làm việc':'Mở hồ sơ công việc'}${icon('arrow')}</button></section>`}).join('');
 }
 function renderWork(){shell(`<div class="work-bridge"><div class="bridge-title"><h1>Công việc</h1><p>Đi tới đúng hồ sơ và trạng thái công việc hiện có.</p></div>${workCards()}</div>`,'work')}
 function renderPlaceholder(tab,title,message){shell(`<section class="placeholder"><div class="placeholder-icon">${icon(tab==='matches'?'match':tab==='notifications'?'notice':'profile')}</div><h1>${escape(title)}</h1><p>${escape(message)}</p>${tab==='matches'?'<button class="bridge-button" data-shell="history">Xem lịch sử trận đấu</button>':''}</section>`,tab)}
 
 function openTournamentContext({tournamentId,workSessionId=null,screen='assignment',matchId=null}){window.dispatchEvent(new CustomEvent('application-resume',{detail:{kind:'tournament',screen,tournamentId,workSessionId,matchId}}))}
+function beginAssignment(tournamentId,assignmentId){
+  try{const tournament=tournamentRepository.get(tournamentId),workSession=startWorkSession(tournament,assignmentId);tournamentRepository.save(tournament,{activeWorkSession:workSession.id});openTournamentContext({tournamentId,workSessionId:workSession.id,screen:'court'})}
+  catch(error){alert(error.message)}
+}
 function todayAction(action){
   const p=currentProjection||loadProjection();
   if(action==='open-work')return renderWork();
   if(action==='resume-match')return window.dispatchEvent(new CustomEvent('match-resume',{detail:{matchId:p.activeMatch.id}}));
-  if(action==='start-work')return openTournamentContext({tournamentId:p.work.tournamentId,screen:'assignment'});
+  if(action==='start-work')return beginAssignment(p.work.tournamentId,p.work.assignmentId);
   if(action==='prepare-match')return openTournamentContext({tournamentId:p.work.tournamentId,workSessionId:p.work.workSessionId,screen:p.nextMatch.operations?.preMatch?'prematch':'operations',matchId:p.nextMatch.id});
   if(action==='open-active-work')return openTournamentContext({tournamentId:p.work.tournamentId,workSessionId:p.work.workSessionId,screen:'court'});
   if(action==='view-summary')return openTournamentContext({tournamentId:p.work.tournamentId,workSessionId:p.work.workSessionId,screen:'shiftAttention'});
@@ -121,6 +126,7 @@ document.addEventListener('click',event=>{
   if(['open-work','resume-match','start-work','prepare-match','open-active-work','view-summary'].includes(action))return todayAction(action);
   if(action==='notifications')return renderPlaceholder('notifications','Thông báo','Module Thông báo đang được hoàn thiện.');
   if(action==='history')return window.dispatchEvent(new Event('history-open'));
+  if(action==='start-assignment')return beginAssignment(target.dataset.tournamentId,target.dataset.assignmentId);
   if(action==='open-tournament')return openTournamentContext({tournamentId:target.dataset.tournamentId,workSessionId:target.dataset.workSessionId||null,screen:target.dataset.workSessionId?'court':'assignment'});
 });
 
